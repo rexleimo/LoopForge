@@ -167,7 +167,7 @@ pub async fn run_harness(
                     return Err(e);
                 }
                 prompt = format!(
-                    "init.sh failed after your changes.\n\nOutput:\n{}\n\nFix the issues and make `./init.sh` pass.",
+                    "Workspace init script failed after your changes.\n\nOutput:\n{}\n\nFix the issues and make the init script pass (`./init.sh`, or `./init.ps1` on Windows).",
                     e
                 );
             }
