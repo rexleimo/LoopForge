@@ -74,6 +74,20 @@ impl RexosConfig {
             .with_context(|| format!("write config: {}", config_path.display()))?;
         Ok(())
     }
+
+    pub fn load(paths: &RexosPaths) -> anyhow::Result<Self> {
+        let config_path = paths.config_path();
+        let raw = fs::read_to_string(&config_path)
+            .with_context(|| format!("read config: {}", config_path.display()))?;
+        toml::from_str(&raw).context("parse config TOML")
+    }
+
+    pub fn api_key(&self) -> Option<String> {
+        if self.llm.api_key_env.trim().is_empty() {
+            return None;
+        }
+        std::env::var(&self.llm.api_key_env).ok()
+    }
 }
 
 #[cfg(test)]
