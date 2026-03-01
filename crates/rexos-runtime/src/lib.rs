@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use anyhow::{bail, Context};
 
@@ -19,7 +19,11 @@ pub struct AgentRuntime {
 
 impl AgentRuntime {
     pub fn new(memory: MemoryStore, llms: LlmRegistry, router: ModelRouter) -> Self {
-        Self { memory, llms, router }
+        Self {
+            memory,
+            llms,
+            router,
+        }
     }
 
     pub async fn run_session(
@@ -107,11 +111,30 @@ impl AgentRuntime {
                     bail!("tool loop detected: {sig}");
                 }
 
-                let args_json = normalize_tool_arguments(&call.function.name, &call.function.arguments);
-                let output = tools
-                    .call(&call.function.name, &args_json)
-                    .await
-                    .with_context(|| format!("tool {}", call.function.name))?;
+                let args_json =
+                    normalize_tool_arguments(&call.function.name, &call.function.arguments);
+                let output = match call.function.name.as_str() {
+                    "memory_store" => {
+                        let args: MemoryStoreToolArgs =
+                            serde_json::from_str(&args_json).context("parse memory_store args")?;
+                        self.memory
+                            .kv_set(&args.key, &args.value)
+                            .context("memory_store kv_set")?;
+                        "ok".to_string()
+                    }
+                    "memory_recall" => {
+                        let args: MemoryRecallToolArgs =
+                            serde_json::from_str(&args_json).context("parse memory_recall args")?;
+                        self.memory
+                            .kv_get(&args.key)
+                            .context("memory_recall kv_get")?
+                            .unwrap_or_default()
+                    }
+                    _ => tools
+                        .call(&call.function.name, &args_json)
+                        .await
+                        .with_context(|| format!("tool {}", call.function.name))?,
+                };
 
                 let tool_msg = ChatMessage {
                     role: Role::Tool,
@@ -148,6 +171,17 @@ impl AgentRuntime {
     ) -> anyhow::Result<ChatMessage> {
         driver.chat(req).await
     }
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct MemoryStoreToolArgs {
+    key: String,
+    value: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct MemoryRecallToolArgs {
+    key: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -241,7 +275,9 @@ fn parse_json_tool_calls_from_value(value: serde_json::Value) -> Option<Vec<Json
         return Some(calls);
     }
 
-    serde_json::from_value::<JsonToolCall>(value).ok().map(|c| vec![c])
+    serde_json::from_value::<JsonToolCall>(value)
+        .ok()
+        .map(|c| vec![c])
 }
 
 fn extract_json_tool_calls_from_text(content: &str) -> Vec<JsonToolCall> {

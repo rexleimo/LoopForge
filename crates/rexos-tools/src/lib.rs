@@ -22,9 +22,9 @@ pub struct Toolset {
 
 impl Toolset {
     pub fn new(workspace_root: PathBuf) -> anyhow::Result<Self> {
-        let workspace_root = workspace_root
-            .canonicalize()
-            .with_context(|| format!("canonicalize workspace root: {}", workspace_root.display()))?;
+        let workspace_root = workspace_root.canonicalize().with_context(|| {
+            format!("canonicalize workspace root: {}", workspace_root.display())
+        })?;
         let http = reqwest::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .timeout(Duration::from_secs(30))
@@ -38,7 +38,7 @@ impl Toolset {
     }
 
     pub fn definitions(&self) -> Vec<ToolDefinition> {
-        vec![
+        let mut defs = vec![
             fs_read_def(),
             fs_write_def(),
             shell_def(),
@@ -49,29 +49,57 @@ impl Toolset {
             browser_read_page_def(),
             browser_screenshot_def(),
             browser_close_def(),
-        ]
+        ];
+        defs.extend(openfang_compat_defs());
+        defs
     }
 
     pub async fn call(&self, name: &str, arguments_json: &str) -> anyhow::Result<String> {
         match name {
             "fs_read" => {
-                let args: FsReadArgs = serde_json::from_str(arguments_json)
-                    .context("parse fs_read arguments")?;
+                let args: FsReadArgs =
+                    serde_json::from_str(arguments_json).context("parse fs_read arguments")?;
+                self.fs_read(&args.path)
+            }
+            "file_read" => {
+                let args: FileReadArgs =
+                    serde_json::from_str(arguments_json).context("parse file_read arguments")?;
                 self.fs_read(&args.path)
             }
             "fs_write" => {
-                let args: FsWriteArgs = serde_json::from_str(arguments_json)
-                    .context("parse fs_write arguments")?;
+                let args: FsWriteArgs =
+                    serde_json::from_str(arguments_json).context("parse fs_write arguments")?;
                 self.fs_write(&args.path, &args.content)
             }
+            "file_write" => {
+                let args: FileWriteArgs =
+                    serde_json::from_str(arguments_json).context("parse file_write arguments")?;
+                self.fs_write(&args.path, &args.content)
+            }
+            "file_list" => {
+                let args: FileListArgs =
+                    serde_json::from_str(arguments_json).context("parse file_list arguments")?;
+                self.file_list(&args.path)
+            }
+            "apply_patch" => {
+                let args: ApplyPatchArgs =
+                    serde_json::from_str(arguments_json).context("parse apply_patch arguments")?;
+                self.apply_patch(&args.patch)
+            }
             "shell" => {
-                let args: ShellArgs = serde_json::from_str(arguments_json)
-                    .context("parse shell arguments")?;
+                let args: ShellArgs =
+                    serde_json::from_str(arguments_json).context("parse shell arguments")?;
                 self.shell(&args.command, args.timeout_ms).await
             }
+            "shell_exec" => {
+                let args: ShellExecArgs =
+                    serde_json::from_str(arguments_json).context("parse shell_exec arguments")?;
+                let timeout_ms = args.timeout_seconds.map(|s| s.saturating_mul(1000));
+                self.shell(&args.command, timeout_ms).await
+            }
             "web_fetch" => {
-                let args: WebFetchArgs = serde_json::from_str(arguments_json)
-                    .context("parse web_fetch arguments")?;
+                let args: WebFetchArgs =
+                    serde_json::from_str(arguments_json).context("parse web_fetch arguments")?;
                 self.web_fetch(
                     &args.url,
                     args.timeout_ms,
@@ -79,6 +107,11 @@ impl Toolset {
                     args.allow_private,
                 )
                 .await
+            }
+            "web_search" => {
+                let args: WebSearchArgs =
+                    serde_json::from_str(arguments_json).context("parse web_search arguments")?;
+                self.web_search(&args.query, args.max_results).await
             }
             "browser_navigate" => {
                 let args: BrowserNavigateArgs = serde_json::from_str(arguments_json)
@@ -97,8 +130,8 @@ impl Toolset {
                 self.browser_click(&args.selector).await
             }
             "browser_type" => {
-                let args: BrowserTypeArgs = serde_json::from_str(arguments_json)
-                    .context("parse browser_type arguments")?;
+                let args: BrowserTypeArgs =
+                    serde_json::from_str(arguments_json).context("parse browser_type arguments")?;
                 self.browser_type(&args.selector, &args.text).await
             }
             "browser_read_page" => {
@@ -111,6 +144,49 @@ impl Toolset {
                     .context("parse browser_screenshot arguments")?;
                 self.browser_screenshot(args.path.as_deref()).await
             }
+            "memory_store" | "memory_recall" => {
+                bail!("tool '{name}' is implemented in the runtime, not Toolset")
+            }
+            "agent_send"
+            | "agent_spawn"
+            | "agent_list"
+            | "agent_kill"
+            | "agent_find"
+            | "task_post"
+            | "task_claim"
+            | "task_complete"
+            | "task_list"
+            | "event_publish"
+            | "schedule_create"
+            | "schedule_list"
+            | "schedule_delete"
+            | "knowledge_add_entity"
+            | "knowledge_add_relation"
+            | "knowledge_query"
+            | "image_analyze"
+            | "location_get"
+            | "media_describe"
+            | "media_transcribe"
+            | "image_generate"
+            | "cron_create"
+            | "cron_list"
+            | "cron_cancel"
+            | "channel_send"
+            | "hand_list"
+            | "hand_activate"
+            | "hand_status"
+            | "hand_deactivate"
+            | "a2a_discover"
+            | "a2a_send"
+            | "text_to_speech"
+            | "speech_to_text"
+            | "docker_exec"
+            | "process_start"
+            | "process_poll"
+            | "process_write"
+            | "process_kill"
+            | "process_list"
+            | "canvas_present" => bail!("tool not implemented yet: {name}"),
             _ => bail!("unknown tool: {name}"),
         }
     }
@@ -118,8 +194,7 @@ impl Toolset {
     fn fs_read(&self, user_path: &str) -> anyhow::Result<String> {
         let path = self.resolve_workspace_path(user_path)?;
 
-        let meta = std::fs::metadata(&path)
-            .with_context(|| format!("stat {}", path.display()))?;
+        let meta = std::fs::metadata(&path).with_context(|| format!("stat {}", path.display()))?;
         if meta.len() > 200_000 {
             bail!("file too large: {} bytes", meta.len());
         }
@@ -136,6 +211,66 @@ impl Toolset {
 
         std::fs::write(&path, content).with_context(|| format!("write {}", path.display()))?;
         Ok("ok".to_string())
+    }
+
+    fn file_list(&self, user_path: &str) -> anyhow::Result<String> {
+        let resolved = if user_path.trim() == "." {
+            self.workspace_root.clone()
+        } else {
+            self.resolve_workspace_path(user_path)?
+        };
+
+        let mut out = Vec::new();
+        for entry in std::fs::read_dir(&resolved)
+            .with_context(|| format!("list dir {}", resolved.display()))?
+        {
+            let entry = entry.context("read dir entry")?;
+            let name = entry.file_name().to_string_lossy().to_string();
+            let suffix = match entry.file_type() {
+                Ok(ft) if ft.is_dir() => "/",
+                _ => "",
+            };
+            out.push(format!("{name}{suffix}"));
+        }
+        out.sort();
+        Ok(out.join("\n"))
+    }
+
+    fn apply_patch(&self, patch: &str) -> anyhow::Result<String> {
+        let ops = parse_patch(patch).context("parse patch")?;
+        let mut result = PatchApplyResult::default();
+
+        for op in ops {
+            match op {
+                PatchOp::AddFile { path, content } => {
+                    let dest = self.resolve_workspace_path_for_write(&path)?;
+                    if let Some(parent) = dest.parent() {
+                        std::fs::create_dir_all(parent)
+                            .with_context(|| format!("create dirs {}", parent.display()))?;
+                    }
+                    std::fs::write(&dest, content)
+                        .with_context(|| format!("write {}", dest.display()))?;
+                    result.files_added += 1;
+                }
+                PatchOp::UpdateFile { path, hunks } => {
+                    let dest = self.resolve_workspace_path_for_write(&path)?;
+                    let before = std::fs::read_to_string(&dest)
+                        .with_context(|| format!("read {}", dest.display()))?;
+                    let after = apply_hunks_to_text(&before, &hunks).context("apply hunks")?;
+                    std::fs::write(&dest, after)
+                        .with_context(|| format!("write {}", dest.display()))?;
+                    result.files_updated += 1;
+                }
+                PatchOp::DeleteFile { path } => {
+                    let dest = self.resolve_workspace_path(&path)?;
+                    std::fs::remove_file(&dest)
+                        .with_context(|| format!("delete {}", dest.display()))?;
+                    result.files_deleted += 1;
+                }
+            }
+        }
+
+        Ok(result.summary())
     }
 
     async fn shell(&self, command: &str, timeout_ms: Option<u64>) -> anyhow::Result<String> {
@@ -214,6 +349,42 @@ impl Toolset {
         Ok(combined)
     }
 
+    async fn web_search(&self, query: &str, max_results: Option<u32>) -> anyhow::Result<String> {
+        if query.trim().is_empty() {
+            bail!("query is empty");
+        }
+
+        let max_results = max_results.unwrap_or(5).clamp(1, 20) as usize;
+        let resp = self
+            .http
+            .get("https://html.duckduckgo.com/html/")
+            .query(&[("q", query)])
+            .header("User-Agent", "Mozilla/5.0 (compatible; RexOS/0.1)")
+            .send()
+            .await
+            .context("send web_search request")?
+            .error_for_status()
+            .context("web_search http error")?;
+
+        let body = resp.text().await.context("read web_search body")?;
+        let results = parse_ddg_results(&body, max_results);
+        if results.is_empty() {
+            return Ok(format!("No results found for '{query}'."));
+        }
+
+        let mut out = format!("Search results for '{query}':\n\n");
+        for (idx, (title, url, snippet)) in results.into_iter().enumerate() {
+            out.push_str(&format!(
+                "{}. {}\n   URL: {}\n   {}\n\n",
+                idx + 1,
+                title,
+                url,
+                snippet
+            ));
+        }
+        Ok(out)
+    }
+
     async fn web_fetch(
         &self,
         url: &str,
@@ -228,9 +399,7 @@ impl Toolset {
         }
 
         let host = url.host_str().context("url missing host")?;
-        let port = url
-            .port_or_known_default()
-            .context("url missing port")?;
+        let port = url.port_or_known_default().context("url missing port")?;
 
         if !allow_private {
             let ips = resolve_host_ips(host, port)
@@ -265,7 +434,11 @@ impl Toolset {
             .context("read response body")?;
 
         let truncated = bytes.len() > max_bytes;
-        let slice = if truncated { &bytes[..max_bytes] } else { &bytes };
+        let slice = if truncated {
+            &bytes[..max_bytes]
+        } else {
+            &bytes
+        };
         let body = String::from_utf8_lossy(slice).to_string();
 
         Ok(serde_json::json!({
@@ -291,9 +464,7 @@ impl Toolset {
         }
 
         let host = url.host_str().context("url missing host")?;
-        let port = url
-            .port_or_known_default()
-            .context("url missing port")?;
+        let port = url.port_or_known_default().context("url missing port")?;
 
         if !allow_private {
             let ips = resolve_host_ips(host, port)
@@ -325,9 +496,7 @@ impl Toolset {
     async fn browser_close(&self) -> anyhow::Result<String> {
         let mut guard = self.browser.lock().await;
         if let Some(mut session) = guard.take() {
-            let _ = session
-                .send(serde_json::json!({ "action": "Close" }))
-                .await;
+            let _ = session.send(serde_json::json!({ "action": "Close" })).await;
             session.kill().await;
         }
         Ok("ok".to_string())
@@ -367,7 +536,9 @@ impl Toolset {
         let session = guard
             .as_mut()
             .context("browser session not started; call browser_navigate first")?;
-        let resp = session.send(serde_json::json!({ "action": "ReadPage" })).await?;
+        let resp = session
+            .send(serde_json::json!({ "action": "ReadPage" }))
+            .await?;
         Ok(resp.into_tool_output()?)
     }
 
@@ -493,7 +664,15 @@ impl BrowserSession {
 
         let mut cmd = tokio::process::Command::new(python);
         cmd.arg("-u").arg(script_path);
-        cmd.args(["--headless", "--width", "1280", "--height", "720", "--timeout", "30"]);
+        cmd.args([
+            "--headless",
+            "--width",
+            "1280",
+            "--height",
+            "720",
+            "--timeout",
+            "30",
+        ]);
         cmd.stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
@@ -634,9 +813,30 @@ struct FsReadArgs {
 }
 
 #[derive(Debug, serde::Deserialize)]
+struct FileReadArgs {
+    path: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
 struct FsWriteArgs {
     path: String,
     content: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct FileWriteArgs {
+    path: String,
+    content: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct FileListArgs {
+    path: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ApplyPatchArgs {
+    patch: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -644,6 +844,13 @@ struct ShellArgs {
     command: String,
     #[serde(default)]
     timeout_ms: Option<u64>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ShellExecArgs {
+    command: String,
+    #[serde(default)]
+    timeout_seconds: Option<u64>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -655,6 +862,13 @@ struct WebFetchArgs {
     max_bytes: Option<u64>,
     #[serde(default)]
     allow_private: bool,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct WebSearchArgs {
+    query: String,
+    #[serde(default)]
+    max_results: Option<u32>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -709,6 +923,292 @@ fn validate_relative_path(user_path: &str) -> anyhow::Result<PathBuf> {
     Ok(out)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum PatchOp {
+    AddFile { path: String, content: String },
+    UpdateFile { path: String, hunks: Vec<PatchHunk> },
+    DeleteFile { path: String },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct PatchHunk {
+    old_lines: Vec<String>,
+    new_lines: Vec<String>,
+}
+
+#[derive(Debug, Default)]
+struct PatchApplyResult {
+    files_added: u32,
+    files_updated: u32,
+    files_deleted: u32,
+}
+
+impl PatchApplyResult {
+    fn summary(&self) -> String {
+        let mut parts = Vec::new();
+        if self.files_added > 0 {
+            parts.push(format!("{} added", self.files_added));
+        }
+        if self.files_updated > 0 {
+            parts.push(format!("{} updated", self.files_updated));
+        }
+        if self.files_deleted > 0 {
+            parts.push(format!("{} deleted", self.files_deleted));
+        }
+        if parts.is_empty() {
+            "No changes applied".to_string()
+        } else {
+            parts.join(", ")
+        }
+    }
+}
+
+fn parse_patch(input: &str) -> anyhow::Result<Vec<PatchOp>> {
+    let lines: Vec<&str> = input.lines().collect();
+    let begin = lines
+        .iter()
+        .position(|l| l.trim() == "*** Begin Patch")
+        .context("missing '*** Begin Patch' marker")?;
+    let end = lines
+        .iter()
+        .rposition(|l| l.trim() == "*** End Patch")
+        .context("missing '*** End Patch' marker")?;
+    if end <= begin {
+        bail!("'*** End Patch' must come after '*** Begin Patch'");
+    }
+
+    let body = &lines[begin + 1..end];
+    let mut ops = Vec::new();
+    let mut i = 0usize;
+
+    while i < body.len() {
+        let line = body[i].trim();
+        if line.is_empty() {
+            i += 1;
+            continue;
+        }
+
+        if let Some(rest) = line.strip_prefix("*** Add File:") {
+            let path = rest.trim().to_string();
+            if path.is_empty() {
+                bail!("empty path in '*** Add File:'");
+            }
+            i += 1;
+
+            let mut content_lines = Vec::new();
+            while i < body.len() && !body[i].trim().starts_with("***") {
+                let raw = body[i];
+                if let Some(stripped) = raw.strip_prefix('+') {
+                    content_lines.push(stripped.to_string());
+                } else if raw.trim().is_empty() {
+                    content_lines.push(String::new());
+                } else {
+                    bail!("expected '+' prefix in Add File content, got: {}", raw);
+                }
+                i += 1;
+            }
+
+            ops.push(PatchOp::AddFile {
+                path,
+                content: content_lines.join("\n"),
+            });
+            continue;
+        }
+
+        if let Some(rest) = line.strip_prefix("*** Update File:") {
+            let path = rest.trim().to_string();
+            if path.is_empty() {
+                bail!("empty path in '*** Update File:'");
+            }
+            i += 1;
+
+            let mut hunks = Vec::new();
+            while i < body.len() && !body[i].trim().starts_with("***") {
+                let cur = body[i].trim();
+                if cur.starts_with("@@") {
+                    i += 1;
+                    let mut old_lines = Vec::new();
+                    let mut new_lines = Vec::new();
+                    while i < body.len()
+                        && !body[i].trim().starts_with("@@")
+                        && !body[i].trim().starts_with("***")
+                    {
+                        let hl = body[i];
+                        if let Some(stripped) = hl.strip_prefix('-') {
+                            old_lines.push(stripped.to_string());
+                        } else if let Some(stripped) = hl.strip_prefix('+') {
+                            new_lines.push(stripped.to_string());
+                        }
+                        i += 1;
+                    }
+                    hunks.push(PatchHunk {
+                        old_lines,
+                        new_lines,
+                    });
+                } else {
+                    i += 1;
+                }
+            }
+
+            if hunks.is_empty() {
+                bail!("Update File '{path}' has no hunks");
+            }
+
+            ops.push(PatchOp::UpdateFile { path, hunks });
+            continue;
+        }
+
+        if let Some(rest) = line.strip_prefix("*** Delete File:") {
+            let path = rest.trim().to_string();
+            if path.is_empty() {
+                bail!("empty path in '*** Delete File:'");
+            }
+            i += 1;
+            ops.push(PatchOp::DeleteFile { path });
+            continue;
+        }
+
+        bail!("unknown patch directive: {line}");
+    }
+
+    Ok(ops)
+}
+
+fn apply_hunks_to_text(before: &str, hunks: &[PatchHunk]) -> anyhow::Result<String> {
+    let trailing_newline = before.ends_with('\n');
+    let mut lines: Vec<String> = before.lines().map(|l| l.to_string()).collect();
+
+    for hunk in hunks {
+        if hunk.old_lines.is_empty() {
+            lines.extend(hunk.new_lines.clone());
+            continue;
+        }
+
+        let mut found = None;
+        for idx in 0..=lines.len().saturating_sub(hunk.old_lines.len()) {
+            if lines[idx..idx + hunk.old_lines.len()] == hunk.old_lines {
+                found = Some(idx);
+                break;
+            }
+        }
+
+        let idx = found.context("hunk target not found in file")?;
+        lines.splice(idx..idx + hunk.old_lines.len(), hunk.new_lines.clone());
+    }
+
+    let mut out = lines.join("\n");
+    if trailing_newline {
+        out.push('\n');
+    }
+    Ok(out)
+}
+
+fn parse_ddg_results(html: &str, max: usize) -> Vec<(String, String, String)> {
+    let mut results = Vec::new();
+
+    for chunk in html.split("class=\"result__a\"") {
+        if results.len() >= max {
+            break;
+        }
+        if !chunk.contains("href=") {
+            continue;
+        }
+
+        let url = extract_between(chunk, "href=\"", "\"")
+            .unwrap_or_default()
+            .to_string();
+
+        let actual_url = if url.contains("uddg=") {
+            url.split("uddg=")
+                .nth(1)
+                .and_then(|u| u.split('&').next())
+                .map(percent_decode)
+                .unwrap_or(url)
+        } else {
+            url
+        };
+
+        let title = extract_between(chunk, ">", "</a>")
+            .map(strip_html_tags)
+            .unwrap_or_default();
+
+        let snippet = if let Some(start) = chunk.find("class=\"result__snippet\"") {
+            let after = &chunk[start..];
+            extract_between(after, ">", "</a>")
+                .or_else(|| extract_between(after, ">", "</"))
+                .map(strip_html_tags)
+                .unwrap_or_default()
+        } else {
+            String::new()
+        };
+
+        if !title.is_empty() && !actual_url.is_empty() {
+            results.push((title, actual_url, snippet));
+        }
+    }
+
+    results
+}
+
+fn extract_between<'a>(text: &'a str, start: &str, end: &str) -> Option<&'a str> {
+    let start_idx = text.find(start)? + start.len();
+    let remaining = &text[start_idx..];
+    let end_idx = remaining.find(end)?;
+    Some(&remaining[..end_idx])
+}
+
+fn strip_html_tags(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut in_tag = false;
+    for ch in s.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => result.push(ch),
+            _ => {}
+        }
+    }
+    result
+}
+
+fn percent_decode(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'%' if i + 2 < bytes.len() => {
+                let hi = bytes[i + 1];
+                let lo = bytes[i + 2];
+                let hex = |b: u8| -> Option<u8> {
+                    match b {
+                        b'0'..=b'9' => Some(b - b'0'),
+                        b'a'..=b'f' => Some(b - b'a' + 10),
+                        b'A'..=b'F' => Some(b - b'A' + 10),
+                        _ => None,
+                    }
+                };
+                if let (Some(hi), Some(lo)) = (hex(hi), hex(lo)) {
+                    out.push((hi * 16 + lo) as char);
+                    i += 3;
+                } else {
+                    out.push('%');
+                    i += 1;
+                }
+            }
+            b'+' => {
+                out.push(' ');
+                i += 1;
+            }
+            b => {
+                out.push(b as char);
+                i += 1;
+            }
+        }
+    }
+    out
+}
+
 fn fs_read_def() -> ToolDefinition {
     ToolDefinition {
         kind: "function".to_string(),
@@ -727,12 +1227,208 @@ fn fs_read_def() -> ToolDefinition {
     }
 }
 
+fn openfang_compat_defs() -> Vec<ToolDefinition> {
+    use serde_json::json;
+
+    let mut defs = Vec::new();
+
+    // Core OpenFang names that map to existing RexOS primitives.
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "file_read".to_string(),
+            description: "Read the contents of a file. Paths are relative to the agent workspace."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string", "description": "The file path to read" }
+                },
+                "required": ["path"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "file_write".to_string(),
+            description: "Write content to a file. Paths are relative to the agent workspace."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string", "description": "The file path to write to" },
+                    "content": { "type": "string", "description": "The content to write" }
+                },
+                "required": ["path", "content"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "file_list".to_string(),
+            description: "List files in a directory. Paths are relative to the agent workspace."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string", "description": "The directory path to list" }
+                },
+                "required": ["path"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "apply_patch".to_string(),
+            description: "Apply a multi-hunk diff patch to add, update, or delete files."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "patch": { "type": "string", "description": "Patch in *** Begin Patch / *** End Patch format." }
+                },
+                "required": ["patch"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "shell_exec".to_string(),
+            description: "Execute a shell command and return its output.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "command": { "type": "string", "description": "The command to execute" },
+                    "timeout_seconds": { "type": "integer", "description": "Timeout in seconds (default: 30)" }
+                },
+                "required": ["command"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "web_search".to_string(),
+            description: "Search the web and return a short list of results.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "query": { "type": "string", "description": "The search query" },
+                    "max_results": { "type": "integer", "description": "Maximum number of results to return (default: 5, max: 20)" }
+                },
+                "required": ["query"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "memory_store".to_string(),
+            description: "Persist a key/value pair to shared memory.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "key": { "type": "string", "description": "The memory key" },
+                    "value": { "type": "string", "description": "The value to store" }
+                },
+                "required": ["key", "value"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "memory_recall".to_string(),
+            description: "Recall a value from shared memory.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "key": { "type": "string", "description": "The memory key" }
+                },
+                "required": ["key"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
+    // Remaining OpenFang builtins (stubs in RexOS for now).
+    for name in [
+        "agent_send",
+        "agent_spawn",
+        "agent_list",
+        "agent_kill",
+        "agent_find",
+        "task_post",
+        "task_claim",
+        "task_complete",
+        "task_list",
+        "event_publish",
+        "schedule_create",
+        "schedule_list",
+        "schedule_delete",
+        "knowledge_add_entity",
+        "knowledge_add_relation",
+        "knowledge_query",
+        "image_analyze",
+        "location_get",
+        "media_describe",
+        "media_transcribe",
+        "image_generate",
+        "cron_create",
+        "cron_list",
+        "cron_cancel",
+        "channel_send",
+        "hand_list",
+        "hand_activate",
+        "hand_status",
+        "hand_deactivate",
+        "a2a_discover",
+        "a2a_send",
+        "text_to_speech",
+        "speech_to_text",
+        "docker_exec",
+        "process_start",
+        "process_poll",
+        "process_write",
+        "process_kill",
+        "process_list",
+        "canvas_present",
+    ] {
+        defs.push(ToolDefinition {
+            kind: "function".to_string(),
+            function: ToolFunctionDefinition {
+                name: name.to_string(),
+                description: format!("OpenFang-compatible tool stub: {name}."),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": true
+                }),
+            },
+        });
+    }
+
+    defs
+}
+
 fn fs_write_def() -> ToolDefinition {
     ToolDefinition {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
             name: "fs_write".to_string(),
-            description: "Write a UTF-8 text file to the workspace (creates parent dirs).".to_string(),
+            description: "Write a UTF-8 text file to the workspace (creates parent dirs)."
+                .to_string(),
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -751,7 +1447,9 @@ fn shell_def() -> ToolDefinition {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
             name: "shell".to_string(),
-            description: "Run a shell command inside the workspace (bash on Unix, PowerShell on Windows).".to_string(),
+            description:
+                "Run a shell command inside the workspace (bash on Unix, PowerShell on Windows)."
+                    .to_string(),
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -770,7 +1468,9 @@ fn web_fetch_def() -> ToolDefinition {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
             name: "web_fetch".to_string(),
-            description: "Fetch a URL via HTTP(S) and return a small response body (SSRF-protected).".to_string(),
+            description:
+                "Fetch a URL via HTTP(S) and return a small response body (SSRF-protected)."
+                    .to_string(),
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -811,7 +1511,9 @@ fn browser_click_def() -> ToolDefinition {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
             name: "browser_click".to_string(),
-            description: "Click an element in the browser by CSS selector (or best-effort text fallback).".to_string(),
+            description:
+                "Click an element in the browser by CSS selector (or best-effort text fallback)."
+                    .to_string(),
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -994,6 +1696,105 @@ mod tests {
         ] {
             assert!(defs.contains(name), "missing tool definition: {name}");
         }
+    }
+
+    #[test]
+    fn tool_definitions_include_openfang_builtin_tools() {
+        let tmp = tempfile::tempdir().unwrap();
+        let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
+        let defs = tools
+            .definitions()
+            .into_iter()
+            .map(|d| d.function.name)
+            .collect::<std::collections::BTreeSet<_>>();
+
+        for name in [
+            "file_read",
+            "file_write",
+            "file_list",
+            "apply_patch",
+            "shell_exec",
+            "web_search",
+            "memory_store",
+            "memory_recall",
+            "agent_send",
+            "task_post",
+            "cron_create",
+            "process_start",
+            "canvas_present",
+        ] {
+            assert!(defs.contains(name), "missing OpenFang tool: {name}");
+        }
+    }
+
+    #[tokio::test]
+    async fn openfang_file_tools_work_via_aliases() {
+        let tmp = tempfile::tempdir().unwrap();
+        let workspace = tmp.path().join("ws");
+        std::fs::create_dir_all(&workspace).unwrap();
+
+        let tools = Toolset::new(workspace.clone()).unwrap();
+
+        tools
+            .call("file_write", r#"{ "path": "a.txt", "content": "hello" }"#)
+            .await
+            .unwrap();
+
+        let content = tools
+            .call("file_read", r#"{ "path": "a.txt" }"#)
+            .await
+            .unwrap();
+        assert_eq!(content, "hello");
+
+        std::fs::create_dir_all(workspace.join("dir")).unwrap();
+        std::fs::write(workspace.join("dir").join("b.txt"), "world").unwrap();
+
+        let listing = tools.call("file_list", r#"{ "path": "." }"#).await.unwrap();
+        assert!(listing.contains("a.txt"), "{listing}");
+        assert!(
+            listing.contains("dir/") || listing.contains("dir"),
+            "{listing}"
+        );
+    }
+
+    #[tokio::test]
+    async fn openfang_apply_patch_adds_and_updates_files() {
+        let tmp = tempfile::tempdir().unwrap();
+        let workspace = tmp.path().join("ws");
+        std::fs::create_dir_all(&workspace).unwrap();
+        let tools = Toolset::new(workspace.clone()).unwrap();
+
+        let patch = r#"*** Begin Patch
+*** Add File: greet.txt
++hi
+*** Update File: greet.txt
+@@
+-hi
++hello
+*** End Patch"#;
+
+        let _ = tools
+            .call(
+                "apply_patch",
+                &format!(
+                    r#"{{ "patch": {} }}"#,
+                    serde_json::to_string(patch).unwrap()
+                ),
+            )
+            .await
+            .unwrap();
+
+        let content = std::fs::read_to_string(workspace.join("greet.txt")).unwrap();
+        assert_eq!(content.trim_end(), "hello");
+    }
+
+    #[tokio::test]
+    async fn openfang_stub_tools_return_not_implemented_error() {
+        let tmp = tempfile::tempdir().unwrap();
+        let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
+        let err = tools.call("agent_send", r#"{}"#).await.unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("not implemented"), "{msg}");
     }
 
     #[tokio::test]
