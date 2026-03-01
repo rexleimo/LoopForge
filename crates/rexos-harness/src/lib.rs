@@ -19,7 +19,11 @@ pub fn init_workspace(workspace_dir: &Path) -> anyhow::Result<()> {
     let init_sh_path = workspace_dir.join(INIT_SH);
     let init_ps1_path = workspace_dir.join(INIT_PS1);
 
-    if features_path.exists() || progress_path.exists() || init_sh_path.exists() || init_ps1_path.exists() {
+    if features_path.exists()
+        || progress_path.exists()
+        || init_sh_path.exists()
+        || init_ps1_path.exists()
+    {
         bail!("workspace already initialized");
     }
 
@@ -32,8 +36,11 @@ pub fn init_workspace(workspace_dir: &Path) -> anyhow::Result<()> {
         },
         "features": []
     });
-    std::fs::write(&features_path, serde_json::to_string_pretty(&features_json)?)
-        .with_context(|| format!("write {}", features_path.display()))?;
+    std::fs::write(
+        &features_path,
+        serde_json::to_string_pretty(&features_json)?,
+    )
+    .with_context(|| format!("write {}", features_path.display()))?;
 
     std::fs::write(
         &progress_path,
@@ -69,7 +76,10 @@ Write-Output "[rexos] init.ps1: customize this script for your project"
     }
 
     ensure_git_repo(workspace_dir)?;
-    git(workspace_dir, ["add", FEATURES_JSON, PROGRESS_MD, INIT_SH, INIT_PS1])?;
+    git(
+        workspace_dir,
+        ["add", FEATURES_JSON, PROGRESS_MD, INIT_SH, INIT_PS1],
+    )?;
     git_with_identity(
         workspace_dir,
         [
@@ -102,7 +112,8 @@ pub fn resolve_session_id(workspace_dir: &Path) -> anyhow::Result<String> {
     }
 
     let id = uuid::Uuid::new_v4().to_string();
-    std::fs::write(&path, format!("{id}\n")).with_context(|| format!("write {}", path.display()))?;
+    std::fs::write(&path, format!("{id}\n"))
+        .with_context(|| format!("write {}", path.display()))?;
     Ok(id)
 }
 
@@ -267,10 +278,7 @@ fn git<const N: usize>(workspace_dir: &Path, args: [&str; N]) -> anyhow::Result<
     Ok(())
 }
 
-fn git_with_identity<const N: usize>(
-    workspace_dir: &Path,
-    args: [&str; N],
-) -> anyhow::Result<()> {
+fn git_with_identity<const N: usize>(workspace_dir: &Path, args: [&str; N]) -> anyhow::Result<()> {
     let output = Command::new("git")
         .arg("-c")
         .arg("user.name=RexOS")
@@ -303,7 +311,7 @@ fn tail_lines(s: &str, n: usize) -> Vec<&str> {
 fn is_initialized(workspace_dir: &Path) -> bool {
     workspace_dir.join(FEATURES_JSON).exists()
         && workspace_dir.join(PROGRESS_MD).exists()
-        && workspace_dir.join(INIT_SH).exists()
+        && (workspace_dir.join(INIT_SH).exists() || workspace_dir.join(INIT_PS1).exists())
 }
 
 fn ensure_gitignore_has_rexos_dir(workspace_dir: &Path) -> anyhow::Result<()> {
@@ -405,7 +413,8 @@ fn normalize_features_json(workspace_dir: &Path) -> anyhow::Result<()> {
     }
 
     let default_editing = "Only change `passes` (false -> true) and optionally `notes`. Do not delete or reorder items.";
-    let default_completion = "A feature can only be marked passing after required tests/smoke checks are run.";
+    let default_completion =
+        "A feature can only be marked passing after required tests/smoke checks are run.";
 
     if v.get("rules").and_then(|x| x.as_object()).is_none() {
         v["rules"] = serde_json::json!({
@@ -470,7 +479,7 @@ fn select_init_script(workspace_dir: &Path) -> anyhow::Result<InitScript> {
             return Ok(InitScript::PowerShell);
         }
         if sh_exists {
-            return Ok(InitScript::Bash);
+            bail!("init.ps1 is required on Windows (bash/WSL is not assumed to be available)");
         }
     } else if sh_exists {
         return Ok(InitScript::Bash);
@@ -568,10 +577,7 @@ fn commit_checkpoint_if_dirty(workspace_dir: &Path, message: &str) -> anyhow::Re
     }
 
     git(workspace_dir, ["add", "-A"])?;
-    git_with_identity(
-        workspace_dir,
-        ["commit", "-m", message, "--no-gpg-sign"],
-    )?;
+    git_with_identity(workspace_dir, ["commit", "-m", message, "--no-gpg-sign"])?;
     Ok(())
 }
 
@@ -580,10 +586,7 @@ fn first_failing_feature(v: &serde_json::Value) -> Option<String> {
     for f in arr {
         if f.get("passes").and_then(|p| p.as_bool()) == Some(false) {
             let id = f.get("id").and_then(|x| x.as_str()).unwrap_or("<no id>");
-            let desc = f
-                .get("description")
-                .and_then(|x| x.as_str())
-                .unwrap_or("");
+            let desc = f.get("description").and_then(|x| x.as_str()).unwrap_or("");
             return Some(format!("{id} - {desc}"));
         }
     }

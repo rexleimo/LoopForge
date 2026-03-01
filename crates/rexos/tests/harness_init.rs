@@ -10,6 +10,7 @@ fn harness_init_creates_artifacts_and_git_commit() {
     assert!(workspace.join("features.json").exists());
     assert!(workspace.join("rexos-progress.md").exists());
     assert!(workspace.join("init.sh").exists());
+    assert!(workspace.join("init.ps1").exists());
     assert!(workspace.join(".git").exists());
 
     let commit_count = Command::new("git")
@@ -37,4 +38,3 @@ fn harness_init_creates_artifacts_and_git_commit() {
     let msg = err.to_string();
     assert!(msg.contains("already initialized"), "{msg}");
 }
-
