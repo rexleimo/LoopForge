@@ -5,6 +5,15 @@ use rusqlite::{Connection, OptionalExtension};
 
 use crate::paths::RexosPaths;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Message {
+    pub id: i64,
+    pub session_id: String,
+    pub role: String,
+    pub content: String,
+    pub created_at: String,
+}
+
 #[derive(Debug)]
 pub struct MemoryStore {
     conn: Connection,
@@ -68,6 +77,48 @@ impl MemoryStore {
             .optional()?;
         Ok(value)
     }
+
+    pub fn append_message(&self, session_id: &str, role: &str, content: &str) -> anyhow::Result<()> {
+        let now = now_epoch_seconds().to_string();
+
+        self.conn.execute(
+            "INSERT INTO sessions (session_id, created_at) VALUES (?1, ?2)\n            ON CONFLICT(session_id) DO NOTHING",
+            (session_id, &now),
+        )?;
+
+        self.conn.execute(
+            "INSERT INTO messages (session_id, role, content, created_at) VALUES (?1, ?2, ?3, ?4)",
+            (session_id, role, content, &now),
+        )?;
+
+        Ok(())
+    }
+
+    pub fn list_messages(&self, session_id: &str) -> anyhow::Result<Vec<Message>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, role, content, created_at FROM messages WHERE session_id=?1 ORDER BY id ASC",
+        )?;
+
+        let mut rows = stmt.query((session_id,))?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next()? {
+            out.push(Message {
+                id: row.get(0)?,
+                session_id: session_id.to_string(),
+                role: row.get(1)?,
+                content: row.get(2)?,
+                created_at: row.get(3)?,
+            });
+        }
+        Ok(out)
+    }
+}
+
+fn now_epoch_seconds() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -87,5 +138,24 @@ mod tests {
         store.kv_set("a", "2").unwrap();
         assert_eq!(store.kv_get("a").unwrap(), Some("2".to_string()));
     }
-}
 
+    #[test]
+    fn messages_persist_across_reopen() {
+        let tmp = tempdir().unwrap();
+        let db_path = tmp.path().join("test.db");
+
+        {
+            let store = MemoryStore::open_or_create_at_path(&db_path).unwrap();
+            store.append_message("s1", "user", "hello").unwrap();
+            store.append_message("s1", "assistant", "world").unwrap();
+        }
+
+        let store = MemoryStore::open_or_create_at_path(&db_path).unwrap();
+        let msgs = store.list_messages("s1").unwrap();
+        assert_eq!(msgs.len(), 2);
+        assert_eq!(msgs[0].role, "user");
+        assert_eq!(msgs[0].content, "hello");
+        assert_eq!(msgs[1].role, "assistant");
+        assert_eq!(msgs[1].content, "world");
+    }
+}
