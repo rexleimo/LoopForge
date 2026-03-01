@@ -5,9 +5,11 @@
 # RexOS runtime
 /.rexos/
 
+# Worktrees
+/.worktrees/
+
 # OS files
 .DS_Store
 
 # Reference code (not part of RexOS repo)
 /openfang/
-
