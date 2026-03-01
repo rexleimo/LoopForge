@@ -1,0 +1,52 @@
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::Arc;
+
+use anyhow::bail;
+
+use crate::llm::openai_compat::{ChatCompletionRequest, ChatMessage};
+use crate::llm::openai_compat::OpenAiCompatibleClient;
+
+pub type ChatFuture<'a> = Pin<Box<dyn Future<Output = anyhow::Result<ChatMessage>> + Send + 'a>>;
+
+pub trait LlmDriver: Send + Sync {
+    fn chat<'a>(&'a self, req: ChatCompletionRequest) -> ChatFuture<'a>;
+}
+
+#[derive(Clone)]
+pub struct OpenAiCompatDriver {
+    client: OpenAiCompatibleClient,
+}
+
+impl OpenAiCompatDriver {
+    pub fn new(base_url: String, api_key: Option<String>) -> anyhow::Result<Self> {
+        Ok(Self {
+            client: OpenAiCompatibleClient::new(base_url, api_key)?,
+        })
+    }
+}
+
+impl LlmDriver for OpenAiCompatDriver {
+    fn chat<'a>(&'a self, req: ChatCompletionRequest) -> ChatFuture<'a> {
+        Box::pin(async move { self.client.chat_completions(req).await })
+    }
+}
+
+#[derive(Clone)]
+pub struct UnimplementedDriver {
+    provider: Arc<str>,
+}
+
+impl UnimplementedDriver {
+    pub fn new(provider: impl Into<Arc<str>>) -> Self {
+        Self {
+            provider: provider.into(),
+        }
+    }
+}
+
+impl LlmDriver for UnimplementedDriver {
+    fn chat<'a>(&'a self, _req: ChatCompletionRequest) -> ChatFuture<'a> {
+        Box::pin(async move { bail!("provider not implemented: {}", self.provider) })
+    }
+}
