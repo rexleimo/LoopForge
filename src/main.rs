@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::path::PathBuf;
 
 use rexos::{config::RexosConfig, memory::MemoryStore, paths::RexosPaths};
 
@@ -14,6 +15,19 @@ struct Cli {
 enum Command {
     /// Initialize ~/.rexos (config + database)
     Init,
+    /// Long-running harness helpers (initializer + sessions)
+    Harness {
+        #[command(subcommand)]
+        command: HarnessCommand,
+    },
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum HarnessCommand {
+    /// Initialize a workspace directory for long-running agent sessions
+    Init { dir: PathBuf },
+    /// Run a harness preflight session (bearings + smoke checks)
+    Run { dir: PathBuf },
 }
 
 #[tokio::main]
@@ -28,8 +42,16 @@ async fn main() -> anyhow::Result<()> {
             MemoryStore::open_or_create(&paths)?;
             println!("Initialized {}", paths.base_dir.display());
         }
+        Command::Harness { command } => match command {
+            HarnessCommand::Init { dir } => {
+                rexos::harness::init_workspace(&dir)?;
+                println!("Harness initialized in {}", dir.display());
+            }
+            HarnessCommand::Run { dir } => {
+                rexos::harness::preflight(&dir)?;
+            }
+        },
     }
 
     Ok(())
 }
-
