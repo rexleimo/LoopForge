@@ -1,13 +1,13 @@
-# Harness + OpenFang Alignment Implementation Plan
+# Harness + Agent OS Alignment Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Align RexOS with Anthropic’s “Effective harnesses for long-running agents” harness patterns (initializer + long-running coding harness) and with OpenFang’s architecture at the “core subsystems” level (tools, stability, extensibility), while keeping Ollama as the primary local smoke/E2E driver.
+**Goal:** Align RexOS with Anthropic’s “Effective harnesses for long-running agents” harness patterns (initializer + long-running coding harness) and with an Agent OS “core subsystems” baseline (tools, stability, extensibility), while keeping Ollama as the primary local smoke/E2E driver.
 
 **Architecture:** Keep RexOS as a Cargo workspace. Expand `rexos-harness` from “scaffold + preflight” into a real harness runner:
 - **Initializer**: generate a comprehensive `features.json` from a user prompt and initialize/verify workspace artifacts.
 - **Runner**: run the coding agent with injected workspace context, then verify via `init.sh`, checkpoint via git commit, and retry with failure output when needed.
-Add two OpenFang-inspired runtime hardening pieces:
+Add two runtime hardening pieces:
 - `web_fetch` tool with SSRF protections.
 - Tool-loop guard in the agent loop to prevent runaway repetition.
 
@@ -114,7 +114,7 @@ Store session id in `workspace/.rexos/session_id` (workspace-local, durable, git
 
 ### Task 4: Add `web_fetch` tool with SSRF protections
 
-**Goal:** Add a built-in tool inspired by OpenFang’s `WebFetchEngine`:
+**Goal:** Add a built-in `web_fetch` tool:
 - Only `http`/`https`
 - Deny loopback/private/link-local by default
 - Size cap and timeout
@@ -170,7 +170,7 @@ Expected: PASS
 
 ### Task 6: Add an explicit alignment checklist doc
 
-**Goal:** Make “对齐” auditable: one file that maps Anthropic harness requirements + OpenFang architecture sections to RexOS modules, with “Implemented / Partial / Planned” and pointers.
+**Goal:** Make “对齐” auditable: one file that maps Anthropic harness requirements + RexOS core subsystems to modules, with “Implemented / Partial / Planned” and pointers.
 
 **Files:**
 - Create: `docs/alignment.md`
@@ -179,7 +179,7 @@ Expected: PASS
 
 Include:
 - Anthropic harness checklist mapping to `rexos-harness` + CLI
-- OpenFang core subsystems mapping to crates + what’s intentionally out of scope (channels/skills/wire)
+- RexOS core subsystems mapping to crates + what’s intentionally out of scope (channels/skills/wire)
 
 **Step 2: Commit**
 
@@ -195,4 +195,3 @@ Expected: PASS
 
 Commit messages:
 - One commit per task (small, reviewable)
-

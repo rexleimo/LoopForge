@@ -1,12 +1,8 @@
-# RexOS 对齐清单（Anthropic Harness + OpenFang 架构参考）
+# RexOS 对齐清单（Anthropic Harness + RexOS 核心架构）
 
-本文档用于“可审计地”回答：RexOS 是否已按
-- Anthropic: *Effective harnesses for long-running agents*
-- OpenFang: `openfang/docs/architecture.md`
-
-对齐到可用的 Agent OS 核心能力与扩展点。
-
-> 说明：OpenFang 的完整功能面非常大（channels/skills/wire/MCP/A2A/WASM/计费/向量检索等）。RexOS 当前目标是对齐其 **核心循环 + 工程化 harness + 安全工具模型 + 多 provider LLM**，并在文档中明确哪些属于后续子系统。
+本文档用于“可审计地”回答：RexOS 是否已按 Anthropic 的
+*Effective harnesses for long-running agents* 落地可用的 long-running harness，
+并覆盖一个 Agent OS 的核心能力（工具沙盒、记忆、LLM 路由、稳定性保护等）。
 
 ---
 
@@ -64,9 +60,9 @@
 
 ---
 
-## 2) OpenFang 架构参考对齐（核心层）
+## 2) RexOS 核心系统（MVP）对齐
 
-### 2.1 Workspace crate 分层（OpenFang-style）
+### 2.1 Workspace crate 分层
 
 已对齐到 workspace + 多 crate 的基础形态：
 - `crates/rexos`（facade，对外 re-export，保持 `rexos::agent/llm/memory/tools/...` 路径稳定）
@@ -108,9 +104,9 @@
 - 工具沙盒：workspace 路径约束、防 `..`、拒绝 symlink escape
 - shell：固定 cwd + env_clear + timeout + 基础危险命令拒绝
 
-新增（参考 OpenFang）：
+新增：
 - `web_fetch`：SSRF 防护（默认拒绝 loopback/private/link-local），支持 `allow_private=true`（便于本地测试/内网）
-- OpenFang 兼容工具面（aliases + stubs）：
+- 兼容工具面（aliases + stubs）：
   - 已实现：`file_read/file_write/file_list`、`apply_patch`、`shell_exec`、`web_search`、`memory_store/memory_recall`
   - 已对齐命名但未实现（stub）：`agent_*` / `task_*` / `schedule_*` / `knowledge_*` / `cron_*` / `channel_send` / `a2a_*` / `process_*` 等（会返回 not implemented）
 
@@ -125,7 +121,7 @@
 
 ### 2.5 Agent loop stability（稳定性子系统）
 
-新增（参考 OpenFang LoopGuard）：
+新增：
 - Tool-loop guard：同一 session 内重复调用相同工具（同参）达到阈值即 fail-fast（避免无意义循环）
 
 对应实现：
@@ -137,7 +133,7 @@
 
 ---
 
-## 3) 仍未对齐的 OpenFang 大子系统（明确列出）
+## 3) 后续子系统（明确列出）
 
 以下属于后续阶段（RexOS 需要做“骨架 + 渐进实现”）：
 - Kernel 组装器（真正的 subsystem registry / scheduler / supervisor / event bus）

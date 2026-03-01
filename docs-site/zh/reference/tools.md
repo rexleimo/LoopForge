@@ -1,6 +1,6 @@
 # 工具参考
 
-RexOS 对 agent runtime 暴露了一组小而清晰的核心工具集，并提供一层 OpenFang 兼容的工具面（别名 + stub），便于复用 OpenFang 风格的 prompts / manifests。
+RexOS 对 agent runtime 暴露了一组小而清晰的核心工具集，并提供一层“兼容工具面”（别名 + 预留名称），便于复用遵循常见工具约定的 prompts / manifests。
 
 ## `fs_read`
 
@@ -48,9 +48,9 @@ RexOS 会强制超时，并使用尽量最小的环境。
   python3 -m playwright install chromium
   ```
 
-## OpenFang 兼容（别名）
+## 兼容别名
 
-以下工具名用于兼容 OpenFang，实际会映射到 RexOS 内置工具：
+以下工具名用于兼容常见工具约定，实际会映射到 RexOS 内置工具：
 
 - `file_read` → `fs_read`
 - `file_write` → `fs_write`
@@ -60,9 +60,9 @@ RexOS 会强制超时，并使用尽量最小的环境。
 - `web_search` → DuckDuckGo HTML 搜索（best-effort；返回简短文本列表）
 - `memory_store` / `memory_recall` → 共享 KV（持久化在 `~/.rexos/rexos.db`）
 
-## OpenFang 兼容（stubs）
+## 预留工具（stubs）
 
-以下 OpenFang 工具名已定义，但当前会直接返回 `tool not implemented yet: <name>`：
+以下工具名已定义，但当前会直接返回 `tool not implemented yet: <name>`：
 
 `agent_send`, `agent_spawn`, `agent_list`, `agent_kill`, `agent_find`,
 `task_post`, `task_claim`, `task_complete`, `task_list`,

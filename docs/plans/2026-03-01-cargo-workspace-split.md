@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Convert RexOS from a single crate into an OpenFang-style Cargo workspace with modular crates, while keeping the `rexos` CLI behavior and existing integration tests working.
+**Goal:** Convert RexOS from a single crate into a modular Cargo workspace with multiple crates, while keeping the `rexos` CLI behavior and existing integration tests working.
 
 **Architecture:** Use a virtual workspace root (`Cargo.toml` with `[workspace]`). Move code into `crates/*` and introduce a small `rexos` facade crate that re-exports the public API (`rexos::agent`, `rexos::llm`, `rexos::memory`, etc.). Keep the CLI as `crates/rexos-cli` (binary name: `rexos`) that depends on the facade.
 

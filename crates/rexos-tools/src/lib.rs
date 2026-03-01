@@ -50,7 +50,7 @@ impl Toolset {
             browser_screenshot_def(),
             browser_close_def(),
         ];
-        defs.extend(openfang_compat_defs());
+        defs.extend(compat_tool_defs());
         defs
     }
 
@@ -1227,12 +1227,12 @@ fn fs_read_def() -> ToolDefinition {
     }
 }
 
-fn openfang_compat_defs() -> Vec<ToolDefinition> {
+fn compat_tool_defs() -> Vec<ToolDefinition> {
     use serde_json::json;
 
     let mut defs = Vec::new();
 
-    // Core OpenFang names that map to existing RexOS primitives.
+    // Compatibility aliases that map to RexOS primitives.
     defs.push(ToolDefinition {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
@@ -1362,7 +1362,7 @@ fn openfang_compat_defs() -> Vec<ToolDefinition> {
         },
     });
 
-    // Remaining OpenFang builtins (stubs in RexOS for now).
+    // Reserved tool names (stubs in RexOS for now).
     for name in [
         "agent_send",
         "agent_spawn",
@@ -1409,7 +1409,7 @@ fn openfang_compat_defs() -> Vec<ToolDefinition> {
             kind: "function".to_string(),
             function: ToolFunctionDefinition {
                 name: name.to_string(),
-                description: format!("OpenFang-compatible tool stub: {name}."),
+                description: format!("Tool stub (not implemented yet): {name}."),
                 parameters: json!({
                     "type": "object",
                     "properties": {},
@@ -1699,7 +1699,7 @@ mod tests {
     }
 
     #[test]
-    fn tool_definitions_include_openfang_builtin_tools() {
+    fn tool_definitions_include_compat_aliases_and_stubs() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
         let defs = tools
@@ -1723,12 +1723,12 @@ mod tests {
             "process_start",
             "canvas_present",
         ] {
-            assert!(defs.contains(name), "missing OpenFang tool: {name}");
+            assert!(defs.contains(name), "missing tool definition: {name}");
         }
     }
 
     #[tokio::test]
-    async fn openfang_file_tools_work_via_aliases() {
+    async fn compat_file_tools_work_via_aliases() {
         let tmp = tempfile::tempdir().unwrap();
         let workspace = tmp.path().join("ws");
         std::fs::create_dir_all(&workspace).unwrap();
@@ -1758,7 +1758,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn openfang_apply_patch_adds_and_updates_files() {
+    async fn compat_apply_patch_adds_and_updates_files() {
         let tmp = tempfile::tempdir().unwrap();
         let workspace = tmp.path().join("ws");
         std::fs::create_dir_all(&workspace).unwrap();
@@ -1789,7 +1789,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn openfang_stub_tools_return_not_implemented_error() {
+    async fn stub_tools_return_not_implemented_error() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
         let err = tools.call("agent_send", r#"{}"#).await.unwrap_err();

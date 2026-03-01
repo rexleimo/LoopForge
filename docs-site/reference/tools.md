@@ -1,6 +1,6 @@
 # Tools Reference
 
-RexOS exposes a small core toolset, plus an OpenFang-compatible tool surface (aliases + stubs) so you can reuse OpenFang-style prompts/manifests.
+RexOS exposes a small core toolset, plus a compatibility tool surface (aliases + reserved names) so you can reuse prompts/manifests written for common agent tool conventions.
 
 ## `fs_read`
 
@@ -48,7 +48,7 @@ Notes:
   python3 -m playwright install chromium
   ```
 
-## OpenFang compatibility (aliases)
+## Compatibility aliases
 
 These tool names exist for compatibility and map to RexOS built-ins:
 
@@ -60,9 +60,9 @@ These tool names exist for compatibility and map to RexOS built-ins:
 - `web_search` → DuckDuckGo HTML search (best-effort; returns a short text list)
 - `memory_store` / `memory_recall` → shared KV store persisted in `~/.rexos/rexos.db`
 
-## OpenFang compatibility (stubs)
+## Reserved tools (stubs)
 
-The following OpenFang tool names are defined but currently return `tool not implemented yet: <name>`:
+The following tool names are defined but currently return `tool not implemented yet: <name>`:
 
 `agent_send`, `agent_spawn`, `agent_list`, `agent_kill`, `agent_find`,
 `task_post`, `task_claim`, `task_complete`, `task_list`,
