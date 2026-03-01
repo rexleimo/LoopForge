@@ -181,7 +181,7 @@ impl Default for RexosConfig {
             "minimax".to_string(),
             ProviderConfig {
                 kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://api.minimax.io/v1".to_string(),
+                base_url: "https://api.minimax.chat/v1".to_string(),
                 api_key_env: "MINIMAX_API_KEY".to_string(),
                 default_model: "MiniMax-M2.5".to_string(),
             },
@@ -190,7 +190,7 @@ impl Default for RexosConfig {
             "minimax_native".to_string(),
             ProviderConfig {
                 kind: ProviderKind::MiniMaxNative,
-                base_url: "https://api.minimaxi.com/v1".to_string(),
+                base_url: "https://api.minimax.chat/v1".to_string(),
                 api_key_env: "MINIMAX_API_KEY".to_string(),
                 default_model: "MiniMax-M2.5".to_string(),
             },
@@ -362,5 +362,16 @@ mod tests {
         assert!(toml_str.contains("provider = \"ollama\""));
         assert!(toml_str.contains("[router.coding]"));
         assert!(toml_str.contains("[router.summary]"));
+    }
+
+    #[test]
+    fn minimax_presets_use_official_base_url() {
+        let cfg = RexosConfig::default();
+
+        let minimax = cfg.providers.get("minimax").unwrap();
+        assert_eq!(minimax.base_url, "https://api.minimax.chat/v1");
+
+        let minimax_native = cfg.providers.get("minimax_native").unwrap();
+        assert_eq!(minimax_native.base_url, "https://api.minimax.chat/v1");
     }
 }
