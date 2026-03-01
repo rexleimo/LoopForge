@@ -196,6 +196,15 @@ impl Default for RexosConfig {
             },
         );
         providers.insert(
+            "nvidia".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::OpenAiCompatible,
+                base_url: "https://integrate.api.nvidia.com/v1".to_string(),
+                api_key_env: "NVIDIA_API_KEY".to_string(),
+                default_model: "meta/llama-3.2-3b-instruct".to_string(),
+            },
+        );
+        providers.insert(
             "minimax_anthropic".to_string(),
             ProviderConfig {
                 kind: ProviderKind::Anthropic,
@@ -348,6 +357,7 @@ mod tests {
         assert!(toml_str.contains("[providers.glm_native]"));
         assert!(toml_str.contains("[providers.minimax]"));
         assert!(toml_str.contains("[providers.minimax_native]"));
+        assert!(toml_str.contains("[providers.nvidia]"));
         assert!(toml_str.contains("[providers.anthropic]"));
         assert!(toml_str.contains("[providers.gemini]"));
         assert!(toml_str.contains("kind = \"openai_compatible\""));
@@ -373,5 +383,13 @@ mod tests {
 
         let minimax_native = cfg.providers.get("minimax_native").unwrap();
         assert_eq!(minimax_native.base_url, "https://api.minimax.chat/v1");
+    }
+
+    #[test]
+    fn nvidia_preset_uses_nim_base_url() {
+        let cfg = RexosConfig::default();
+
+        let nvidia = cfg.providers.get("nvidia").unwrap();
+        assert_eq!(nvidia.base_url, "https://integrate.api.nvidia.com/v1");
     }
 }
