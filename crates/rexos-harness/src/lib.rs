@@ -6,6 +6,7 @@ use anyhow::{bail, Context};
 const FEATURES_JSON: &str = "features.json";
 const PROGRESS_MD: &str = "rexos-progress.md";
 const INIT_SH: &str = "init.sh";
+const INIT_PS1: &str = "init.ps1";
 const REXOS_DIR: &str = ".rexos";
 const SESSION_ID_FILE: &str = "session_id";
 
@@ -16,8 +17,9 @@ pub fn init_workspace(workspace_dir: &Path) -> anyhow::Result<()> {
     let features_path = workspace_dir.join(FEATURES_JSON);
     let progress_path = workspace_dir.join(PROGRESS_MD);
     let init_sh_path = workspace_dir.join(INIT_SH);
+    let init_ps1_path = workspace_dir.join(INIT_PS1);
 
-    if features_path.exists() || progress_path.exists() || init_sh_path.exists() {
+    if features_path.exists() || progress_path.exists() || init_sh_path.exists() || init_ps1_path.exists() {
         bail!("workspace already initialized");
     }
 
@@ -49,6 +51,15 @@ echo "[rexos] init.sh: customize this script for your project"
     )
     .with_context(|| format!("write {}", init_sh_path.display()))?;
 
+    std::fs::write(
+        &init_ps1_path,
+        r#"$ErrorActionPreference = "Stop"
+
+Write-Output "[rexos] init.ps1: customize this script for your project"
+"#,
+    )
+    .with_context(|| format!("write {}", init_ps1_path.display()))?;
+
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -58,7 +69,7 @@ echo "[rexos] init.sh: customize this script for your project"
     }
 
     ensure_git_repo(workspace_dir)?;
-    git(workspace_dir, ["add", FEATURES_JSON, PROGRESS_MD, INIT_SH])?;
+    git(workspace_dir, ["add", FEATURES_JSON, PROGRESS_MD, INIT_SH, INIT_PS1])?;
     git_with_identity(
         workspace_dir,
         [
@@ -118,7 +129,7 @@ pub async fn bootstrap_with_prompt(
         )
         .await?;
 
-    run_init_sh(workspace_dir)?;
+    run_init_script(workspace_dir)?;
     commit_checkpoint_if_dirty(workspace_dir, "chore: rexos harness bootstrap")?;
     Ok(())
 }
@@ -146,7 +157,7 @@ pub async fn run_harness(
             )
             .await?;
 
-        match run_init_sh_capture(workspace_dir) {
+        match run_init_script_capture(workspace_dir) {
             Ok(_) => {
                 commit_checkpoint_if_dirty(workspace_dir, "chore: rexos harness checkpoint")?;
                 return Ok(out);
@@ -170,8 +181,12 @@ pub fn preflight(workspace_dir: &Path) -> anyhow::Result<()> {
     let features_path = workspace_dir.join(FEATURES_JSON);
     let progress_path = workspace_dir.join(PROGRESS_MD);
     let init_sh_path = workspace_dir.join(INIT_SH);
+    let init_ps1_path = workspace_dir.join(INIT_PS1);
 
-    if !features_path.exists() || !progress_path.exists() || !init_sh_path.exists() {
+    if !features_path.exists()
+        || !progress_path.exists()
+        || (!init_sh_path.exists() && !init_ps1_path.exists())
+    {
         bail!(
             "workspace not initialized; run `rexos harness init {}`",
             workspace_dir.display()
@@ -212,14 +227,7 @@ pub fn preflight(workspace_dir: &Path) -> anyhow::Result<()> {
         println!("[rexos] features.json: could not parse (continuing)");
     }
 
-    let status = Command::new("bash")
-        .arg(INIT_SH)
-        .current_dir(workspace_dir)
-        .status()
-        .with_context(|| format!("run {}", init_sh_path.display()))?;
-    if !status.success() {
-        bail!("init.sh failed");
-    }
+    run_init_script(workspace_dir)?;
 
     Ok(())
 }
@@ -336,7 +344,7 @@ Your job:
 Rules:
 - Work only inside the workspace directory.
 - Prefer tools (`fs_read`, `fs_write`, `shell`) to inspect and change files.
-- After edits, run `./init.sh` and ensure it succeeds.
+- After edits, run the workspace init script (`./init.sh`, or `./init.ps1` on Windows) and ensure it succeeds.
 - Commit your changes to git with a descriptive message.
 "#
 }
@@ -348,39 +356,101 @@ Rules:
 - Work only inside the workspace directory.
 - Make small, incremental progress (one feature at a time).
 - Prefer using tools (`fs_read`, `fs_write`, `shell`) to inspect and change files.
-- If you change code, run the workspace's `init.sh` (smoke checks) and fix any failures.
+- If you change code, run the workspace init script (smoke checks) and fix any failures.
 - Append a short summary to `rexos-progress.md`.
 - Commit meaningful progress to git with a descriptive message.
 "#
 }
 
-fn run_init_sh(workspace_dir: &Path) -> anyhow::Result<()> {
-    let init_sh_path = workspace_dir.join(INIT_SH);
-    let status = Command::new("bash")
-        .arg(INIT_SH)
-        .current_dir(workspace_dir)
-        .status()
-        .with_context(|| format!("run {}", init_sh_path.display()))?;
-    if !status.success() {
-        bail!("init.sh failed");
-    }
-    Ok(())
+#[derive(Debug, Clone, Copy)]
+enum InitScript {
+    Bash,
+    PowerShell,
 }
 
-fn run_init_sh_capture(workspace_dir: &Path) -> anyhow::Result<String> {
-    let init_sh_path = workspace_dir.join(INIT_SH);
-    let output = Command::new("bash")
-        .arg(INIT_SH)
-        .current_dir(workspace_dir)
-        .output()
-        .with_context(|| format!("run {}", init_sh_path.display()))?;
+fn select_init_script(workspace_dir: &Path) -> anyhow::Result<InitScript> {
+    let sh_exists = workspace_dir.join(INIT_SH).exists();
+    let ps1_exists = workspace_dir.join(INIT_PS1).exists();
+
+    if cfg!(windows) {
+        if ps1_exists {
+            return Ok(InitScript::PowerShell);
+        }
+        if sh_exists {
+            return Ok(InitScript::Bash);
+        }
+    } else if sh_exists {
+        return Ok(InitScript::Bash);
+    }
+
+    if ps1_exists && !sh_exists {
+        bail!("init.ps1 exists but init.sh is missing");
+    }
+
+    bail!("no init script found (expected init.sh and/or init.ps1)");
+}
+
+fn run_init_script(workspace_dir: &Path) -> anyhow::Result<()> {
+    match select_init_script(workspace_dir)? {
+        InitScript::Bash => {
+            let status = Command::new("bash")
+                .arg(INIT_SH)
+                .current_dir(workspace_dir)
+                .status()
+                .with_context(|| format!("run {}", workspace_dir.join(INIT_SH).display()))?;
+            if !status.success() {
+                bail!("init.sh failed");
+            }
+            Ok(())
+        }
+        InitScript::PowerShell => {
+            let status = Command::new("powershell")
+                .args([
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    INIT_PS1,
+                ])
+                .current_dir(workspace_dir)
+                .status()
+                .with_context(|| format!("run {}", workspace_dir.join(INIT_PS1).display()))?;
+            if !status.success() {
+                bail!("init.ps1 failed");
+            }
+            Ok(())
+        }
+    }
+}
+
+fn run_init_script_capture(workspace_dir: &Path) -> anyhow::Result<String> {
+    let output = match select_init_script(workspace_dir)? {
+        InitScript::Bash => Command::new("bash")
+            .arg(INIT_SH)
+            .current_dir(workspace_dir)
+            .output()
+            .with_context(|| format!("run {}", workspace_dir.join(INIT_SH).display()))?,
+        InitScript::PowerShell => Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                INIT_PS1,
+            ])
+            .current_dir(workspace_dir)
+            .output()
+            .with_context(|| format!("run {}", workspace_dir.join(INIT_PS1).display()))?,
+    };
 
     let mut combined = String::new();
     combined.push_str(&String::from_utf8_lossy(&output.stdout));
     combined.push_str(&String::from_utf8_lossy(&output.stderr));
 
     if !output.status.success() {
-        bail!("init.sh failed: {}", combined.trim());
+        bail!("init failed: {}", combined.trim());
     }
 
     Ok(combined)

@@ -33,8 +33,13 @@ async fn shell_tool_runs_in_workspace() {
     let root = tmp.path();
 
     let tools = rexos::tools::Toolset::new(root.to_path_buf()).unwrap();
+    let command = if cfg!(windows) {
+        "(Get-Location).Path"
+    } else {
+        "pwd"
+    };
     let out = tools
-        .call("shell", r#"{ "command": "pwd" }"#)
+        .call("shell", &format!(r#"{{ "command": "{command}" }}"#))
         .await
         .unwrap();
 

@@ -96,12 +96,53 @@ impl Toolset {
 
         let timeout = Duration::from_millis(timeout_ms.unwrap_or(60_000));
 
-        let mut cmd = tokio::process::Command::new("bash");
-        cmd.arg("-c")
-            .arg(command)
-            .current_dir(&self.workspace_root)
-            .env_clear()
-            .env("PATH", "/usr/bin:/bin:/usr/sbin:/sbin");
+        let mut cmd = if cfg!(windows) {
+            let mut cmd = tokio::process::Command::new("powershell");
+            cmd.args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+            ]);
+
+            let wrapped = format!(
+                "$ErrorActionPreference = 'Stop'; $global:LASTEXITCODE = 0; {command}; if ($global:LASTEXITCODE -ne 0) {{ exit $global:LASTEXITCODE }}",
+                command = command
+            );
+            cmd.arg(wrapped);
+            cmd
+        } else {
+            let mut cmd = tokio::process::Command::new("bash");
+            cmd.arg("-c").arg(command);
+            cmd
+        };
+
+        cmd.current_dir(&self.workspace_root).env_clear();
+
+        if let Ok(path) = std::env::var("PATH") {
+            cmd.env("PATH", path);
+        }
+
+        if cfg!(windows) {
+            for key in ["SystemRoot", "USERPROFILE", "TEMP", "TMP"] {
+                if let Ok(v) = std::env::var(key) {
+                    cmd.env(key, v);
+                }
+            }
+        } else {
+            for key in ["HOME", "USER"] {
+                if let Ok(v) = std::env::var(key) {
+                    cmd.env(key, v);
+                }
+            }
+        }
+
+        for key in ["CARGO_HOME", "RUSTUP_HOME"] {
+            if let Ok(v) = std::env::var(key) {
+                cmd.env(key, v);
+            }
+        }
 
         let output = tokio::time::timeout(timeout, cmd.output())
             .await
@@ -320,7 +361,7 @@ fn shell_def() -> ToolDefinition {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
             name: "shell".to_string(),
-            description: "Run a shell command inside the workspace.".to_string(),
+            description: "Run a shell command inside the workspace (bash on Unix, PowerShell on Windows).".to_string(),
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {

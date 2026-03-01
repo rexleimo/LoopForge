@@ -18,6 +18,18 @@ async fn harness_run_retries_on_init_sh_failure_and_checkpoints() {
         State(state): State<TestState>,
         Json(_payload): Json<serde_json::Value>,
     ) -> Json<serde_json::Value> {
+        let init_path = if cfg!(windows) { "init.ps1" } else { "init.sh" };
+        let init_fail = if cfg!(windows) {
+            "$ErrorActionPreference = \"Stop\"\nexit 1\n"
+        } else {
+            "#!/usr/bin/env bash\nexit 1\n"
+        };
+        let init_ok = if cfg!(windows) {
+            "$ErrorActionPreference = \"Stop\"\nexit 0\n"
+        } else {
+            "#!/usr/bin/env bash\nexit 0\n"
+        };
+
         let mut calls = state.calls.lock().unwrap();
         *calls += 1;
 
@@ -34,8 +46,8 @@ async fn harness_run_retries_on_init_sh_failure_and_checkpoints() {
                             "function": {
                                 "name": "fs_write",
                                 "arguments": serde_json::to_string(&json!({
-                                    "path": "init.sh",
-                                    "content": "#!/usr/bin/env bash\nexit 1\n"
+                                    "path": init_path,
+                                    "content": init_fail
                                 })).unwrap()
                             }
                         }]
@@ -63,8 +75,8 @@ async fn harness_run_retries_on_init_sh_failure_and_checkpoints() {
                                 "function": {
                                     "name": "fs_write",
                                     "arguments": serde_json::to_string(&json!({
-                                        "path": "init.sh",
-                                        "content": "#!/usr/bin/env bash\nexit 0\n"
+                                        "path": init_path,
+                                        "content": init_ok
                                     })).unwrap()
                                 }
                             },
@@ -168,4 +180,3 @@ async fn harness_run_retries_on_init_sh_failure_and_checkpoints() {
 
     server.abort();
 }
-
