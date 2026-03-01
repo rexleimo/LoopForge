@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-01",
+  "rules": {
+    "editing": "Only change `passes` (false -> true) and optionally `notes`. Do not delete or reorder items.",
+    "completion": "A feature can only be marked passing after the required tests/smoke checks are run."
+  },
+  "features": [
+    {
+      "id": "cli_help",
+      "category": "functional",
+      "priority": "p0",
+      "description": "`rexos --help` prints CLI usage.",
+      "steps": ["Run `cargo run -- --help`", "Verify help text is printed and exit code is 0."],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "config_init",
+      "category": "functional",
+      "priority": "p0",
+      "description": "`rexos init` creates `~/.rexos/config.toml` and `~/.rexos/rexos.db` if missing.",
+      "steps": ["Run `cargo run -- init`", "Verify config file exists", "Verify SQLite DB exists"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "memory_sessions",
+      "category": "functional",
+      "priority": "p0",
+      "description": "Memory persists sessions/messages in SQLite.",
+      "steps": ["Create a session", "Append messages", "Reload and verify messages persist"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "tool_fs_sandbox",
+      "category": "security",
+      "priority": "p0",
+      "description": "Filesystem tool rejects path traversal and restricts reads/writes to workspace root.",
+      "steps": ["Attempt to read `../` path", "Verify tool returns an error"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "tool_shell_workspace_only",
+      "category": "security",
+      "priority": "p0",
+      "description": "Shell tool executes commands only inside a workspace directory with a scrubbed environment.",
+      "steps": ["Run `pwd` via tool", "Verify output is workspace path", "Verify env is minimal"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "llm_openai_compatible",
+      "category": "functional",
+      "priority": "p0",
+      "description": "LLM client supports OpenAI-compatible Chat Completions with tool calling.",
+      "steps": ["Configure provider", "Send a request with a tool definition", "Verify tool call is parsed"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "llm_router",
+      "category": "functional",
+      "priority": "p1",
+      "description": "Model router selects a model by task (planning/coding/summarize) and budget limits.",
+      "steps": ["Request route=planning", "Verify chosen model is planning tier"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "agent_loop_resume",
+      "category": "functional",
+      "priority": "p1",
+      "description": "Agent loop can resume from persisted session state (multi-run).",
+      "steps": ["Run one loop iteration", "Restart process", "Resume and continue"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "harness_initializer",
+      "category": "harness",
+      "priority": "p0",
+      "description": "Harness initializer creates workspace, `init.sh`, progress log, and first git commit in the workspace.",
+      "steps": ["Run `rexos harness init <dir>`", "Verify files exist", "Verify git has an initial commit"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "harness_incremental_session",
+      "category": "harness",
+      "priority": "p0",
+      "description": "Harness session workflow: get bearings, run smoke checks, implement one feature, update progress, git commit.",
+      "steps": ["Run `rexos harness run <dir>`", "Verify progress log appended", "Verify commit created"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "api_status",
+      "category": "functional",
+      "priority": "p2",
+      "description": "Daemon exposes `/healthz` and `/status` for agent/task status.",
+      "steps": ["Start daemon", "Curl `/healthz`", "Expect 200 OK"],
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
+

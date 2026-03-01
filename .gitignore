@@ -1,0 +1,13 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# RexOS runtime
+/.rexos/
+
+# OS files
+.DS_Store
+
+# Reference code (not part of RexOS repo)
+/openfang/
+
