@@ -1,5 +1,7 @@
 # RexOS
 
+English | [简体中文](README.zh-CN.md)
+
 RexOS is a long-running agent operating system: persistent memory, tool sandboxing, and model routing, plus an Anthropic-style harness for multi-session work.
 
 ## Status
