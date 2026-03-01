@@ -123,13 +123,9 @@ async fn main() -> anyhow::Result<()> {
                 let cfg = RexosConfig::load(&paths)?;
 
                 let memory = MemoryStore::open_or_create(&paths)?;
-                let api_key = cfg.api_key();
-                let llm = rexos::llm::openai_compat::OpenAiCompatibleClient::new(
-                    cfg.llm.base_url,
-                    api_key,
-                )?;
+                let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg)?;
                 let router = rexos::router::ModelRouter::new(cfg.router);
-                let agent = rexos::agent::AgentRuntime::new(memory, llm, router);
+                let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
 
                 let session_id = session.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
                 let out = agent
@@ -163,13 +159,9 @@ async fn main() -> anyhow::Result<()> {
                     let cfg = RexosConfig::load(&paths)?;
 
                     let memory = MemoryStore::open_or_create(&paths)?;
-                    let api_key = cfg.api_key();
-                    let llm = rexos::llm::openai_compat::OpenAiCompatibleClient::new(
-                        cfg.llm.base_url,
-                        api_key,
-                    )?;
+                    let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg)?;
                     let router = rexos::router::ModelRouter::new(cfg.router);
-                    let agent = rexos::agent::AgentRuntime::new(memory, llm, router);
+                    let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
 
                     let session_id =
                         session.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());

@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use anyhow::{bail, Context};
 
-use crate::llm::openai_compat::{ChatCompletionRequest, ChatMessage, OpenAiCompatibleClient, Role};
+use crate::llm::driver::LlmDriver;
+use crate::llm::openai_compat::{ChatCompletionRequest, ChatMessage, Role};
+use crate::llm::registry::LlmRegistry;
 use crate::memory::MemoryStore;
 use crate::router::{ModelRouter, TaskKind};
 use crate::tools::Toolset;
@@ -10,13 +12,13 @@ use crate::tools::Toolset;
 #[derive(Debug)]
 pub struct AgentRuntime {
     memory: MemoryStore,
-    llm: OpenAiCompatibleClient,
+    llms: LlmRegistry,
     router: ModelRouter,
 }
 
 impl AgentRuntime {
-    pub fn new(memory: MemoryStore, llm: OpenAiCompatibleClient, router: ModelRouter) -> Self {
-        Self { memory, llm, router }
+    pub fn new(memory: MemoryStore, llms: LlmRegistry, router: ModelRouter) -> Self {
+        Self { memory, llms, router }
     }
 
     pub async fn run_session(
@@ -28,7 +30,13 @@ impl AgentRuntime {
         kind: TaskKind,
     ) -> anyhow::Result<String> {
         let tools = Toolset::new(workspace_root)?;
+        let provider = self.router.provider_for(kind);
         let model = self.router.model_for(kind).to_string();
+
+        let driver = self
+            .llms
+            .driver(provider)
+            .ok_or_else(|| anyhow::anyhow!("unknown provider: {provider}"))?;
 
         let mut messages = self
             .memory
@@ -70,8 +78,7 @@ impl AgentRuntime {
             };
 
             let assistant = self
-                .llm
-                .chat_completions(req)
+                .driver_chat(&*driver, req)
                 .await
                 .context("llm chat completion")?;
 
@@ -94,7 +101,7 @@ impl AgentRuntime {
                 let tool_msg = ChatMessage {
                     role: Role::Tool,
                     content: Some(output),
-                    name: None,
+                    name: Some(call.function.name),
                     tool_call_id: Some(call.id),
                     tool_calls: None,
                 };
@@ -104,5 +111,13 @@ impl AgentRuntime {
         }
 
         bail!("max iterations exceeded")
+    }
+
+    async fn driver_chat(
+        &self,
+        driver: &(dyn LlmDriver),
+        req: ChatCompletionRequest,
+    ) -> anyhow::Result<ChatMessage> {
+        driver.chat(req).await
     }
 }
