@@ -7,7 +7,7 @@ RexOS 从 `~/.rexos/config.toml` 读取 providers 配置，并把每个任务类
 执行 `rexos init` 后，`~/.rexos/config.toml` 默认已经包含常用 providers（可直接改路由使用）：
 
 - 本地：`ollama`
-- OpenAI-compatible：`deepseek`、`kimi` / `kimi_cn`、`qwen` / `qwen_cn` / `qwen_sg`、`glm`、`minimax`
+- OpenAI-compatible：`deepseek`、`kimi` / `kimi_cn`、`qwen` / `qwen_cn` / `qwen_sg`、`glm`、`minimax`、`nvidia`
 - Provider-native：`qwen_native*`、`glm_native`、`minimax_native`
 - 网关：`minimax_anthropic`
 - 官方 API：`anthropic`、`gemini`
@@ -71,6 +71,20 @@ provider = "minimax_native"
 model = "default"
 ```
 
+## 示例：NVIDIA NIM（OpenAI 兼容）
+
+```toml
+[providers.nvidia]
+kind = "openai_compatible"
+base_url = "https://integrate.api.nvidia.com/v1"
+api_key_env = "NVIDIA_API_KEY"
+default_model = "meta/llama-3.2-3b-instruct"
+
+[router.coding]
+provider = "nvidia"
+model = "default"
+```
+
 ## 路由建议
 
 - 研发调试：优先用 `ollama`（小模型先跑通逻辑）
@@ -103,6 +117,7 @@ RexOS 会从 `api_key_env` 指定的环境变量读取 key。
     export DASHSCOPE_API_KEY="..."
     export ZHIPUAI_API_KEY="id.secret"
     export MINIMAX_API_KEY="..."
+    export NVIDIA_API_KEY="..."
     ```
 
 === "PowerShell (Windows)"
@@ -112,4 +127,5 @@ RexOS 会从 `api_key_env` 指定的环境变量读取 key。
     $env:DASHSCOPE_API_KEY = "..."
     $env:ZHIPUAI_API_KEY = "id.secret"
     $env:MINIMAX_API_KEY = "..."
+    $env:NVIDIA_API_KEY = "..."
     ```

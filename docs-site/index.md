@@ -10,7 +10,7 @@
 [Use cases](how-to/use-cases.md){ .md-button }
 
 <p class="rexos-muted">
-Develop locally with small models on Ollama, then switch routing to GLM / MiniMax / DeepSeek / Kimi / Qwen when you need more capability.
+Develop locally with small models on Ollama, then switch routing to GLM / MiniMax / DeepSeek / Kimi / Qwen / NVIDIA NIM when you need more capability.
 </p>
 
 </div>
@@ -68,4 +68,4 @@ flowchart LR
 
 - Learn the harness loop: `tutorials/harness-long-task.md`
 - Explore common recipes: `how-to/use-cases.md`
-- Switch providers (GLM/MiniMax native included): `how-to/providers.md`
+- Switch providers (GLM/MiniMax native + NVIDIA NIM included): `how-to/providers.md`

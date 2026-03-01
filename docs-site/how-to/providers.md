@@ -7,7 +7,7 @@ RexOS loads provider config from `~/.rexos/config.toml` and routes each task kin
 After `rexos init`, your `~/.rexos/config.toml` already includes common providers and sensible defaults:
 
 - Local: `ollama`
-- OpenAI-compatible: `deepseek`, `kimi` / `kimi_cn`, `qwen` / `qwen_cn` / `qwen_sg`, `glm`, `minimax`
+- OpenAI-compatible: `deepseek`, `kimi` / `kimi_cn`, `qwen` / `qwen_cn` / `qwen_sg`, `glm`, `minimax`, `nvidia`
 - Provider-native: `qwen_native*`, `glm_native`, `minimax_native`
 - Gateways: `minimax_anthropic`
 - First-party APIs: `anthropic`, `gemini`
@@ -71,6 +71,20 @@ provider = "minimax_native"
 model = "default"
 ```
 
+## Example: NVIDIA NIM (OpenAI-compatible)
+
+```toml
+[providers.nvidia]
+kind = "openai_compatible"
+base_url = "https://integrate.api.nvidia.com/v1"
+api_key_env = "NVIDIA_API_KEY"
+default_model = "meta/llama-3.2-3b-instruct"
+
+[router.coding]
+provider = "nvidia"
+model = "default"
+```
+
 ## Routing tips
 
 - Use `model = "default"` to pick `providers.<name>.default_model`.
@@ -101,6 +115,7 @@ RexOS reads provider keys from the env var referenced by `api_key_env`.
     export DASHSCOPE_API_KEY="..."
     export ZHIPUAI_API_KEY="id.secret"
     export MINIMAX_API_KEY="..."
+    export NVIDIA_API_KEY="..."
     ```
 
 === "PowerShell (Windows)"
@@ -110,4 +125,5 @@ RexOS reads provider keys from the env var referenced by `api_key_env`.
     $env:DASHSCOPE_API_KEY = "..."
     $env:ZHIPUAI_API_KEY = "id.secret"
     $env:MINIMAX_API_KEY = "..."
+    $env:NVIDIA_API_KEY = "..."
     ```

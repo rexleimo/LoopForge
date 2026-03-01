@@ -67,7 +67,7 @@ git push origin v0.1.0
 ## Providers & routing
 
 RexOS supports multiple LLM providers via drivers:
-- `openai_compatible` (Ollama / DeepSeek / Kimi / Qwen / GLM / MiniMax / OpenAI-compatible gateways)
+- `openai_compatible` (Ollama / DeepSeek / Kimi / Qwen / GLM / MiniMax / NVIDIA NIM / OpenAI-compatible gateways)
 - `dashscope_native` (Alibaba DashScope Generation API / Qwen native)
 - `zhipu_native` (Zhipu GLM native auth/token handling)
 - `minimax_native` (MiniMax native `text/chatcompletion_v2` API)
@@ -103,4 +103,5 @@ Built-in presets include:
 - `qwen_native` / `qwen_native_cn` / `qwen_native_sg` (DashScope native API)
 - `glm` / `glm_native` (OpenAI-compatible / Zhipu native)
 - `minimax` / `minimax_native` (OpenAI-compatible / MiniMax native)
+- `nvidia` (OpenAI-compatible / NVIDIA NIM)
 - `minimax_anthropic` (Anthropic-compatible gateway)

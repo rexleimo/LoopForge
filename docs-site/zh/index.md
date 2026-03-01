@@ -12,7 +12,7 @@
 [常见场景](how-to/use-cases.md){ .md-button }
 
 <p class="rexos-muted">
-研发调试阶段用 Ollama 小模型先跑通逻辑；需要更强能力时，把路由切到 GLM / MiniMax / DeepSeek / Kimi / Qwen。
+研发调试阶段用 Ollama 小模型先跑通逻辑；需要更强能力时，把路由切到 GLM / MiniMax / DeepSeek / Kimi / Qwen / NVIDIA NIM。
 </p>
 
 </div>
@@ -70,4 +70,4 @@ flowchart LR
 
 - Harness 长任务教程：`tutorials/harness-long-task.md`
 - 常见场景与配方：`how-to/use-cases.md`
-- Provider 切换与原生 API：`how-to/providers.md`
+- Provider 切换与原生 API（含 NVIDIA NIM）：`how-to/providers.md`

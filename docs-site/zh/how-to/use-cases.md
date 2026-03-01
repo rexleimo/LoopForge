@@ -95,7 +95,7 @@ provider = "ollama"
 model = "default"
 ```
 
-完整 provider 示例见：`how-to/providers.md`（包含 GLM/MiniMax 原生 API）。
+完整 provider 示例见：`how-to/providers.md`（包含 GLM/MiniMax 原生 API 与 NVIDIA NIM）。
 
 ---
 

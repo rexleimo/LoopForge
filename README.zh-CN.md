@@ -67,7 +67,7 @@ git push origin v0.1.0
 ## Providers 与路由
 
 RexOS 通过多种 driver 支持多个 LLM Provider：
-- `openai_compatible`（Ollama / DeepSeek / Kimi / Qwen / GLM / MiniMax / 其它 OpenAI-compatible 网关）
+- `openai_compatible`（Ollama / DeepSeek / Kimi / Qwen / GLM / MiniMax / NVIDIA NIM / 其它 OpenAI-compatible 网关）
 - `dashscope_native`（阿里云 DashScope Generation API / Qwen 原生）
 - `zhipu_native`（智谱 GLM 原生：auth/token 处理）
 - `minimax_native`（MiniMax 原生 `text/chatcompletion_v2` API）
@@ -103,4 +103,5 @@ model = "default" # uses providers.<name>.default_model
 - `qwen_native` / `qwen_native_cn` / `qwen_native_sg`（DashScope 原生 API）
 - `glm` / `glm_native`（OpenAI-compatible / 智谱原生）
 - `minimax` / `minimax_native`（OpenAI-compatible / MiniMax 原生）
+- `nvidia`（OpenAI-compatible / NVIDIA NIM）
 - `minimax_anthropic`（Anthropic-compatible 网关）
