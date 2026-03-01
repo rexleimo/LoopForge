@@ -76,13 +76,22 @@ impl Default for RexosConfig {
             "deepseek".to_string(),
             ProviderConfig {
                 kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://api.deepseek.com/v1".to_string(),
+                base_url: "https://api.deepseek.com".to_string(),
                 api_key_env: "DEEPSEEK_API_KEY".to_string(),
                 default_model: "deepseek-chat".to_string(),
             },
         );
         providers.insert(
             "kimi".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::OpenAiCompatible,
+                base_url: "https://api.moonshot.ai/v1".to_string(),
+                api_key_env: "MOONSHOT_API_KEY".to_string(),
+                default_model: "moonshot-v1-8k".to_string(),
+            },
+        );
+        providers.insert(
+            "kimi_cn".to_string(),
             ProviderConfig {
                 kind: ProviderKind::OpenAiCompatible,
                 base_url: "https://api.moonshot.cn/v1".to_string(),
@@ -94,7 +103,25 @@ impl Default for RexosConfig {
             "qwen".to_string(),
             ProviderConfig {
                 kind: ProviderKind::OpenAiCompatible,
+                base_url: "https://dashscope-us.aliyuncs.com/compatible-mode/v1".to_string(),
+                api_key_env: "DASHSCOPE_API_KEY".to_string(),
+                default_model: "qwen-plus".to_string(),
+            },
+        );
+        providers.insert(
+            "qwen_cn".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::OpenAiCompatible,
                 base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1".to_string(),
+                api_key_env: "DASHSCOPE_API_KEY".to_string(),
+                default_model: "qwen-plus".to_string(),
+            },
+        );
+        providers.insert(
+            "qwen_sg".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::OpenAiCompatible,
+                base_url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1".to_string(),
                 api_key_env: "DASHSCOPE_API_KEY".to_string(),
                 default_model: "qwen-plus".to_string(),
             },
@@ -105,7 +132,7 @@ impl Default for RexosConfig {
                 kind: ProviderKind::OpenAiCompatible,
                 base_url: "https://open.bigmodel.cn/api/paas/v4".to_string(),
                 api_key_env: "ZHIPUAI_API_KEY".to_string(),
-                default_model: "glm-5".to_string(),
+                default_model: "glm-4".to_string(),
             },
         );
         providers.insert(
@@ -114,7 +141,16 @@ impl Default for RexosConfig {
                 kind: ProviderKind::OpenAiCompatible,
                 base_url: "https://api.minimax.io/v1".to_string(),
                 api_key_env: "MINIMAX_API_KEY".to_string(),
-                default_model: "MiniMax-Text-01".to_string(),
+                default_model: "MiniMax-M2.5".to_string(),
+            },
+        );
+        providers.insert(
+            "minimax_anthropic".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::Anthropic,
+                base_url: "https://api.minimax.io/anthropic".to_string(),
+                api_key_env: "MINIMAX_API_KEY".to_string(),
+                default_model: "MiniMax-M2.5".to_string(),
             },
         );
         providers.insert(
@@ -166,24 +202,22 @@ impl Default for ProviderConfig {
 }
 
 impl RouterConfig {
-    fn default_from_provider(default_provider: &str, providers: &BTreeMap<String, ProviderConfig>) -> Self {
-        let model = providers
-            .get(default_provider)
-            .map(|p| p.default_model.as_str())
-            .unwrap_or("llama3.2");
-
+    fn default_from_provider(
+        default_provider: &str,
+        _providers: &BTreeMap<String, ProviderConfig>,
+    ) -> Self {
         Self {
             planning: RouteConfig {
                 provider: default_provider.to_string(),
-                model: model.to_string(),
+                model: "default".to_string(),
             },
             coding: RouteConfig {
                 provider: default_provider.to_string(),
-                model: model.to_string(),
+                model: "default".to_string(),
             },
             summary: RouteConfig {
                 provider: default_provider.to_string(),
-                model: model.to_string(),
+                model: "default".to_string(),
             },
         }
     }
@@ -199,7 +233,7 @@ impl Default for RouteConfig {
     fn default() -> Self {
         Self {
             provider: "ollama".to_string(),
-            model: "llama3.2".to_string(),
+            model: "default".to_string(),
         }
     }
 }

@@ -48,13 +48,21 @@ default_model = "llama3.2"
 
 [providers.deepseek]
 kind = "openai_compatible"
-base_url = "https://api.deepseek.com/v1"
+base_url = "https://api.deepseek.com"
 api_key_env = "DEEPSEEK_API_KEY"
 default_model = "deepseek-chat"
 
 [router.coding]
 provider = "ollama"
-model = "llama3.2"
+model = "default" # uses providers.<name>.default_model
 ```
 
-To switch providers, set the provider's `api_key_env` (if needed) and update `[router.*]` to point at the provider + model you want.
+To switch providers, set the provider's `api_key_env` (if needed) and update `[router.*]` to point at the provider you want. If you keep `model = "default"`, RexOS uses `providers.<name>.default_model`.
+
+Built-in presets include:
+- `deepseek` (OpenAI-compatible)
+- `kimi` / `kimi_cn` (OpenAI-compatible)
+- `qwen` / `qwen_cn` / `qwen_sg` (OpenAI-compatible)
+- `glm` (OpenAI-compatible)
+- `minimax` (OpenAI-compatible)
+- `minimax_anthropic` (Anthropic-compatible gateway)
