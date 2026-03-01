@@ -1,6 +1,6 @@
 # 工具参考
 
-RexOS 对 agent runtime 暴露了一组小而清晰的工具集。
+RexOS 对 agent runtime 暴露了一组小而清晰的核心工具集，并提供一层 OpenFang 兼容的工具面（别名 + stub），便于复用 OpenFang 风格的 prompts / manifests。
 
 ## `fs_read`
 
@@ -47,3 +47,35 @@ RexOS 会强制超时，并使用尽量最小的环境。
   python3 -m pip install playwright
   python3 -m playwright install chromium
   ```
+
+## OpenFang 兼容（别名）
+
+以下工具名用于兼容 OpenFang，实际会映射到 RexOS 内置工具：
+
+- `file_read` → `fs_read`
+- `file_write` → `fs_write`
+- `file_list` → 目录列表（workspace 相对路径；允许 `.`）
+- `shell_exec` → `shell`
+- `apply_patch` → 应用 `*** Begin Patch` / `*** End Patch` 格式的补丁（add/update/delete）
+- `web_search` → DuckDuckGo HTML 搜索（best-effort；返回简短文本列表）
+- `memory_store` / `memory_recall` → 共享 KV（持久化在 `~/.rexos/rexos.db`）
+
+## OpenFang 兼容（stubs）
+
+以下 OpenFang 工具名已定义，但当前会直接返回 `tool not implemented yet: <name>`：
+
+`agent_send`, `agent_spawn`, `agent_list`, `agent_kill`, `agent_find`,
+`task_post`, `task_claim`, `task_complete`, `task_list`,
+`event_publish`,
+`schedule_create`, `schedule_list`, `schedule_delete`,
+`knowledge_add_entity`, `knowledge_add_relation`, `knowledge_query`,
+`image_analyze`, `location_get`,
+`media_describe`, `media_transcribe`, `image_generate`,
+`cron_create`, `cron_list`, `cron_cancel`,
+`channel_send`,
+`hand_list`, `hand_activate`, `hand_status`, `hand_deactivate`,
+`a2a_discover`, `a2a_send`,
+`text_to_speech`, `speech_to_text`,
+`docker_exec`,
+`process_start`, `process_poll`, `process_write`, `process_kill`, `process_list`,
+`canvas_present`。

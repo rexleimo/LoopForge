@@ -110,6 +110,9 @@
 
 新增（参考 OpenFang）：
 - `web_fetch`：SSRF 防护（默认拒绝 loopback/private/link-local），支持 `allow_private=true`（便于本地测试/内网）
+- OpenFang 兼容工具面（aliases + stubs）：
+  - 已实现：`file_read/file_write/file_list`、`apply_patch`、`shell_exec`、`web_search`、`memory_store/memory_recall`
+  - 已对齐命名但未实现（stub）：`agent_*` / `task_*` / `schedule_*` / `knowledge_*` / `cron_*` / `channel_send` / `a2a_*` / `process_*` 等（会返回 not implemented）
 
 对应实现：
 - `crates/rexos-tools/src/lib.rs`：`fs_read/fs_write/shell/web_fetch`
@@ -142,7 +145,6 @@
 - Channels system（多平台适配）
 - Skills system（skill registry + marketplace）
 - Wire protocol（p2p + auth）
-- Web search（多 provider 搜索聚合）
+- Web search（多 provider 搜索聚合；当前仅实现 DuckDuckGo HTML best-effort）
 - Metering/quotas/cost catalog
 - Embeddings/semantic memory
-

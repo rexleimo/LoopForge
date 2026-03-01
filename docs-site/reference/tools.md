@@ -1,6 +1,6 @@
 # Tools Reference
 
-RexOS exposes a small set of tools to the agent runtime.
+RexOS exposes a small core toolset, plus an OpenFang-compatible tool surface (aliases + stubs) so you can reuse OpenFang-style prompts/manifests.
 
 ## `fs_read`
 
@@ -47,3 +47,35 @@ Notes:
   python3 -m pip install playwright
   python3 -m playwright install chromium
   ```
+
+## OpenFang compatibility (aliases)
+
+These tool names exist for compatibility and map to RexOS built-ins:
+
+- `file_read` → `fs_read`
+- `file_write` → `fs_write`
+- `file_list` → directory listing (workspace-relative; `.` is allowed)
+- `shell_exec` → `shell`
+- `apply_patch` → apply `*** Begin Patch` / `*** End Patch` patches (add/update/delete)
+- `web_search` → DuckDuckGo HTML search (best-effort; returns a short text list)
+- `memory_store` / `memory_recall` → shared KV store persisted in `~/.rexos/rexos.db`
+
+## OpenFang compatibility (stubs)
+
+The following OpenFang tool names are defined but currently return `tool not implemented yet: <name>`:
+
+`agent_send`, `agent_spawn`, `agent_list`, `agent_kill`, `agent_find`,
+`task_post`, `task_claim`, `task_complete`, `task_list`,
+`event_publish`,
+`schedule_create`, `schedule_list`, `schedule_delete`,
+`knowledge_add_entity`, `knowledge_add_relation`, `knowledge_query`,
+`image_analyze`, `location_get`,
+`media_describe`, `media_transcribe`, `image_generate`,
+`cron_create`, `cron_list`, `cron_cancel`,
+`channel_send`,
+`hand_list`, `hand_activate`, `hand_status`, `hand_deactivate`,
+`a2a_discover`, `a2a_send`,
+`text_to_speech`, `speech_to_text`,
+`docker_exec`,
+`process_start`, `process_poll`, `process_write`, `process_kill`, `process_list`,
+`canvas_present`.
