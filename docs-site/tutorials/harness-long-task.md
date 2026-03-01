@@ -9,28 +9,36 @@ The harness is for tasks that won’t fit in a single model context window. It m
 
 ## 1) Create a workspace
 
-```bash
-mkdir -p /tmp/rexos-task
-```
+Pick an empty folder for this tutorial:
+
+=== "macOS/Linux"
+    ```bash
+    mkdir -p rexos-task
+    ```
+
+=== "Windows (PowerShell)"
+    ```powershell
+    mkdir rexos-task
+    ```
 
 ## 2) Initialize the harness
 
 Without a prompt, this only creates the durable artifacts + the initial git commit:
 
 ```bash
-rexos harness init /tmp/rexos-task
+rexos harness init rexos-task
 ```
 
 With a prompt, RexOS runs an “initializer agent” to populate `features.json` and adjust the init script:
 
 ```bash
-rexos harness init /tmp/rexos-task --prompt "Create a small CLI in this workspace that prints Hello and has a passing test suite"
+rexos harness init rexos-task --prompt "Create a small CLI in this workspace that prints Hello and has a passing test suite"
 ```
 
 ## 3) Run an incremental session
 
 ```bash
-rexos harness run /tmp/rexos-task --prompt "Implement the next failing feature"
+rexos harness run rexos-task --prompt "Implement the next failing feature"
 ```
 
 The harness will:
@@ -44,11 +52,10 @@ The harness will:
 ## 4) Repeat until done
 
 ```bash
-rexos harness run /tmp/rexos-task --prompt "Continue"
+rexos harness run rexos-task --prompt "Continue"
 ```
 
 ## Where state lives
 
 - Workspace: your code + `features.json` + `rexos-progress.md` + init scripts + git history
 - Memory: `~/.rexos/rexos.db` (sessions/messages + small KV store)
-

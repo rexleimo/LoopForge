@@ -39,17 +39,33 @@
 
 ## 快速开始（本地 Ollama）
 
-```bash
-# 1) 启动 Ollama
-ollama serve
+请确保 Ollama 里至少有一个 **对话模型**（不要只有 embedding 模型）。如果默认的 `llama3.2` 没有拉取，可以先 `ollama pull llama3.2`，或在 `~/.rexos/config.toml` 里修改 `providers.ollama.default_model`（详见“快速开始（Ollama）”教程）。
 
-# 2) 初始化 RexOS（~/.rexos/config.toml + ~/.rexos/rexos.db）
-rexos init
+=== "macOS/Linux"
+    ```bash
+    # 1) 启动 Ollama
+    ollama serve
 
-# 3) 在 workspace 里跑一次 session
-mkdir -p /tmp/rexos-work
-rexos agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the word hi"
-```
+    # 2) 初始化 RexOS（~/.rexos/config.toml + ~/.rexos/rexos.db）
+    rexos init
+
+    # 3) 在 workspace 里跑一次 session
+    mkdir -p rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    ```
+
+=== "Windows (PowerShell)"
+    ```powershell
+    # 1) 启动 Ollama
+    ollama serve
+
+    # 2) 初始化 RexOS（~/.rexos/config.toml + ~/.rexos/rexos.db）
+    rexos init
+
+    # 3) 在 workspace 里跑一次 session
+    mkdir rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    ```
 
 ## 工作方式
 

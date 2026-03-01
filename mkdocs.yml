@@ -64,6 +64,7 @@ plugins:
             Get Started: 入门
             Install & Update: 安装与更新
             Quickstart (Ollama): 快速开始（Ollama）
+            New User Walkthrough: 新人复习
             Workflows: 工作流
             Long Task With Harness: Harness 长任务
             Common Use Cases: 常见场景
@@ -124,6 +125,7 @@ nav:
       - Get Started:
           - Install & Update: how-to/install.md
           - Quickstart (Ollama): tutorials/quickstart-ollama.md
+          - New User Walkthrough: tutorials/new-user-walkthrough.md
       - Workflows:
           - Long Task With Harness: tutorials/harness-long-task.md
           - Common Use Cases: how-to/use-cases.md

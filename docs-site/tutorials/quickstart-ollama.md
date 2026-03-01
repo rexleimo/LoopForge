@@ -5,7 +5,30 @@ This tutorial runs RexOS locally using Ollama’s OpenAI-compatible endpoint.
 ## Prerequisites
 
 - Ollama is installed and running.
-- You have at least one chat model available (example: `qwen3:4b`, `llama3.2`, etc.).
+- You have at least one **chat model** available (example: `qwen3:4b`, `llama3.2`, etc.). (Embedding-only models won’t work.)
+
+Check your local models:
+
+```bash
+ollama list
+```
+
+RexOS defaults to `providers.ollama.default_model = "llama3.2"` in `~/.rexos/config.toml`.
+
+If you don’t have `llama3.2` installed, pick one of these:
+
+1) Pull it:
+
+```bash
+ollama pull llama3.2
+```
+
+2) Or switch RexOS to a model you already have (example: `qwen3:4b`):
+
+```toml
+[providers.ollama]
+default_model = "qwen3:4b"
+```
 
 ## 1) Start Ollama
 
@@ -27,21 +50,29 @@ rexos init
 
 Pick a workspace directory (tools are sandboxed to this root):
 
-```bash
-mkdir -p /tmp/rexos-work
-rexos agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the word hi"
-```
+=== "macOS/Linux"
+    ```bash
+    mkdir -p rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    cat rexos-work/hello.txt
+    ```
+
+=== "Windows (PowerShell)"
+    ```powershell
+    mkdir rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    Get-Content .\rexos-work\hello.txt
+    ```
 
 RexOS prints the final assistant output, and also logs a `session_id` to stderr for later reuse.
 
 ## 4) Re-run with the same session id (optional)
 
 ```bash
-rexos agent run --workspace /tmp/rexos-work --session <SESSION_ID> --prompt "Now append a newline + bye to hello.txt"
+rexos agent run --workspace rexos-work --session <SESSION_ID> --prompt "Now append a newline + bye to hello.txt"
 ```
 
 ## Next steps
 
 - Use the harness for long tasks: see “Long Task With Harness”.
 - Switch providers/models: see “Providers & Routing”.
-

@@ -37,17 +37,33 @@ Develop locally with small models on Ollama, then switch routing to GLM / MiniMa
 
 ## Quickstart (local, with Ollama)
 
-```bash
-# 1) Start Ollama
-ollama serve
+Make sure you have at least one **chat model** available in Ollama (not embedding-only). If the default `llama3.2` isn’t installed, either `ollama pull llama3.2` or change `providers.ollama.default_model` in `~/.rexos/config.toml` (see the Quickstart tutorial).
 
-# 2) Init RexOS (~/.rexos/config.toml + ~/.rexos/rexos.db)
-rexos init
+=== "macOS/Linux"
+    ```bash
+    # 1) Start Ollama
+    ollama serve
 
-# 3) Run a workspace session
-mkdir -p /tmp/rexos-work
-rexos agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the word hi"
-```
+    # 2) Init RexOS (~/.rexos/config.toml + ~/.rexos/rexos.db)
+    rexos init
+
+    # 3) Run a workspace session
+    mkdir -p rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    ```
+
+=== "Windows (PowerShell)"
+    ```powershell
+    # 1) Start Ollama
+    ollama serve
+
+    # 2) Init RexOS (~/.rexos/config.toml + ~/.rexos/rexos.db)
+    rexos init
+
+    # 3) Run a workspace session
+    mkdir rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    ```
 
 ## How it works
 

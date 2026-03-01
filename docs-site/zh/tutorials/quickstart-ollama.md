@@ -2,6 +2,36 @@
 
 本教程用 Ollama 的 OpenAI 兼容接口在本地跑通 RexOS。
 
+## 前置条件
+
+- 已安装并启动 Ollama
+- Ollama 里至少有一个 **对话模型**（例如 `qwen3:4b`、`llama3.2` 等；只有 embedding 模型是不行的）
+
+查看本机有哪些模型：
+
+```bash
+ollama list
+```
+
+默认情况下，RexOS 会在 `~/.rexos/config.toml` 里使用：
+
+- `providers.ollama.default_model = "llama3.2"`
+
+如果你没有拉取 `llama3.2`，有两种方式：
+
+1) 直接拉取默认模型：
+
+```bash
+ollama pull llama3.2
+```
+
+2) 或把 RexOS 切到你已经有的模型（例：`qwen3:4b`）：
+
+```toml
+[providers.ollama]
+default_model = "qwen3:4b"
+```
+
 ## 1) 启动 Ollama
 
 ```bash
@@ -22,13 +52,21 @@ rexos init
 
 工具调用会被沙盒限制在 `--workspace` 目录内：
 
-```bash
-mkdir -p /tmp/rexos-work
-rexos agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the word hi"
-```
+=== "macOS/Linux"
+    ```bash
+    mkdir -p rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    cat rexos-work/hello.txt
+    ```
+
+=== "Windows (PowerShell)"
+    ```powershell
+    mkdir rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    Get-Content .\rexos-work\hello.txt
+    ```
 
 ## 下一步
 
 - Harness 长任务：见 “Harness 长任务”
 - Providers 与路由：见 “Providers 与路由”
-

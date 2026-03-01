@@ -12,14 +12,30 @@ RexOS ships a single binary: `rexos`.
 
 ## Examples
 
-```bash
-rexos init
+=== "macOS/Linux"
+    ```bash
+    rexos init
 
-rexos agent run --workspace /tmp/rexos-work --prompt "Create hello.txt"
+    mkdir -p rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt"
 
-rexos harness init /tmp/task --prompt "Initialize a features checklist for refactoring this repo"
-rexos harness run /tmp/task --prompt "Continue"
+    mkdir -p rexos-task
+    rexos harness init rexos-task --prompt "Initialize a features checklist for refactoring this repo"
+    rexos harness run rexos-task --prompt "Continue"
 
-rexos daemon start --addr 127.0.0.1:8787
-```
+    rexos daemon start --addr 127.0.0.1:8787
+    ```
 
+=== "Windows (PowerShell)"
+    ```powershell
+    rexos init
+
+    mkdir rexos-work
+    rexos agent run --workspace rexos-work --prompt "Create hello.txt"
+
+    mkdir rexos-task
+    rexos harness init rexos-task --prompt "Initialize a features checklist for refactoring this repo"
+    rexos harness run rexos-task --prompt "Continue"
+
+    rexos daemon start --addr 127.0.0.1:8787
+    ```
