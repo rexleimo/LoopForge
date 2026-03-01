@@ -21,14 +21,14 @@ RexOS defaults to `ollama` at `http://127.0.0.1:11434/v1` in `~/.rexos/config.to
 ollama serve
 
 # 2) Init RexOS (creates ~/.rexos/config.toml + ~/.rexos/rexos.db)
-cargo run -- init
+cargo run -p rexos-cli -- init
 
 # 3) Run an agent session in a workspace directory
 mkdir -p /tmp/rexos-work
-cargo run -- agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the word hi"
+cargo run -p rexos-cli -- agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the word hi"
 ```
 
-To run the optional Ollama smoke test: `REXOS_OLLAMA_MODEL=<your-model> cargo test -- --ignored`.
+To run the optional Ollama smoke test: `REXOS_OLLAMA_MODEL=<your-model> cargo test -p rexos -- --ignored`.
 
 ## Providers & routing
 

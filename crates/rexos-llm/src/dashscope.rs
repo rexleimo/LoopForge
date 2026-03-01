@@ -3,8 +3,8 @@ use std::time::Duration;
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::llm::driver::{ChatFuture, LlmDriver};
-use crate::llm::openai_compat::{ChatCompletionRequest, ChatMessage, Role, ToolCall, ToolDefinition};
+use crate::driver::{ChatFuture, LlmDriver};
+use crate::openai_compat::{ChatCompletionRequest, ChatMessage, Role, ToolCall, ToolDefinition};
 
 #[derive(Debug, Clone)]
 pub struct DashscopeDriver {
@@ -145,4 +145,3 @@ fn clean_message(mut m: ChatMessage) -> ChatMessage {
     }
     m
 }
-

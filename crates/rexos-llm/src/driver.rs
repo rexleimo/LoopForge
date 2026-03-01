@@ -4,8 +4,7 @@ use std::sync::Arc;
 
 use anyhow::bail;
 
-use crate::llm::openai_compat::{ChatCompletionRequest, ChatMessage};
-use crate::llm::openai_compat::OpenAiCompatibleClient;
+use crate::openai_compat::{ChatCompletionRequest, ChatMessage, OpenAiCompatibleClient};
 
 pub type ChatFuture<'a> = Pin<Box<dyn Future<Output = anyhow::Result<ChatMessage>> + Send + 'a>>;
 

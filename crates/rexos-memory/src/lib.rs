@@ -3,8 +3,8 @@ use std::path::Path;
 use anyhow::Context;
 use rusqlite::{Connection, OptionalExtension};
 
-use crate::llm::openai_compat::{ChatMessage, Role, ToolCall};
-use crate::paths::RexosPaths;
+use rexos_kernel::paths::RexosPaths;
+use rexos_llm::openai_compat::{ChatMessage, Role, ToolCall};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Message {
@@ -226,6 +226,7 @@ fn now_epoch_seconds() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rexos_llm::openai_compat::ToolFunction;
     use tempfile::tempdir;
 
     #[test]
@@ -275,7 +276,7 @@ mod tests {
             tool_calls: Some(vec![ToolCall {
                 id: "call_1".to_string(),
                 kind: "function".to_string(),
-                function: crate::llm::openai_compat::ToolFunction {
+                function: ToolFunction {
                     name: "fs_read".to_string(),
                     arguments: "{\"path\":\"README.md\"}".to_string(),
                 },

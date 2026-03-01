@@ -6,8 +6,8 @@ use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 
-use crate::llm::driver::{ChatFuture, LlmDriver};
-use crate::llm::openai_compat::{
+use crate::driver::{ChatFuture, LlmDriver};
+use crate::openai_compat::{
     ChatCompletionRequest, ChatMessage, Role, ToolCall, ToolDefinition, ToolFunction,
 };
 

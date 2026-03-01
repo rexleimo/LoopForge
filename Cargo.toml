@@ -1,11 +1,24 @@
-[package]
-name = "rexos"
+[workspace]
+resolver = "2"
+members = [
+    "crates/rexos",
+    "crates/rexos-cli",
+    "crates/rexos-daemon",
+    "crates/rexos-harness",
+    "crates/rexos-kernel",
+    "crates/rexos-llm",
+    "crates/rexos-memory",
+    "crates/rexos-runtime",
+    "crates/rexos-tools",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
 rust-version = "1.75"
 
-[dependencies]
+[workspace.dependencies]
 anyhow = "1"
 axum = "0.8"
 base64 = "0.22"
@@ -17,11 +30,9 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
+tempfile = "3"
 thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "process", "time"] }
 toml = "0.8"
-uuid = { version = "1", features = ["v4"] }
-
-[dev-dependencies]
-tempfile = "3"
 tower = { version = "0.5", features = ["util"] }
+uuid = { version = "1", features = ["v4"] }

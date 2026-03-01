@@ -1058,23 +1058,106 @@ dependencies = [
 name = "rexos"
 version = "0.1.0"
 dependencies = [
+ "axum",
+ "rexos-daemon",
+ "rexos-harness",
+ "rexos-kernel",
+ "rexos-llm",
+ "rexos-memory",
+ "rexos-runtime",
+ "rexos-tools",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tower",
+]
+
+[[package]]
+name = "rexos-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "rexos",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "rexos-daemon"
+version = "0.1.0"
+dependencies = [
  "anyhow",
  "axum",
- "base64",
- "clap",
+ "serde",
+ "tokio",
+]
+
+[[package]]
+name = "rexos-harness"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde_json",
+]
+
+[[package]]
+name = "rexos-kernel"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "dirs",
+ "serde",
+ "tempfile",
+ "toml",
+]
+
+[[package]]
+name = "rexos-llm"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64",
  "hmac",
  "reqwest",
- "rusqlite",
+ "rexos-kernel",
  "serde",
  "serde_json",
  "sha2",
+]
+
+[[package]]
+name = "rexos-memory"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rexos-kernel",
+ "rexos-llm",
+ "rusqlite",
+ "serde_json",
  "tempfile",
- "thiserror 2.0.18",
+]
+
+[[package]]
+name = "rexos-runtime"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rexos-kernel",
+ "rexos-llm",
+ "rexos-memory",
+ "rexos-tools",
+]
+
+[[package]]
+name = "rexos-tools"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "rexos-llm",
+ "serde",
+ "serde_json",
  "tokio",
- "toml",
- "tower",
- "uuid",
 ]
 
 [[package]]

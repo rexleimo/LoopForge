@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use anyhow::{bail, Context};
 
-use crate::llm::openai_compat::{ToolDefinition, ToolFunctionDefinition};
+use rexos_llm::openai_compat::{ToolDefinition, ToolFunctionDefinition};
 
 #[derive(Debug, Clone)]
 pub struct Toolset {

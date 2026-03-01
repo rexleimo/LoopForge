@@ -1,13 +1,14 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use crate::config::{ProviderKind, RexosConfig};
-use crate::llm::anthropic::AnthropicDriver;
-use crate::llm::dashscope::DashscopeDriver;
-use crate::llm::driver::{LlmDriver, OpenAiCompatDriver};
-use crate::llm::gemini::GeminiDriver;
-use crate::llm::minimax::MiniMaxDriver;
-use crate::llm::zhipu::ZhipuDriver;
+use rexos_kernel::config::{ProviderKind, RexosConfig};
+
+use crate::anthropic::AnthropicDriver;
+use crate::dashscope::DashscopeDriver;
+use crate::driver::{LlmDriver, OpenAiCompatDriver};
+use crate::gemini::GeminiDriver;
+use crate::minimax::MiniMaxDriver;
+use crate::zhipu::ZhipuDriver;
 
 #[derive(Clone)]
 pub struct LlmRegistry {
@@ -82,7 +83,7 @@ impl LlmRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{LlmConfig, ProviderConfig, ProviderKind};
+    use rexos_kernel::config::{LlmConfig, ProviderConfig, ProviderKind, RexosConfig, RouterConfig};
 
     #[test]
     fn registry_builds_and_resolves_drivers() {
@@ -136,7 +137,7 @@ mod tests {
         let cfg = RexosConfig {
             llm: LlmConfig::default(),
             providers,
-            router: crate::config::RouterConfig::default(),
+            router: RouterConfig::default(),
         };
 
         let registry = LlmRegistry::from_config(&cfg).unwrap();

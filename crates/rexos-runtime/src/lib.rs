@@ -2,12 +2,12 @@ use std::path::PathBuf;
 
 use anyhow::{bail, Context};
 
-use crate::llm::driver::LlmDriver;
-use crate::llm::openai_compat::{ChatCompletionRequest, ChatMessage, Role};
-use crate::llm::registry::LlmRegistry;
-use crate::memory::MemoryStore;
-use crate::router::{ModelRouter, TaskKind};
-use crate::tools::Toolset;
+use rexos_kernel::router::{ModelRouter, TaskKind};
+use rexos_llm::driver::LlmDriver;
+use rexos_llm::openai_compat::{ChatCompletionRequest, ChatMessage, Role};
+use rexos_llm::registry::LlmRegistry;
+use rexos_memory::MemoryStore;
+use rexos_tools::Toolset;
 
 #[derive(Debug)]
 pub struct AgentRuntime {

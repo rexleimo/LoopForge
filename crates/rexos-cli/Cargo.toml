@@ -1,0 +1,17 @@
+[package]
+name = "rexos-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "rexos"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+rexos = { path = "../rexos" }

@@ -1,0 +1,22 @@
+[package]
+name = "rexos"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rexos-daemon = { path = "../rexos-daemon" }
+rexos-harness = { path = "../rexos-harness" }
+rexos-kernel = { path = "../rexos-kernel" }
+rexos-llm = { path = "../rexos-llm" }
+rexos-memory = { path = "../rexos-memory" }
+rexos-runtime = { path = "../rexos-runtime" }
+rexos-tools = { path = "../rexos-tools" }
+
+[dev-dependencies]
+axum.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio.workspace = true
+tower.workspace = true

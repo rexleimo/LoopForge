@@ -4,8 +4,8 @@ use anyhow::Context;
 use serde::Deserialize;
 use serde::Serialize;
 
-use crate::llm::driver::{ChatFuture, LlmDriver};
-use crate::llm::openai_compat::{
+use crate::driver::{ChatFuture, LlmDriver};
+use crate::openai_compat::{
     ChatCompletionRequest, ChatMessage, Role, ToolCall, ToolDefinition, ToolFunction,
 };
 
@@ -138,4 +138,3 @@ fn map_message(raw: RawChatMessage) -> anyhow::Result<ChatMessage> {
         tool_calls,
     })
 }
-

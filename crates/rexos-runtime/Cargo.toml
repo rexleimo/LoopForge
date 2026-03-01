@@ -1,0 +1,13 @@
+[package]
+name = "rexos-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+rexos-kernel = { path = "../rexos-kernel" }
+rexos-llm = { path = "../rexos-llm" }
+rexos-memory = { path = "../rexos-memory" }
+rexos-tools = { path = "../rexos-tools" }
