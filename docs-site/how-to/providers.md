@@ -108,6 +108,18 @@ model = "default"
 
 RexOS reads provider keys from the env var referenced by `api_key_env`.
 
+## Optional smoke tests (real providers)
+
+These tests hit real provider endpoints and are `#[ignore]` by default:
+
+```bash
+# Ollama (OpenAI-compatible)
+REXOS_OLLAMA_MODEL=<your-model> cargo test -p rexos --test ollama_smoke -- --ignored
+
+# NVIDIA NIM (OpenAI-compatible)
+NVIDIA_API_KEY=<key> REXOS_NVIDIA_MODEL=<model> cargo test -p rexos --test nvidia_nim_smoke -- --ignored
+```
+
 === "Bash (macOS/Linux)"
     ```bash
     export DEEPSEEK_API_KEY="..."

@@ -129,3 +129,15 @@ RexOS 会从 `api_key_env` 指定的环境变量读取 key。
     $env:MINIMAX_API_KEY = "..."
     $env:NVIDIA_API_KEY = "..."
     ```
+
+## 可选 smoke tests（真实 provider）
+
+这些测试会真实请求 provider endpoint，并且默认标记为 `#[ignore]`：
+
+```bash
+# Ollama（OpenAI-compatible）
+REXOS_OLLAMA_MODEL=<your-model> cargo test -p rexos --test ollama_smoke -- --ignored
+
+# NVIDIA NIM（OpenAI-compatible）
+NVIDIA_API_KEY=<key> REXOS_NVIDIA_MODEL=<model> cargo test -p rexos --test nvidia_nim_smoke -- --ignored
+```

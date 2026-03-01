@@ -54,6 +54,7 @@ rexos agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the 
 ```
 
 可选的 Ollama smoke test：`REXOS_OLLAMA_MODEL=<your-model> cargo test -p rexos -- --ignored`。
+可选的 NVIDIA NIM smoke test：`NVIDIA_API_KEY=<key> cargo test -p rexos --test nvidia_nim_smoke -- --ignored`。
 
 ## 发版（维护者）
 
