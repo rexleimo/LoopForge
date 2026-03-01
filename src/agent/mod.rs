@@ -31,7 +31,7 @@ impl AgentRuntime {
     ) -> anyhow::Result<String> {
         let tools = Toolset::new(workspace_root)?;
         let provider = self.router.provider_for(kind);
-        let model = self.router.model_for(kind).to_string();
+        let model = self.resolve_model(provider, kind)?;
 
         let driver = self
             .llms
@@ -111,6 +111,19 @@ impl AgentRuntime {
         }
 
         bail!("max iterations exceeded")
+    }
+
+    fn resolve_model(&self, provider: &str, kind: TaskKind) -> anyhow::Result<String> {
+        let configured = self.router.model_for(kind).trim();
+        if configured.is_empty() || configured.eq_ignore_ascii_case("default") {
+            let model = self
+                .llms
+                .default_model(provider)
+                .ok_or_else(|| anyhow::anyhow!("provider missing default_model: {provider}"))?;
+            Ok(model.to_string())
+        } else {
+            Ok(configured.to_string())
+        }
     }
 
     async fn driver_chat(

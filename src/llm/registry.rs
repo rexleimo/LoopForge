@@ -9,6 +9,7 @@ use crate::llm::gemini::GeminiDriver;
 #[derive(Clone)]
 pub struct LlmRegistry {
     drivers: BTreeMap<String, Arc<dyn LlmDriver>>,
+    default_models: BTreeMap<String, String>,
 }
 
 impl std::fmt::Debug for LlmRegistry {
@@ -23,6 +24,7 @@ impl std::fmt::Debug for LlmRegistry {
 impl LlmRegistry {
     pub fn from_config(cfg: &RexosConfig) -> anyhow::Result<Self> {
         let mut drivers: BTreeMap<String, Arc<dyn LlmDriver>> = BTreeMap::new();
+        let mut default_models: BTreeMap<String, String> = BTreeMap::new();
 
         for (name, p) in &cfg.providers {
             let driver: Arc<dyn LlmDriver> = match p.kind {
@@ -41,13 +43,24 @@ impl LlmRegistry {
             };
 
             drivers.insert(name.clone(), driver);
+            default_models.insert(name.clone(), p.default_model.clone());
         }
 
-        Ok(Self { drivers })
+        Ok(Self {
+            drivers,
+            default_models,
+        })
     }
 
     pub fn driver(&self, name: &str) -> Option<Arc<dyn LlmDriver>> {
         self.drivers.get(name).cloned()
+    }
+
+    pub fn default_model(&self, provider: &str) -> Option<&str> {
+        self.default_models
+            .get(provider)
+            .map(|m| m.as_str())
+            .filter(|m| !m.trim().is_empty())
     }
 }
 
