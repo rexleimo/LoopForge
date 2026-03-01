@@ -30,6 +30,8 @@ pub struct LlmConfig {
 pub enum ProviderKind {
     #[serde(rename = "openai_compatible")]
     OpenAiCompatible,
+    #[serde(rename = "dashscope_native")]
+    DashscopeNative,
     #[serde(rename = "anthropic")]
     Anthropic,
     #[serde(rename = "gemini")]
@@ -109,6 +111,15 @@ impl Default for RexosConfig {
             },
         );
         providers.insert(
+            "qwen_native".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::DashscopeNative,
+                base_url: "https://dashscope-us.aliyuncs.com/api/v1".to_string(),
+                api_key_env: "DASHSCOPE_API_KEY".to_string(),
+                default_model: "qwen-plus".to_string(),
+            },
+        );
+        providers.insert(
             "qwen_cn".to_string(),
             ProviderConfig {
                 kind: ProviderKind::OpenAiCompatible,
@@ -118,10 +129,28 @@ impl Default for RexosConfig {
             },
         );
         providers.insert(
+            "qwen_native_cn".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::DashscopeNative,
+                base_url: "https://dashscope.aliyuncs.com/api/v1".to_string(),
+                api_key_env: "DASHSCOPE_API_KEY".to_string(),
+                default_model: "qwen-plus".to_string(),
+            },
+        );
+        providers.insert(
             "qwen_sg".to_string(),
             ProviderConfig {
                 kind: ProviderKind::OpenAiCompatible,
                 base_url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1".to_string(),
+                api_key_env: "DASHSCOPE_API_KEY".to_string(),
+                default_model: "qwen-plus".to_string(),
+            },
+        );
+        providers.insert(
+            "qwen_native_sg".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::DashscopeNative,
+                base_url: "https://dashscope-intl.aliyuncs.com/api/v1".to_string(),
                 api_key_env: "DASHSCOPE_API_KEY".to_string(),
                 default_model: "qwen-plus".to_string(),
             },
@@ -292,11 +321,13 @@ mod tests {
         assert!(toml_str.contains("[providers.deepseek]"));
         assert!(toml_str.contains("[providers.kimi]"));
         assert!(toml_str.contains("[providers.qwen]"));
+        assert!(toml_str.contains("[providers.qwen_native]"));
         assert!(toml_str.contains("[providers.glm]"));
         assert!(toml_str.contains("[providers.minimax]"));
         assert!(toml_str.contains("[providers.anthropic]"));
         assert!(toml_str.contains("[providers.gemini]"));
         assert!(toml_str.contains("kind = \"openai_compatible\""));
+        assert!(toml_str.contains("kind = \"dashscope_native\""));
         assert!(toml_str.contains("base_url"));
         assert!(toml_str.contains("api_key_env"));
         assert!(toml_str.contains("default_model"));

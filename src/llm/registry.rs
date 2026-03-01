@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use crate::config::{ProviderKind, RexosConfig};
 use crate::llm::anthropic::AnthropicDriver;
+use crate::llm::dashscope::DashscopeDriver;
 use crate::llm::driver::{LlmDriver, OpenAiCompatDriver};
 use crate::llm::gemini::GeminiDriver;
 
@@ -29,6 +30,10 @@ impl LlmRegistry {
         for (name, p) in &cfg.providers {
             let driver: Arc<dyn LlmDriver> = match p.kind {
                 ProviderKind::OpenAiCompatible => Arc::new(OpenAiCompatDriver::new(
+                    p.base_url.clone(),
+                    cfg.provider_api_key(name),
+                )?),
+                ProviderKind::DashscopeNative => Arc::new(DashscopeDriver::new(
                     p.base_url.clone(),
                     cfg.provider_api_key(name),
                 )?),
@@ -82,6 +87,15 @@ mod tests {
             },
         );
         providers.insert(
+            "qwen_native".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::DashscopeNative,
+                base_url: "http://127.0.0.1:1/api/v1".to_string(),
+                api_key_env: "DASHSCOPE_API_KEY".to_string(),
+                default_model: "qwen-plus".to_string(),
+            },
+        );
+        providers.insert(
             "anthropic".to_string(),
             ProviderConfig {
                 kind: ProviderKind::Anthropic,
@@ -99,6 +113,7 @@ mod tests {
 
         let registry = LlmRegistry::from_config(&cfg).unwrap();
         assert!(registry.driver("ollama").is_some());
+        assert!(registry.driver("qwen_native").is_some());
         assert!(registry.driver("anthropic").is_some());
     }
 }

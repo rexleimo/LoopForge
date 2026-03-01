@@ -34,6 +34,7 @@ To run the optional Ollama smoke test: `REXOS_OLLAMA_MODEL=<your-model> cargo te
 
 RexOS supports multiple LLM providers via drivers:
 - `openai_compatible` (Ollama / DeepSeek / Kimi / Qwen / GLM / MiniMax / OpenAI-compatible gateways)
+- `dashscope_native` (Alibaba DashScope Generation API / Qwen native)
 - `anthropic` (Claude API + Anthropic-compatible gateways)
 - `gemini` (Google Gemini API)
 
@@ -63,6 +64,7 @@ Built-in presets include:
 - `deepseek` (OpenAI-compatible)
 - `kimi` / `kimi_cn` (OpenAI-compatible)
 - `qwen` / `qwen_cn` / `qwen_sg` (OpenAI-compatible)
+- `qwen_native` / `qwen_native_cn` / `qwen_native_sg` (DashScope native API)
 - `glm` (OpenAI-compatible)
 - `minimax` (OpenAI-compatible)
 - `minimax_anthropic` (Anthropic-compatible gateway)
