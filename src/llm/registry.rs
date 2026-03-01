@@ -6,6 +6,8 @@ use crate::llm::anthropic::AnthropicDriver;
 use crate::llm::dashscope::DashscopeDriver;
 use crate::llm::driver::{LlmDriver, OpenAiCompatDriver};
 use crate::llm::gemini::GeminiDriver;
+use crate::llm::minimax::MiniMaxDriver;
+use crate::llm::zhipu::ZhipuDriver;
 
 #[derive(Clone)]
 pub struct LlmRegistry {
@@ -34,6 +36,14 @@ impl LlmRegistry {
                     cfg.provider_api_key(name),
                 )?),
                 ProviderKind::DashscopeNative => Arc::new(DashscopeDriver::new(
+                    p.base_url.clone(),
+                    cfg.provider_api_key(name),
+                )?),
+                ProviderKind::ZhipuNative => Arc::new(ZhipuDriver::new(
+                    p.base_url.clone(),
+                    cfg.provider_api_key(name),
+                )?),
+                ProviderKind::MiniMaxNative => Arc::new(MiniMaxDriver::new(
                     p.base_url.clone(),
                     cfg.provider_api_key(name),
                 )?),
@@ -96,6 +106,24 @@ mod tests {
             },
         );
         providers.insert(
+            "glm_native".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::ZhipuNative,
+                base_url: "http://127.0.0.1:1/api/paas/v4".to_string(),
+                api_key_env: "ZHIPUAI_API_KEY".to_string(),
+                default_model: "glm-4".to_string(),
+            },
+        );
+        providers.insert(
+            "minimax_native".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::MiniMaxNative,
+                base_url: "http://127.0.0.1:1/v1".to_string(),
+                api_key_env: "MINIMAX_API_KEY".to_string(),
+                default_model: "MiniMax-M2.5".to_string(),
+            },
+        );
+        providers.insert(
             "anthropic".to_string(),
             ProviderConfig {
                 kind: ProviderKind::Anthropic,
@@ -114,6 +142,8 @@ mod tests {
         let registry = LlmRegistry::from_config(&cfg).unwrap();
         assert!(registry.driver("ollama").is_some());
         assert!(registry.driver("qwen_native").is_some());
+        assert!(registry.driver("glm_native").is_some());
+        assert!(registry.driver("minimax_native").is_some());
         assert!(registry.driver("anthropic").is_some());
     }
 }

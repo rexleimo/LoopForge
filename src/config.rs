@@ -32,6 +32,10 @@ pub enum ProviderKind {
     OpenAiCompatible,
     #[serde(rename = "dashscope_native")]
     DashscopeNative,
+    #[serde(rename = "zhipu_native")]
+    ZhipuNative,
+    #[serde(rename = "minimax_native")]
+    MiniMaxNative,
     #[serde(rename = "anthropic")]
     Anthropic,
     #[serde(rename = "gemini")]
@@ -165,10 +169,28 @@ impl Default for RexosConfig {
             },
         );
         providers.insert(
+            "glm_native".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::ZhipuNative,
+                base_url: "https://open.bigmodel.cn/api/paas/v4".to_string(),
+                api_key_env: "ZHIPUAI_API_KEY".to_string(),
+                default_model: "glm-4".to_string(),
+            },
+        );
+        providers.insert(
             "minimax".to_string(),
             ProviderConfig {
                 kind: ProviderKind::OpenAiCompatible,
                 base_url: "https://api.minimax.io/v1".to_string(),
+                api_key_env: "MINIMAX_API_KEY".to_string(),
+                default_model: "MiniMax-M2.5".to_string(),
+            },
+        );
+        providers.insert(
+            "minimax_native".to_string(),
+            ProviderConfig {
+                kind: ProviderKind::MiniMaxNative,
+                base_url: "https://api.minimaxi.com/v1".to_string(),
                 api_key_env: "MINIMAX_API_KEY".to_string(),
                 default_model: "MiniMax-M2.5".to_string(),
             },
@@ -323,11 +345,15 @@ mod tests {
         assert!(toml_str.contains("[providers.qwen]"));
         assert!(toml_str.contains("[providers.qwen_native]"));
         assert!(toml_str.contains("[providers.glm]"));
+        assert!(toml_str.contains("[providers.glm_native]"));
         assert!(toml_str.contains("[providers.minimax]"));
+        assert!(toml_str.contains("[providers.minimax_native]"));
         assert!(toml_str.contains("[providers.anthropic]"));
         assert!(toml_str.contains("[providers.gemini]"));
         assert!(toml_str.contains("kind = \"openai_compatible\""));
         assert!(toml_str.contains("kind = \"dashscope_native\""));
+        assert!(toml_str.contains("kind = \"zhipu_native\""));
+        assert!(toml_str.contains("kind = \"minimax_native\""));
         assert!(toml_str.contains("base_url"));
         assert!(toml_str.contains("api_key_env"));
         assert!(toml_str.contains("default_model"));

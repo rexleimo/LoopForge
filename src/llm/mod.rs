@@ -4,3 +4,5 @@ pub mod openai_compat;
 pub mod registry;
 pub mod gemini;
 pub mod dashscope;
+pub mod minimax;
+pub mod zhipu;
