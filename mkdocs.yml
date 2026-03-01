@@ -15,7 +15,6 @@ theme:
   icon:
     repo: fontawesome/brands/github
   features:
-    - navigation.instant
     - navigation.tracking
     - navigation.tabs
     - navigation.tabs.sticky
@@ -46,6 +45,40 @@ theme:
         name: Switch to light mode
 
 plugins:
+  - i18n:
+      docs_structure: folder
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 简体中文
+          build: true
+          nav_translations:
+            Guides: 指南
+            Overview: 概览
+            Get Started: 入门
+            Install & Update: 安装与更新
+            Quickstart (Ollama): 快速开始（Ollama）
+            Workflows: 工作流
+            Long Task With Harness: Harness 长任务
+            Common Use Cases: 常见场景
+            Configuration: 配置
+            Providers & Routing: Providers 与路由
+            Operations: 运维
+            Troubleshooting: 故障排查
+            Windows Notes: Windows 说明
+            Run the Daemon: 运行 Daemon
+            Explanation: 说明
+            Concepts: 概念
+            Security & Sandboxing: 安全与沙盒
+            Reference: 参考
+            Config: 配置
+            Tools: 工具
   - search
 
 markdown_extensions:
@@ -106,24 +139,3 @@ nav:
       - CLI: reference/cli.md
       - Config: reference/config.md
       - Tools: reference/tools.md
-  - 中文:
-      - 概览: zh/index.md
-      - 入门:
-          - 安装与更新: zh/how-to/install.md
-          - 快速开始（Ollama）: zh/tutorials/quickstart-ollama.md
-      - 工作流:
-          - Harness 长任务: zh/tutorials/harness-long-task.md
-          - 常见场景: zh/how-to/use-cases.md
-      - 配置:
-          - Providers 与路由: zh/how-to/providers.md
-      - 运维:
-          - 故障排查: zh/how-to/troubleshooting.md
-          - Windows 说明: zh/how-to/windows.md
-          - 运行 Daemon: zh/how-to/daemon.md
-      - 说明:
-          - 概念: zh/explanation/concepts.md
-          - 安全与沙盒: zh/explanation/security.md
-      - 参考:
-          - CLI: zh/reference/cli.md
-          - 配置: zh/reference/config.md
-          - 工具: zh/reference/tools.md
