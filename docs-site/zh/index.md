@@ -25,11 +25,11 @@
 
 - :material-database: **SQLite 持久化记忆**  
   sessions/messages/KV 等写入 `~/.rexos/rexos.db`，便于续跑。  
-  [概念](../explanation/concepts.md)
+  [概念](explanation/concepts.md)
 
 - :material-shield-lock: **工具沙盒**  
   文件读写与 shell 仅在 workspace 内执行，`web_fetch` 默认 SSRF 防护。  
-  [安全模型](../explanation/security.md)
+  [安全模型](explanation/security.md)
 
 - :material-router: **多 Provider 路由**  
   将 planning/coding/summary 路由到不同 provider/model。  

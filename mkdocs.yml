@@ -85,29 +85,45 @@ extra:
       link: https://github.com/rexleimo/rexos
 
 nav:
-  - Home: index.md
-  - Tutorials:
-      - Quickstart (Ollama): tutorials/quickstart-ollama.md
-      - Long Task With Harness: tutorials/harness-long-task.md
-  - How-to Guides:
-      - Install & Update: how-to/install.md
-      - Providers & Routing: how-to/providers.md
-      - Common Use Cases: how-to/use-cases.md
-      - Troubleshooting: how-to/troubleshooting.md
-      - Windows Notes: how-to/windows.md
-      - Run the Daemon: how-to/daemon.md
-  - Explanation:
-      - Concepts: explanation/concepts.md
-      - Security & Sandboxing: explanation/security.md
+  - Guides:
+      - Overview: index.md
+      - Get Started:
+          - Install & Update: how-to/install.md
+          - Quickstart (Ollama): tutorials/quickstart-ollama.md
+      - Workflows:
+          - Long Task With Harness: tutorials/harness-long-task.md
+          - Common Use Cases: how-to/use-cases.md
+      - Configuration:
+          - Providers & Routing: how-to/providers.md
+      - Operations:
+          - Troubleshooting: how-to/troubleshooting.md
+          - Windows Notes: how-to/windows.md
+          - Run the Daemon: how-to/daemon.md
+      - Explanation:
+          - Concepts: explanation/concepts.md
+          - Security & Sandboxing: explanation/security.md
   - Reference:
       - CLI: reference/cli.md
       - Config: reference/config.md
       - Tools: reference/tools.md
   - 中文:
-      - 主页: zh/index.md
-      - 快速开始（Ollama）: zh/tutorials/quickstart-ollama.md
-      - Harness 长任务: zh/tutorials/harness-long-task.md
-      - Providers 与路由: zh/how-to/providers.md
-      - 常见场景: zh/how-to/use-cases.md
-      - 故障排查: zh/how-to/troubleshooting.md
-      - Windows 说明: zh/how-to/windows.md
+      - 概览: zh/index.md
+      - 入门:
+          - 安装与更新: zh/how-to/install.md
+          - 快速开始（Ollama）: zh/tutorials/quickstart-ollama.md
+      - 工作流:
+          - Harness 长任务: zh/tutorials/harness-long-task.md
+          - 常见场景: zh/how-to/use-cases.md
+      - 配置:
+          - Providers 与路由: zh/how-to/providers.md
+      - 运维:
+          - 故障排查: zh/how-to/troubleshooting.md
+          - Windows 说明: zh/how-to/windows.md
+          - 运行 Daemon: zh/how-to/daemon.md
+      - 说明:
+          - 概念: zh/explanation/concepts.md
+          - 安全与沙盒: zh/explanation/security.md
+      - 参考:
+          - CLI: zh/reference/cli.md
+          - 配置: zh/reference/config.md
+          - 工具: zh/reference/tools.md
