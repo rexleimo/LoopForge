@@ -213,7 +213,7 @@ pub fn preflight(workspace_dir: &Path) -> anyhow::Result<()> {
     }
 
     let status = Command::new("bash")
-        .arg(&init_sh_path)
+        .arg(INIT_SH)
         .current_dir(workspace_dir)
         .status()
         .with_context(|| format!("run {}", init_sh_path.display()))?;
@@ -357,7 +357,7 @@ Rules:
 fn run_init_sh(workspace_dir: &Path) -> anyhow::Result<()> {
     let init_sh_path = workspace_dir.join(INIT_SH);
     let status = Command::new("bash")
-        .arg(&init_sh_path)
+        .arg(INIT_SH)
         .current_dir(workspace_dir)
         .status()
         .with_context(|| format!("run {}", init_sh_path.display()))?;
@@ -370,7 +370,7 @@ fn run_init_sh(workspace_dir: &Path) -> anyhow::Result<()> {
 fn run_init_sh_capture(workspace_dir: &Path) -> anyhow::Result<String> {
     let init_sh_path = workspace_dir.join(INIT_SH);
     let output = Command::new("bash")
-        .arg(&init_sh_path)
+        .arg(INIT_SH)
         .current_dir(workspace_dir)
         .output()
         .with_context(|| format!("run {}", init_sh_path.display()))?;
