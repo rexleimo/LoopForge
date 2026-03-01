@@ -70,6 +70,34 @@ echo "[rexos] init.sh: customize this script for your project"
     Ok(())
 }
 
+pub async fn bootstrap_with_prompt(
+    agent: &rexos_runtime::AgentRuntime,
+    workspace_dir: &Path,
+    session_id: &str,
+    prompt: &str,
+) -> anyhow::Result<()> {
+    if !is_initialized(workspace_dir) {
+        init_workspace(workspace_dir)?;
+    }
+
+    preflight(workspace_dir)?;
+
+    let initializer_system = initializer_system_prompt();
+    let _ = agent
+        .run_session(
+            workspace_dir.to_path_buf(),
+            session_id,
+            Some(initializer_system),
+            prompt,
+            rexos_kernel::router::TaskKind::Coding,
+        )
+        .await?;
+
+    run_init_sh(workspace_dir)?;
+    commit_checkpoint_if_dirty(workspace_dir, "chore: rexos harness bootstrap")?;
+    Ok(())
+}
+
 pub fn preflight(workspace_dir: &Path) -> anyhow::Result<()> {
     let features_path = workspace_dir.join(FEATURES_JSON);
     let progress_path = workspace_dir.join(PROGRESS_MD);
@@ -191,6 +219,69 @@ fn tail_lines(s: &str, n: usize) -> Vec<&str> {
         lines.drain(0..lines.len() - n);
     }
     lines
+}
+
+fn is_initialized(workspace_dir: &Path) -> bool {
+    workspace_dir.join(FEATURES_JSON).exists()
+        && workspace_dir.join(PROGRESS_MD).exists()
+        && workspace_dir.join(INIT_SH).exists()
+}
+
+fn initializer_system_prompt() -> &'static str {
+    r#"You are RexOS initializer.
+
+Your job:
+- Generate a comprehensive `features.json` from the user prompt.
+- Keep `features.json` as a stable checklist. Do NOT delete or reorder items after creation.
+- Each feature must include: id, description, steps, passes=false, and optional notes.
+- Update `init.sh` to run the minimal smoke checks/tests required to verify features.
+- Append a short entry to `rexos-progress.md` describing what you initialized.
+
+Rules:
+- Work only inside the workspace directory.
+- Prefer tools (`fs_read`, `fs_write`, `shell`) to inspect and change files.
+- After edits, run `./init.sh` and ensure it succeeds.
+- Commit your changes to git with a descriptive message.
+"#
+}
+
+fn run_init_sh(workspace_dir: &Path) -> anyhow::Result<()> {
+    let init_sh_path = workspace_dir.join(INIT_SH);
+    let status = Command::new("bash")
+        .arg(&init_sh_path)
+        .current_dir(workspace_dir)
+        .status()
+        .with_context(|| format!("run {}", init_sh_path.display()))?;
+    if !status.success() {
+        bail!("init.sh failed");
+    }
+    Ok(())
+}
+
+fn commit_checkpoint_if_dirty(workspace_dir: &Path, message: &str) -> anyhow::Result<()> {
+    let output = Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(workspace_dir)
+        .output()
+        .context("git status")?;
+
+    if !output.status.success() {
+        bail!(
+            "git status failed:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    if output.stdout.is_empty() {
+        return Ok(());
+    }
+
+    git(workspace_dir, ["add", "-A"])?;
+    git_with_identity(
+        workspace_dir,
+        ["commit", "-m", message, "--no-gpg-sign"],
+    )?;
+    Ok(())
 }
 
 fn first_failing_feature(v: &serde_json::Value) -> Option<String> {

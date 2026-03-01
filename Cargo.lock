@@ -1098,6 +1098,8 @@ name = "rexos-harness"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "rexos-kernel",
+ "rexos-runtime",
  "serde_json",
 ]
 
