@@ -97,6 +97,11 @@ impl Toolset {
                 let timeout_ms = args.timeout_seconds.map(|s| s.saturating_mul(1000));
                 self.shell(&args.command, timeout_ms).await
             }
+            "docker_exec" => {
+                let args: DockerExecArgs = serde_json::from_str(arguments_json)
+                    .context("parse docker_exec arguments")?;
+                self.docker_exec(&args.command).await
+            }
             "web_fetch" => {
                 let args: WebFetchArgs =
                     serde_json::from_str(arguments_json).context("parse web_fetch arguments")?;
@@ -224,8 +229,8 @@ impl Toolset {
             | "channel_send" => {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
-            "docker_exec" | "process_start" | "process_poll" | "process_write" | "process_kill"
-            | "process_list" | "canvas_present" => {
+            "process_start" | "process_poll" | "process_write" | "process_kill" | "process_list"
+            | "canvas_present" => {
                 bail!("tool not implemented yet: {name}")
             }
             _ => bail!("unknown tool: {name}"),
@@ -388,6 +393,63 @@ impl Toolset {
         }
 
         Ok(combined)
+    }
+
+    async fn docker_exec(&self, command: &str) -> anyhow::Result<String> {
+        let enabled = std::env::var("REXOS_DOCKER_EXEC_ENABLED")
+            .ok()
+            .map(|v| v.trim() == "1")
+            .unwrap_or(false);
+        if !enabled {
+            bail!("docker_exec is disabled (set REXOS_DOCKER_EXEC_ENABLED=1 to enable)");
+        }
+
+        if command.trim().is_empty() {
+            bail!("command is empty");
+        }
+
+        let image = std::env::var("REXOS_DOCKER_EXEC_IMAGE")
+            .ok()
+            .filter(|v| !v.trim().is_empty())
+            .unwrap_or_else(|| "alpine:3.20".to_string());
+
+        let timeout = Duration::from_secs(60);
+        let mount = format!("{}:/workspace", self.workspace_root.display());
+
+        let mut cmd = tokio::process::Command::new("docker");
+        cmd.arg("run")
+            .arg("--rm")
+            .arg("-i")
+            .arg("--network")
+            .arg("none")
+            .arg("-v")
+            .arg(mount)
+            .arg("-w")
+            .arg("/workspace")
+            .arg(&image)
+            .arg("sh")
+            .arg("-lc")
+            .arg(command)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+
+        let output = tokio::time::timeout(timeout, cmd.output())
+            .await
+            .context("docker_exec timed out")?
+            .context("spawn docker")?;
+
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let exit_code = output.status.code().unwrap_or(-1);
+
+        Ok(serde_json::json!({
+            "exit_code": exit_code,
+            "stdout": stdout,
+            "stderr": stderr,
+            "image": image,
+            "workdir": "/workspace",
+        })
+        .to_string())
     }
 
     async fn web_search(&self, query: &str, max_results: Option<u32>) -> anyhow::Result<String> {
@@ -1218,6 +1280,11 @@ struct ShellExecArgs {
     command: String,
     #[serde(default)]
     timeout_seconds: Option<u64>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct DockerExecArgs {
+    command: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -2444,9 +2511,24 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         },
     });
 
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "docker_exec".to_string(),
+            description: "Run a command inside a one-shot Docker container with the workspace mounted (disabled by default).".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "command": { "type": "string", "description": "Command to execute inside the container (passed to `sh -lc`)." }
+                },
+                "required": ["command"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
     // Reserved tool names (stubs in RexOS for now).
     for name in [
-        "docker_exec",
         "process_start",
         "process_poll",
         "process_write",
@@ -3096,6 +3178,31 @@ mod tests {
         );
 
         server.abort();
+    }
+
+    #[tokio::test]
+    async fn docker_exec_is_disabled_by_default() {
+        let _lock = ENV_LOCK.lock().unwrap();
+
+        let previous = std::env::var_os("REXOS_DOCKER_EXEC_ENABLED");
+        std::env::remove_var("REXOS_DOCKER_EXEC_ENABLED");
+
+        let tmp = tempfile::tempdir().unwrap();
+        let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
+        let err = tools
+            .call("docker_exec", r#"{ "command": "echo hi" }"#)
+            .await
+            .unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("REXOS_DOCKER_EXEC_ENABLED") || msg.contains("disabled"),
+            "{msg}"
+        );
+
+        match previous {
+            Some(v) => std::env::set_var("REXOS_DOCKER_EXEC_ENABLED", v),
+            None => std::env::remove_var("REXOS_DOCKER_EXEC_ENABLED"),
+        }
     }
 
     #[tokio::test]
