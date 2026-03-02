@@ -69,6 +69,13 @@ plugins:
             Long Task With Harness: Harness 长任务
             Examples: 案例代码
             Common Use Cases: 常见场景
+            Index: 目录
+            Setup Sanity Check: 环境自检
+            Harness Recipes: Harness 配方
+            Mechanical Edits: 机械化改动
+            Routing Recipes: 路由示例
+            Daemon Health Check: Daemon 健康检查
+            Notifications: 通知
             Browser Automation: 浏览器自动化
             Browser Use Cases: 浏览器案例
             Configuration: 配置
@@ -141,7 +148,14 @@ nav:
           - Concepts: explanation/concepts.md
           - Security & Sandboxing: explanation/security.md
   - Examples:
-      - Common Use Cases: how-to/use-cases.md
+      - Common Use Cases:
+          - Index: how-to/use-cases.md
+          - Setup Sanity Check: examples/sanity-check.md
+          - Harness Recipes: examples/harness-recipes.md
+          - Mechanical Edits: examples/mechanical-edits.md
+          - Routing Recipes: examples/routing-recipes.md
+          - Daemon Health Check: examples/daemon-health.md
+          - Notifications: examples/notifications.md
       - Browser Use Cases: how-to/browser-use-cases.md
   - Reference:
       - CLI: reference/cli.md
