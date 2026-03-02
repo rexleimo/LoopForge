@@ -1,6 +1,20 @@
 use rexos::llm::openai_compat::{ChatCompletionRequest, ChatMessage, OpenAiCompatibleClient, Role};
 use rexos::tools::Toolset;
 
+fn percent_encode_query(query: &str) -> String {
+    let mut out = String::new();
+    for b in query.as_bytes() {
+        match *b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(*b as char)
+            }
+            b' ' => out.push_str("%20"),
+            _ => out.push_str(&format!("%{:02X}", b)),
+        }
+    }
+    out
+}
+
 #[tokio::test]
 #[ignore]
 async fn browser_baidu_search_weather_and_summarize_with_ollama_smoke() {
@@ -47,32 +61,61 @@ async fn browser_baidu_search_weather_and_summarize_with_ollama_smoke() {
         "unexpected title: {nav_v}"
     );
 
-    // 2) Type query and submit.
+    // Save an early screenshot so we have evidence even if the flow changes.
     let _ = tools
+        .call(
+            "browser_screenshot",
+            r#"{ "path": ".rexos/browser/baidu_home.png" }"#,
+        )
+        .await
+        .expect("browser_screenshot (home)");
+
+    // 2) Type query and submit (best-effort). If Baidu hides the search box for automation, fall
+    // back to opening the results URL directly.
+    let search_box_ready = tools
         .call(
             "browser_wait_for",
-            r#"{ "selector": "input[name=\"wd\"]", "timeout_ms": 15000 }"#,
+            r#"{ "selector": "input[name=\"wd\"]", "timeout_ms": 3000 }"#,
         )
         .await
-        .expect("browser_wait_for search box");
-    let _ = tools
-        .call(
-            "browser_type",
-            &serde_json::json!({
-                "selector": "input[name=\"wd\"]",
-                "text": query,
-            })
-            .to_string(),
-        )
-        .await
-        .expect("browser_type");
-    let _ = tools
-        .call(
-            "browser_press_key",
-            r#"{ "selector": "input[name=\"wd\"]", "key": "Enter" }"#,
-        )
-        .await
-        .expect("browser_press_key");
+        .is_ok();
+
+    if search_box_ready {
+        let _ = tools
+            .call(
+                "browser_type",
+                &serde_json::json!({
+                    "selector": "input[name=\"wd\"]",
+                    "text": query,
+                })
+                .to_string(),
+            )
+            .await
+            .expect("browser_type");
+        let _ = tools
+            .call(
+                "browser_press_key",
+                r#"{ "selector": "input[name=\"wd\"]", "key": "Enter" }"#,
+            )
+            .await
+            .expect("browser_press_key");
+    } else {
+        let results_url = format!(
+            "https://www.baidu.com/s?wd={}",
+            percent_encode_query(&query)
+        );
+        let _ = tools
+            .call(
+                "browser_navigate",
+                &serde_json::json!({
+                    "url": results_url,
+                    "timeout_ms": 30000,
+                })
+                .to_string(),
+            )
+            .await
+            .expect("browser_navigate (direct results url)");
+    }
 
     // 3) Wait for results container and read page.
     let _ = tools
