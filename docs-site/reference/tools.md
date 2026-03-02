@@ -97,13 +97,25 @@ These tools are implemented by the agent runtime (not by the standalone `Toolset
 - `event_publish`
 - `schedule_create` / `schedule_list` / `schedule_delete`
 - `cron_create` / `cron_list` / `cron_cancel`
+- `channel_send` (outbox enqueue; use `rexos channel drain` to deliver)
 - `knowledge_add_entity` / `knowledge_add_relation` / `knowledge_query`
+
+## `channel_send`
+
+Enqueue an outbound message into the outbox. Delivery happens out-of-band via the dispatcher:
+
+- run once: `rexos channel drain`
+- long-running: `rexos channel worker`
+
+Supported channels:
+
+- `console`: prints the message on drain
+- `webhook`: posts JSON to `REXOS_WEBHOOK_URL`
 
 ## Reserved tools (stubs)
 
 The following tool names are defined but currently return `tool not implemented yet: <name>`:
 
-`channel_send`,
 `hand_list`, `hand_activate`, `hand_status`, `hand_deactivate`,
 `a2a_discover`, `a2a_send`,
 `text_to_speech`, `speech_to_text`,

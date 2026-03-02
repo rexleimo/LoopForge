@@ -97,13 +97,25 @@ RexOS 不会做基于 IP 的地理定位推断。
 - `event_publish`
 - `schedule_create` / `schedule_list` / `schedule_delete`
 - `cron_create` / `cron_list` / `cron_cancel`
+- `channel_send`（写入 outbox；用 `rexos channel drain` 投递）
 - `knowledge_add_entity` / `knowledge_add_relation` / `knowledge_query`
+
+## `channel_send`
+
+将一条外发消息写入 outbox。实际投递由 dispatcher 在带副作用的进程中完成：
+
+- 单次执行：`rexos channel drain`
+- 常驻 worker：`rexos channel worker`
+
+当前支持的 channel：
+
+- `console`：drain 时打印到 stdout
+- `webhook`：POST JSON 到 `REXOS_WEBHOOK_URL`
 
 ## 预留工具（stubs）
 
 以下工具名已定义，但当前会直接返回 `tool not implemented yet: <name>`：
 
-`channel_send`,
 `hand_list`, `hand_activate`, `hand_status`, `hand_deactivate`,
 `a2a_discover`, `a2a_send`,
 `text_to_speech`, `speech_to_text`,

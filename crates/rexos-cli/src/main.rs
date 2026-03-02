@@ -20,6 +20,11 @@ enum Command {
         #[command(subcommand)]
         command: AgentCommand,
     },
+    /// Outbound channels (outbox + dispatcher)
+    Channel {
+        #[command(subcommand)]
+        command: ChannelCommand,
+    },
     /// Long-running harness helpers (initializer + sessions)
     Harness {
         #[command(subcommand)]
@@ -78,6 +83,25 @@ enum AgentCommand {
         /// Task kind for model routing
         #[arg(long, value_enum, default_value_t = AgentKind::Coding)]
         kind: AgentKind,
+    },
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum ChannelCommand {
+    /// Drain queued outbox messages once
+    Drain {
+        /// Max messages to attempt in one run
+        #[arg(long, default_value_t = 50)]
+        limit: usize,
+    },
+    /// Run a long-lived worker that periodically drains the outbox
+    Worker {
+        /// Seconds between drain attempts
+        #[arg(long, default_value_t = 5)]
+        interval_secs: u64,
+        /// Max messages to attempt per drain cycle
+        #[arg(long, default_value_t = 50)]
+        limit: usize,
     },
 }
 
@@ -152,8 +176,43 @@ async fn main() -> anyhow::Result<()> {
                 eprintln!("[rexos] session_id={session_id}");
             }
         },
+        Command::Channel { command } => match command {
+            ChannelCommand::Drain { limit } => {
+                let paths = RexosPaths::discover()?;
+                paths.ensure_dirs()?;
+                RexosConfig::ensure_default(&paths)?;
+                MemoryStore::open_or_create(&paths)?;
+
+                let dispatcher =
+                    rexos::agent::OutboxDispatcher::new(MemoryStore::open_or_create(&paths)?)?;
+                let summary = dispatcher.drain_once(limit).await?;
+                println!("drain: sent={} failed={}", summary.sent, summary.failed);
+            }
+            ChannelCommand::Worker {
+                interval_secs,
+                limit,
+            } => {
+                let paths = RexosPaths::discover()?;
+                paths.ensure_dirs()?;
+                RexosConfig::ensure_default(&paths)?;
+                MemoryStore::open_or_create(&paths)?;
+
+                let dispatcher =
+                    rexos::agent::OutboxDispatcher::new(MemoryStore::open_or_create(&paths)?)?;
+
+                loop {
+                    let summary = dispatcher.drain_once(limit).await?;
+                    println!("drain: sent={} failed={}", summary.sent, summary.failed);
+                    tokio::time::sleep(std::time::Duration::from_secs(interval_secs)).await;
+                }
+            }
+        },
         Command::Harness { command } => match command {
-            HarnessCommand::Init { dir, prompt, session } => {
+            HarnessCommand::Init {
+                dir,
+                prompt,
+                session,
+            } => {
                 if prompt.is_none() {
                     rexos::harness::init_workspace(&dir)?;
                     println!("Harness initialized in {}", dir.display());

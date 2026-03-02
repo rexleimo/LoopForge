@@ -6,6 +6,8 @@ RexOS ships a single binary: `rexos`.
 
 - `rexos init` — initialize `~/.rexos` (config + database)
 - `rexos agent run` — run a single agent session in a workspace
+- `rexos channel drain` — drain queued outbox messages once
+- `rexos channel worker` — run a polling outbox dispatcher
 - `rexos harness init` — initialize a harness workspace (durable artifacts + git)
 - `rexos harness run` — run an incremental harness session
 - `rexos daemon start` — start the HTTP daemon
@@ -23,6 +25,8 @@ RexOS ships a single binary: `rexos`.
     rexos harness init rexos-task --prompt "Initialize a features checklist for refactoring this repo"
     rexos harness run rexos-task --prompt "Continue"
 
+    rexos channel drain
+
     rexos daemon start --addr 127.0.0.1:8787
     ```
 
@@ -36,6 +40,8 @@ RexOS ships a single binary: `rexos`.
     mkdir rexos-task
     rexos harness init rexos-task --prompt "Initialize a features checklist for refactoring this repo"
     rexos harness run rexos-task --prompt "Continue"
+
+    rexos channel drain
 
     rexos daemon start --addr 127.0.0.1:8787
     ```

@@ -163,3 +163,34 @@ Notes:
 
 - `browser_navigate` is SSRF-checked by default (set `allow_private=true` only for local/private targets).
 - Screenshots write to workspace-relative paths (no absolute paths, no `..`, no symlink escapes).
+
+---
+
+## 9) Notifications via `channel_send` (outbox + dispatcher)
+
+`channel_send` enqueues an outbound message into an outbox. Delivery happens when you run the dispatcher:
+
+```bash
+rexos channel drain
+```
+
+Or run a long-lived worker:
+
+```bash
+rexos channel worker --interval-secs 5
+```
+
+### Example: send a console notification
+
+```bash
+rexos agent run --workspace . --prompt "Use channel_send to enqueue: channel=console recipient=me subject=Hello message=Done"
+rexos channel drain
+```
+
+### Example: send to a webhook
+
+```bash
+export REXOS_WEBHOOK_URL="https://example.com/my-webhook"
+rexos agent run --workspace . --prompt "Use channel_send to enqueue: channel=webhook recipient=user1 message=hello"
+rexos channel drain
+```

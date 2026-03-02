@@ -23,6 +23,130 @@ pub struct AgentRuntime {
     router: ModelRouter,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct OutboxDrainSummary {
+    pub sent: u32,
+    pub failed: u32,
+}
+
+#[derive(Debug)]
+pub struct OutboxDispatcher {
+    memory: MemoryStore,
+    http: reqwest::Client,
+}
+
+impl OutboxDispatcher {
+    pub fn new(memory: MemoryStore) -> anyhow::Result<Self> {
+        let http = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(15))
+            .build()
+            .context("build http client")?;
+        Ok(Self { memory, http })
+    }
+
+    pub async fn drain_once(&self, limit: usize) -> anyhow::Result<OutboxDrainSummary> {
+        let mut msgs = self.outbox_messages_get()?;
+        let mut summary = OutboxDrainSummary::default();
+
+        let mut processed = 0usize;
+        for msg in msgs.iter_mut() {
+            if processed >= limit.max(1) {
+                break;
+            }
+            if msg.status != OutboxStatus::Queued {
+                continue;
+            }
+            processed += 1;
+
+            let now = AgentRuntime::now_epoch_seconds();
+            msg.attempts = msg.attempts.saturating_add(1);
+            msg.updated_at = now;
+            msg.last_error = None;
+
+            let result = match msg.channel.as_str() {
+                "console" => {
+                    self.deliver_console(msg);
+                    Ok(())
+                }
+                "webhook" => self.deliver_webhook(msg).await,
+                other => Err(anyhow::anyhow!("unknown channel: {other}")),
+            };
+
+            match result {
+                Ok(()) => {
+                    msg.status = OutboxStatus::Sent;
+                    msg.sent_at = Some(now);
+                    summary.sent = summary.sent.saturating_add(1);
+                }
+                Err(e) => {
+                    msg.status = OutboxStatus::Failed;
+                    msg.last_error = Some(e.to_string());
+                    summary.failed = summary.failed.saturating_add(1);
+                }
+            }
+        }
+
+        if processed > 0 {
+            self.outbox_messages_set(&msgs)?;
+        }
+
+        Ok(summary)
+    }
+
+    fn outbox_messages_get(&self) -> anyhow::Result<Vec<OutboxMessageRecord>> {
+        let raw = self
+            .memory
+            .kv_get("rexos.outbox.messages")
+            .context("kv_get rexos.outbox.messages")?
+            .unwrap_or_else(|| "[]".to_string());
+        Ok(serde_json::from_str(&raw).unwrap_or_default())
+    }
+
+    fn outbox_messages_set(&self, msgs: &[OutboxMessageRecord]) -> anyhow::Result<()> {
+        let raw = serde_json::to_string(msgs).context("serialize rexos.outbox.messages")?;
+        self.memory
+            .kv_set("rexos.outbox.messages", &raw)
+            .context("kv_set rexos.outbox.messages")?;
+        Ok(())
+    }
+
+    fn deliver_console(&self, msg: &OutboxMessageRecord) {
+        let subject = msg.subject.as_deref().unwrap_or("");
+        println!(
+            "[rexos][channel_send][console] to={} subject={} message={}",
+            msg.recipient, subject, msg.message
+        );
+    }
+
+    async fn deliver_webhook(&self, msg: &OutboxMessageRecord) -> anyhow::Result<()> {
+        let url = std::env::var("REXOS_WEBHOOK_URL")
+            .ok()
+            .filter(|v| !v.trim().is_empty())
+            .ok_or_else(|| anyhow::anyhow!("REXOS_WEBHOOK_URL is not set"))?;
+
+        let payload = serde_json::json!({
+            "message_id": msg.message_id,
+            "recipient": msg.recipient,
+            "subject": msg.subject,
+            "message": msg.message,
+            "created_at": msg.created_at,
+        });
+
+        let resp = self
+            .http
+            .post(url)
+            .json(&payload)
+            .send()
+            .await
+            .context("send webhook request")?;
+
+        if !resp.status().is_success() {
+            bail!("webhook returned http {}", resp.status());
+        }
+        Ok(())
+    }
+}
+
 impl AgentRuntime {
     pub fn new(memory: MemoryStore, llms: LlmRegistry, router: ModelRouter) -> Self {
         Self {
@@ -208,6 +332,11 @@ impl AgentRuntime {
                         let args: CronCancelToolArgs =
                             serde_json::from_str(&args_json).context("parse cron_cancel args")?;
                         self.cron_cancel(&args.job_id).context("cron_cancel")?
+                    }
+                    "channel_send" => {
+                        let args: ChannelSendToolArgs =
+                            serde_json::from_str(&args_json).context("parse channel_send args")?;
+                        self.channel_send(args).context("channel_send")?
                     }
                     "knowledge_add_entity" => {
                         let args: KnowledgeAddEntityToolArgs = serde_json::from_str(&args_json)
@@ -694,7 +823,9 @@ impl AgentRuntime {
     }
 
     fn cron_create(&self, args: CronCreateToolArgs) -> anyhow::Result<String> {
-        let job_id = args.job_id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+        let job_id = args
+            .job_id
+            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
         let mut jobs = self.cron_jobs_get()?;
         if let Some(existing) = jobs.iter().find(|j| j.job_id == job_id) {
             return Ok(serde_json::to_string(existing).unwrap_or_else(|_| "ok".to_string()));
@@ -734,6 +865,71 @@ impl AgentRuntime {
         }
         self.cron_jobs_set(&jobs)?;
         Ok("ok".to_string())
+    }
+
+    fn outbox_messages_get(&self) -> anyhow::Result<Vec<OutboxMessageRecord>> {
+        let key = "rexos.outbox.messages";
+        let raw = self
+            .memory
+            .kv_get(key)
+            .context("kv_get rexos.outbox.messages")?
+            .unwrap_or_else(|| "[]".to_string());
+        let msgs: Vec<OutboxMessageRecord> = serde_json::from_str(&raw).unwrap_or_default();
+        Ok(msgs)
+    }
+
+    fn outbox_messages_set(&self, msgs: &[OutboxMessageRecord]) -> anyhow::Result<()> {
+        let key = "rexos.outbox.messages";
+        let raw = serde_json::to_string(msgs).context("serialize rexos.outbox.messages")?;
+        self.memory
+            .kv_set(key, &raw)
+            .context("kv_set rexos.outbox.messages")?;
+        Ok(())
+    }
+
+    fn channel_send(&self, args: ChannelSendToolArgs) -> anyhow::Result<String> {
+        if args.channel.trim().is_empty() {
+            return Ok("error: channel is empty".to_string());
+        }
+        if args.recipient.trim().is_empty() {
+            return Ok("error: recipient is empty".to_string());
+        }
+        if args.message.trim().is_empty() {
+            return Ok("error: message is empty".to_string());
+        }
+
+        match args.channel.as_str() {
+            "console" | "webhook" => {}
+            other => return Ok(format!("error: unknown channel: {other}")),
+        }
+
+        let now = Self::now_epoch_seconds();
+        let record = OutboxMessageRecord {
+            message_id: uuid::Uuid::new_v4().to_string(),
+            channel: args.channel,
+            recipient: args.recipient,
+            subject: args.subject.filter(|s| !s.trim().is_empty()),
+            message: args.message,
+            status: OutboxStatus::Queued,
+            attempts: 0,
+            last_error: None,
+            created_at: now,
+            updated_at: now,
+            sent_at: None,
+        };
+
+        let mut msgs = self.outbox_messages_get()?;
+        msgs.push(record.clone());
+        if msgs.len() > 500 {
+            msgs.drain(0..(msgs.len() - 500));
+        }
+        self.outbox_messages_set(&msgs)?;
+
+        Ok(serde_json::json!({
+            "status": "queued",
+            "message_id": record.message_id,
+        })
+        .to_string())
     }
 
     fn knowledge_entities_get(&self) -> anyhow::Result<Vec<KnowledgeEntityRecord>> {
@@ -1057,6 +1253,41 @@ struct CronCreateToolArgs {
 struct CronCancelToolArgs {
     #[serde(alias = "id")]
     job_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum OutboxStatus {
+    Queued,
+    Sent,
+    Failed,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct OutboxMessageRecord {
+    message_id: String,
+    channel: String,
+    recipient: String,
+    #[serde(default)]
+    subject: Option<String>,
+    message: String,
+    status: OutboxStatus,
+    attempts: u32,
+    #[serde(default)]
+    last_error: Option<String>,
+    created_at: i64,
+    updated_at: i64,
+    #[serde(default)]
+    sent_at: Option<i64>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ChannelSendToolArgs {
+    channel: String,
+    recipient: String,
+    #[serde(default)]
+    subject: Option<String>,
+    message: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

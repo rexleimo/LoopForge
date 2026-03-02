@@ -190,11 +190,12 @@ impl Toolset {
             | "knowledge_query"
             | "cron_create"
             | "cron_list"
-            | "cron_cancel" => {
+            | "cron_cancel"
+            | "channel_send" => {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
-            "channel_send" | "hand_list" | "hand_activate" | "hand_status" | "hand_deactivate"
-            | "a2a_discover" | "a2a_send" | "text_to_speech" | "speech_to_text" | "docker_exec"
+            "hand_list" | "hand_activate" | "hand_status" | "hand_deactivate" | "a2a_discover"
+            | "a2a_send" | "text_to_speech" | "speech_to_text" | "docker_exec"
             | "process_start" | "process_poll" | "process_write" | "process_kill"
             | "process_list" | "canvas_present" => {
                 bail!("tool not implemented yet: {name}")
@@ -2034,9 +2035,29 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         },
     });
 
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "channel_send".to_string(),
+            description:
+                "Enqueue an outbound message into the outbox (delivery happens via dispatcher)."
+                    .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "channel": { "type": "string", "description": "Channel adapter name (console, webhook)." },
+                    "recipient": { "type": "string", "description": "Channel-specific recipient identifier." },
+                    "subject": { "type": "string", "description": "Optional subject line (used by some channels)." },
+                    "message": { "type": "string", "description": "Message body to send." }
+                },
+                "required": ["channel", "recipient", "message"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
     // Reserved tool names (stubs in RexOS for now).
     for name in [
-        "channel_send",
         "hand_list",
         "hand_activate",
         "hand_status",
@@ -2512,7 +2533,7 @@ mod tests {
     async fn reserved_stub_tools_return_not_implemented_error() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
-        let err = tools.call("channel_send", r#"{}"#).await.unwrap_err();
+        let err = tools.call("hand_list", r#"{}"#).await.unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("not implemented"), "{msg}");
     }

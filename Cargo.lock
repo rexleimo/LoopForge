@@ -1146,6 +1146,7 @@ name = "rexos-runtime"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "reqwest",
  "rexos-kernel",
  "rexos-llm",
  "rexos-memory",

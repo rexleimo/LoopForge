@@ -163,3 +163,34 @@ rexos agent run --workspace . --prompt "使用 browser 工具打开 https://exam
 
 - `browser_navigate` 默认带 SSRF 防护（只有本地/私网目标才建议显式开启 `allow_private=true`）。
 - 截图只允许写到 workspace 相对路径（不允许绝对路径、不允许 `..`、不允许通过 symlink 逃逸）。
+
+---
+
+## 9) 用 `channel_send` 做通知（outbox + dispatcher）
+
+`channel_send` 只负责把消息写入 outbox。真正的投递会在你运行 dispatcher 时发生：
+
+```bash
+rexos channel drain
+```
+
+或者跑一个常驻 worker：
+
+```bash
+rexos channel worker --interval-secs 5
+```
+
+### 示例：发送 console 通知
+
+```bash
+rexos agent run --workspace . --prompt "使用 channel_send 入队：channel=console recipient=me subject=Hello message=Done"
+rexos channel drain
+```
+
+### 示例：发送到 webhook
+
+```bash
+export REXOS_WEBHOOK_URL="https://example.com/my-webhook"
+rexos agent run --workspace . --prompt "使用 channel_send 入队：channel=webhook recipient=user1 message=hello"
+rexos channel drain
+```
