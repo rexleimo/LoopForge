@@ -90,6 +90,7 @@ impl Toolset {
             browser_click_def(),
             browser_type_def(),
             browser_press_key_def(),
+            browser_wait_for_def(),
             browser_read_page_def(),
             browser_screenshot_def(),
             browser_close_def(),
@@ -269,6 +270,16 @@ impl Toolset {
                     .context("parse browser_press_key arguments")?;
                 self.browser_press_key(args.selector.as_deref(), &args.key)
                     .await
+            }
+            "browser_wait_for" => {
+                let args: BrowserWaitForArgs = serde_json::from_str(arguments_json)
+                    .context("parse browser_wait_for arguments")?;
+                self.browser_wait_for(
+                    args.selector.as_deref(),
+                    args.text.as_deref(),
+                    args.timeout_ms,
+                )
+                .await
             }
             "browser_read_page" => {
                 let _args: serde_json::Value = serde_json::from_str(arguments_json)
@@ -1314,6 +1325,39 @@ impl Toolset {
         Ok(resp.into_tool_output()?)
     }
 
+    async fn browser_wait_for(
+        &self,
+        selector: Option<&str>,
+        text: Option<&str>,
+        timeout_ms: Option<u64>,
+    ) -> anyhow::Result<String> {
+        if selector.unwrap_or("").trim().is_empty() && text.unwrap_or("").trim().is_empty() {
+            bail!("browser_wait_for requires selector or text");
+        }
+
+        let mut guard = self.browser.lock().await;
+        let session = guard
+            .as_mut()
+            .context("browser session not started; call browser_navigate first")?;
+
+        let mut cmd = serde_json::json!({
+            "action": "WaitFor",
+        });
+
+        if let Some(selector) = selector {
+            cmd["selector"] = serde_json::Value::String(selector.to_string());
+        }
+        if let Some(text) = text {
+            cmd["text"] = serde_json::Value::String(text.to_string());
+        }
+        if let Some(timeout_ms) = timeout_ms {
+            cmd["timeout_ms"] = serde_json::Value::Number(timeout_ms.into());
+        }
+
+        let resp = session.send(cmd).await?;
+        Ok(resp.into_tool_output()?)
+    }
+
     async fn browser_read_page(&self) -> anyhow::Result<String> {
         let mut guard = self.browser.lock().await;
         let session = guard
@@ -1767,6 +1811,16 @@ struct BrowserPressKeyArgs {
     key: String,
     #[serde(default)]
     selector: Option<String>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct BrowserWaitForArgs {
+    #[serde(default)]
+    selector: Option<String>,
+    #[serde(default)]
+    text: Option<String>,
+    #[serde(default)]
+    timeout_ms: Option<u64>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -3236,6 +3290,25 @@ fn browser_press_key_def() -> ToolDefinition {
     }
 }
 
+fn browser_wait_for_def() -> ToolDefinition {
+    ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "browser_wait_for".to_string(),
+            description: "Wait for a selector or text to appear on the page.".to_string(),
+            parameters: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "selector": { "type": "string", "description": "Optional CSS selector to wait for." },
+                    "text": { "type": "string", "description": "Optional visible text to wait for." },
+                    "timeout_ms": { "type": "integer", "description": "Optional timeout in milliseconds.", "minimum": 1 }
+                },
+                "additionalProperties": false
+            }),
+        },
+    }
+}
+
 fn browser_read_page_def() -> ToolDefinition {
     ToolDefinition {
         kind: "function".to_string(),
@@ -3385,6 +3458,7 @@ mod tests {
             "browser_click",
             "browser_type",
             "browser_press_key",
+            "browser_wait_for",
             "browser_read_page",
             "browser_screenshot",
             "browser_close",
@@ -4075,6 +4149,22 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn browser_wait_for_requires_session() {
+        let tmp = tempfile::tempdir().unwrap();
+        let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
+
+        let err = tools
+            .call("browser_wait_for", r#"{ "text": "hello" }"#)
+            .await
+            .unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("browser_navigate") || msg.contains("session"),
+            "{msg}"
+        );
+    }
+
+    #[tokio::test]
     async fn browser_read_page_requires_session() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
@@ -4134,6 +4224,13 @@ mod tests {
             .unwrap();
         let v: serde_json::Value = serde_json::from_str(&out).unwrap();
         assert_eq!(v["key"], "Enter");
+
+        let out = tools
+            .call("browser_wait_for", r#"{ "text": "hello", "timeout_ms": 1 }"#)
+            .await
+            .unwrap();
+        let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+        assert_eq!(v["waited_for"]["text"], "hello");
 
         let page = tools.call("browser_read_page", r#"{}"#).await.unwrap();
         let v: serde_json::Value = serde_json::from_str(&page).unwrap();
@@ -4215,6 +4312,13 @@ for line in sys.stdin:
         resp = {"success": True, "data": {"typed": cmd.get("text", ""), "selector": cmd.get("selector", "")}}
     elif action == "PressKey":
         resp = {"success": True, "data": {"key": cmd.get("key", ""), "selector": cmd.get("selector", "")}}
+    elif action == "WaitFor":
+        waited_for = {}
+        if cmd.get("selector"):
+            waited_for["selector"] = cmd.get("selector", "")
+        if cmd.get("text"):
+            waited_for["text"] = cmd.get("text", "")
+        resp = {"success": True, "data": {"waited_for": waited_for, "timeout_ms": cmd.get("timeout_ms")}}
     elif action == "Close":
         resp = {"success": True, "data": {"status": "closed"}}
         sys.stdout.write(json.dumps(resp) + "\n")

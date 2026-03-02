@@ -116,6 +116,41 @@ def main() -> int:
                             },
                         }
                     )
+                elif action == "WaitFor":
+                    selector = cmd.get("selector", "")
+                    text = cmd.get("text", "")
+                    per_call_timeout = cmd.get("timeout_ms")
+                    try:
+                        per_call_timeout = int(per_call_timeout) if per_call_timeout else timeout_ms
+                    except Exception:
+                        per_call_timeout = timeout_ms
+
+                    waited_for = {}
+                    if selector:
+                        page.wait_for_selector(selector, timeout=per_call_timeout)
+                        waited_for["selector"] = selector
+                    if text:
+                        page.get_by_text(text, exact=False).first.wait_for(
+                            state="visible", timeout=per_call_timeout
+                        )
+                        waited_for["text"] = text
+
+                    if not waited_for:
+                        respond({"success": False, "error": "missing selector/text"})
+                        continue
+
+                    current_url = page.url if page.url else current_url
+                    respond(
+                        {
+                            "success": True,
+                            "data": {
+                                "waited_for": waited_for,
+                                "timeout_ms": per_call_timeout,
+                                "title": page.title(),
+                                "url": current_url,
+                            },
+                        }
+                    )
                 elif action == "ReadPage":
                     content = "(empty)"
                     try:

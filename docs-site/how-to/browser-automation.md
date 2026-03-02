@@ -19,6 +19,7 @@ If your Python executable isn't `python3`, set `REXOS_BROWSER_PYTHON` (example: 
 - `browser_click` — click by CSS selector (best-effort text fallback)
 - `browser_type` — fill an input
 - `browser_press_key` — press a key (example: `Enter` to submit a form)
+- `browser_wait_for` — wait for a selector/text to appear
 - `browser_read_page` — return `{title,url,content}` (content is truncated)
 - `browser_screenshot` — write a PNG to a workspace-relative path
 - `browser_close` — close the session (idempotent)
@@ -29,8 +30,9 @@ If your Python executable isn't `python3`, set `REXOS_BROWSER_PYTHON` (example: 
 2. `browser_read_page` to confirm state
 3. One small action: `browser_click` or `browser_type`
    - If you need to submit a form, use `browser_press_key` with `Enter`.
-4. `browser_read_page` again to confirm the page changed
-5. Repeat until done, then `browser_screenshot` for evidence and `browser_close`
+4. If the page updates async, use `browser_wait_for` (selector/text) to wait for the new state
+5. `browser_read_page` again to confirm the page changed
+6. Repeat until done, then `browser_screenshot` for evidence and `browser_close`
 
 ## Selector tips
 
@@ -48,10 +50,11 @@ If a CSS selector fails, `browser_click` will try a **best-effort visible-text f
 Use this as a starting point for agent prompts:
 
 ```text
-You may use RexOS browser tools (browser_navigate/click/type/press_key/read_page/screenshot/close).
+You may use RexOS browser tools (browser_navigate/click/type/press_key/wait_for/read_page/screenshot/close).
 
 Rules:
-- Always call browser_read_page after navigate/click/type to verify page state before the next step.
+- Always call browser_read_page after navigate/click/type/press_key to verify page state before the next step.
+- If the page updates async, use browser_wait_for (selector/text) before browser_read_page.
 - Keep actions minimal and reversible. If selectors fail, read the page and adjust selectors.
 - Save a screenshot at the end to .rexos/browser/<topic>.png.
 - Do NOT enter credentials or complete purchases without explicit user confirmation.
