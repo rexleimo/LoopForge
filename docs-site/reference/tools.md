@@ -72,6 +72,22 @@ Return environment metadata as JSON (`os`, `arch`, `tz`, `lang`).
 
 RexOS does not perform IP-based geolocation.
 
+## `media_describe`
+
+Describe a media file in the workspace and return best-effort metadata as JSON (`kind`, `bytes`, `ext`).
+
+## `media_transcribe`
+
+Transcribe media into text.
+
+For now this tool only supports **text transcript files** in the workspace (`.txt`, `.md`, `.srt`, `.vtt`) and returns JSON (`text`).
+
+## `image_generate`
+
+Generate an image asset from a prompt.
+
+For now this tool outputs **SVG** to a workspace-relative `path` (use a `.svg` filename).
+
 ## Runtime collaboration and scheduling tools
 
 These tools are implemented by the agent runtime (not by the standalone `Toolset`) and persist state in `~/.rexos/rexos.db`:
@@ -86,7 +102,6 @@ These tools are implemented by the agent runtime (not by the standalone `Toolset
 
 The following tool names are defined but currently return `tool not implemented yet: <name>`:
 
-`media_describe`, `media_transcribe`, `image_generate`,
 `cron_create`, `cron_list`, `cron_cancel`,
 `channel_send`,
 `hand_list`, `hand_activate`, `hand_status`, `hand_deactivate`,

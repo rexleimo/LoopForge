@@ -72,6 +72,22 @@ RexOS 会强制超时，并使用尽量最小的环境。
 
 RexOS 不会做基于 IP 的地理定位推断。
 
+## `media_describe`
+
+描述 workspace 内的媒体文件，并返回 best-effort 元数据 JSON（`kind`、`bytes`、`ext`）。
+
+## `media_transcribe`
+
+将媒体转成文本。
+
+当前仅支持读取 workspace 内的 **文本转写/字幕文件**（`.txt`、`.md`、`.srt`、`.vtt`），并返回 JSON（`text`）。
+
+## `image_generate`
+
+根据 prompt 生成图片资产。
+
+当前仅支持输出 **SVG**，写入 workspace 相对路径 `path`（建议使用 `.svg` 文件名）。
+
 ## Runtime 协作与调度工具
 
 以下工具由 agent runtime 实现（不是独立的 `Toolset`），状态会持久化到 `~/.rexos/rexos.db`：
@@ -86,7 +102,6 @@ RexOS 不会做基于 IP 的地理定位推断。
 
 以下工具名已定义，但当前会直接返回 `tool not implemented yet: <name>`：
 
-`media_describe`, `media_transcribe`, `image_generate`,
 `cron_create`, `cron_list`, `cron_cancel`,
 `channel_send`,
 `hand_list`, `hand_activate`, `hand_status`, `hand_deactivate`,

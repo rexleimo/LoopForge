@@ -119,9 +119,24 @@ impl Toolset {
                 self.image_analyze(&args.path)
             }
             "location_get" => {
-                let _args: serde_json::Value = serde_json::from_str(arguments_json)
-                    .context("parse location_get arguments")?;
+                let _args: serde_json::Value =
+                    serde_json::from_str(arguments_json).context("parse location_get arguments")?;
                 self.location_get()
+            }
+            "media_describe" => {
+                let args: MediaDescribeArgs = serde_json::from_str(arguments_json)
+                    .context("parse media_describe arguments")?;
+                self.media_describe(&args.path)
+            }
+            "media_transcribe" => {
+                let args: MediaTranscribeArgs = serde_json::from_str(arguments_json)
+                    .context("parse media_transcribe arguments")?;
+                self.media_transcribe(&args.path)
+            }
+            "image_generate" => {
+                let args: ImageGenerateArgs = serde_json::from_str(arguments_json)
+                    .context("parse image_generate arguments")?;
+                self.image_generate(&args.prompt, &args.path)
             }
             "browser_navigate" => {
                 let args: BrowserNavigateArgs = serde_json::from_str(arguments_json)
@@ -175,11 +190,11 @@ impl Toolset {
             | "knowledge_query" => {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
-            "media_describe" | "media_transcribe" | "image_generate" | "cron_create" | "cron_list"
-            | "cron_cancel" | "channel_send" | "hand_list" | "hand_activate" | "hand_status"
-            | "hand_deactivate" | "a2a_discover" | "a2a_send" | "text_to_speech"
-            | "speech_to_text" | "docker_exec" | "process_start" | "process_poll"
-            | "process_write" | "process_kill" | "process_list" | "canvas_present" => {
+            "cron_create" | "cron_list" | "cron_cancel" | "channel_send" | "hand_list"
+            | "hand_activate" | "hand_status" | "hand_deactivate" | "a2a_discover" | "a2a_send"
+            | "text_to_speech" | "speech_to_text" | "docker_exec" | "process_start"
+            | "process_poll" | "process_write" | "process_kill" | "process_list"
+            | "canvas_present" => {
                 bail!("tool not implemented yet: {name}")
             }
             _ => bail!("unknown tool: {name}"),
@@ -471,7 +486,9 @@ impl Toolset {
     fn location_get(&self) -> anyhow::Result<String> {
         let tz = std::env::var("TZ").ok().filter(|v| !v.trim().is_empty());
         let lang = std::env::var("LANG").ok().filter(|v| !v.trim().is_empty());
-        let lc_all = std::env::var("LC_ALL").ok().filter(|v| !v.trim().is_empty());
+        let lc_all = std::env::var("LC_ALL")
+            .ok()
+            .filter(|v| !v.trim().is_empty());
 
         Ok(serde_json::json!({
             "os": std::env::consts::OS,
@@ -481,6 +498,94 @@ impl Toolset {
             "lc_all": lc_all,
             "geolocation": null,
             "note": "Exact geolocation is not available; RexOS only reports environment metadata.",
+        })
+        .to_string())
+    }
+
+    fn media_describe(&self, user_path: &str) -> anyhow::Result<String> {
+        let path = self.resolve_workspace_path(user_path)?;
+        let meta = std::fs::metadata(&path).with_context(|| format!("stat {}", path.display()))?;
+        if meta.len() > 200_000_000 {
+            bail!("media too large: {} bytes", meta.len());
+        }
+
+        let ext = path
+            .extension()
+            .and_then(|x| x.to_str())
+            .unwrap_or("")
+            .to_ascii_lowercase();
+
+        let kind = match ext.as_str() {
+            "wav" | "mp3" | "flac" | "ogg" | "m4a" | "aac" | "opus" => "audio",
+            "mp4" | "mov" | "mkv" | "webm" | "avi" => "video",
+            "png" | "jpg" | "jpeg" | "gif" | "webp" | "bmp" => "image",
+            "txt" | "md" | "srt" | "vtt" => "text",
+            _ => "unknown",
+        };
+
+        Ok(serde_json::json!({
+            "path": user_path,
+            "bytes": meta.len(),
+            "kind": kind,
+            "ext": if ext.is_empty() { serde_json::Value::Null } else { serde_json::Value::String(ext) },
+        })
+        .to_string())
+    }
+
+    fn media_transcribe(&self, user_path: &str) -> anyhow::Result<String> {
+        let path = self.resolve_workspace_path(user_path)?;
+        let meta = std::fs::metadata(&path).with_context(|| format!("stat {}", path.display()))?;
+        if meta.len() > 2_000_000 {
+            bail!("transcript too large: {} bytes", meta.len());
+        }
+
+        let ext = path
+            .extension()
+            .and_then(|x| x.to_str())
+            .unwrap_or("")
+            .to_ascii_lowercase();
+
+        match ext.as_str() {
+            "txt" | "md" | "srt" | "vtt" => {}
+            _ => bail!("media_transcribe currently supports text transcripts (.txt/.md/.srt/.vtt)"),
+        }
+
+        let raw =
+            std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?;
+        let text = raw.trim_end_matches(&['\r', '\n'][..]).to_string();
+
+        Ok(serde_json::json!({
+            "path": user_path,
+            "text": text,
+        })
+        .to_string())
+    }
+
+    fn image_generate(&self, prompt: &str, user_path: &str) -> anyhow::Result<String> {
+        if prompt.trim().is_empty() {
+            bail!("prompt is empty");
+        }
+
+        let out_path = self.resolve_workspace_path_for_write(user_path)?;
+        if out_path.extension().and_then(|x| x.to_str()).unwrap_or("") != "svg" {
+            bail!("only svg output is supported for now (use a .svg path)");
+        }
+
+        if let Some(parent) = out_path.parent() {
+            std::fs::create_dir_all(parent)
+                .with_context(|| format!("create dirs {}", parent.display()))?;
+        }
+
+        let escaped = escape_xml_text(prompt);
+        let svg = format!(
+            r##"<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450"><rect width="100%" height="100%" fill="#0b1020"/><text x="40" y="120" fill="#e2e8f0" font-size="48" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial">{escaped}</text></svg>"##
+        );
+
+        std::fs::write(&out_path, svg).with_context(|| format!("write {}", out_path.display()))?;
+
+        Ok(serde_json::json!({
+            "path": user_path,
+            "format": "svg",
         })
         .to_string())
     }
@@ -911,6 +1016,22 @@ struct ImageAnalyzeArgs {
 }
 
 #[derive(Debug, serde::Deserialize)]
+struct MediaDescribeArgs {
+    path: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct MediaTranscribeArgs {
+    path: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ImageGenerateArgs {
+    prompt: String,
+    path: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
 struct BrowserNavigateArgs {
     url: String,
     #[serde(default)]
@@ -960,6 +1081,21 @@ fn validate_relative_path(user_path: &str) -> anyhow::Result<PathBuf> {
         bail!("invalid path");
     }
     Ok(out)
+}
+
+fn escape_xml_text(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    for ch in input.chars() {
+        match ch {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&apos;"),
+            _ => out.push(ch),
+        }
+    }
+    out
 }
 
 fn detect_image_format_and_dimensions(bytes: &[u8]) -> Option<(&'static str, u32, u32)> {
@@ -1044,8 +1180,18 @@ fn parse_jpeg_dimensions(bytes: &[u8]) -> Option<(u32, u32)> {
 
         let is_sof = matches!(
             marker,
-            0xC0 | 0xC1 | 0xC2 | 0xC3 | 0xC5 | 0xC6 | 0xC7 | 0xC9 | 0xCA | 0xCB | 0xCD
-                | 0xCE | 0xCF
+            0xC0 | 0xC1
+                | 0xC2
+                | 0xC3
+                | 0xC5
+                | 0xC6
+                | 0xC7
+                | 0xC9
+                | 0xCA
+                | 0xCB
+                | 0xCD
+                | 0xCE
+                | 0xCF
         );
         if is_sof {
             if seg_len < 7 || i + 4 >= bytes.len() {
@@ -1788,11 +1934,57 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         },
     });
 
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "media_describe".to_string(),
+            description: "Describe a media file in the workspace (best-effort metadata)."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string", "description": "Workspace-relative media path." }
+                },
+                "required": ["path"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "media_transcribe".to_string(),
+            description: "Transcribe media into text (currently supports text transcript files)."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "path": { "type": "string", "description": "Workspace-relative transcript path (.txt/.md/.srt/.vtt)." }
+                },
+                "required": ["path"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "image_generate".to_string(),
+            description: "Generate an image asset from a prompt (currently outputs SVG).".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "prompt": { "type": "string", "description": "Image generation prompt." },
+                    "path": { "type": "string", "description": "Workspace-relative output path (use .svg)." }
+                },
+                "required": ["prompt", "path"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
     // Reserved tool names (stubs in RexOS for now).
     for name in [
-        "media_describe",
-        "media_transcribe",
-        "image_generate",
         "cron_create",
         "cron_list",
         "cron_cancel",
@@ -2206,10 +2398,73 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn media_describe_returns_basic_metadata() {
+        let tmp = tempfile::tempdir().unwrap();
+        let workspace = tmp.path().join("ws");
+        std::fs::create_dir_all(&workspace).unwrap();
+
+        std::fs::write(workspace.join("audio.wav"), b"RIFF....WAVEfmt ").unwrap();
+
+        let tools = Toolset::new(workspace).unwrap();
+        let out = tools
+            .call("media_describe", r#"{ "path": "audio.wav" }"#)
+            .await
+            .unwrap();
+
+        let v: serde_json::Value = serde_json::from_str(&out).expect("media_describe is json");
+        assert_eq!(v.get("path").and_then(|v| v.as_str()), Some("audio.wav"));
+        assert_eq!(v.get("bytes").and_then(|v| v.as_u64()), Some(16));
+        assert_eq!(v.get("kind").and_then(|v| v.as_str()), Some("audio"));
+    }
+
+    #[tokio::test]
+    async fn media_transcribe_reads_text_transcripts() {
+        let tmp = tempfile::tempdir().unwrap();
+        let workspace = tmp.path().join("ws");
+        std::fs::create_dir_all(&workspace).unwrap();
+
+        std::fs::write(workspace.join("transcript.txt"), "hello world").unwrap();
+
+        let tools = Toolset::new(workspace).unwrap();
+        let out = tools
+            .call("media_transcribe", r#"{ "path": "transcript.txt" }"#)
+            .await
+            .unwrap();
+
+        let v: serde_json::Value =
+            serde_json::from_str(&out).expect("media_transcribe output is json");
+        assert_eq!(v.get("text").and_then(|v| v.as_str()), Some("hello world"));
+    }
+
+    #[tokio::test]
+    async fn image_generate_writes_svg_file() {
+        let tmp = tempfile::tempdir().unwrap();
+        let workspace = tmp.path().join("ws");
+        std::fs::create_dir_all(&workspace).unwrap();
+
+        let tools = Toolset::new(workspace.clone()).unwrap();
+        let out = tools
+            .call(
+                "image_generate",
+                r#"{ "prompt": "hello", "path": "out.svg" }"#,
+            )
+            .await
+            .unwrap();
+
+        let v: serde_json::Value = serde_json::from_str(&out).expect("image_generate is json");
+        assert_eq!(v.get("path").and_then(|v| v.as_str()), Some("out.svg"));
+        assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("svg"));
+
+        let svg = std::fs::read_to_string(workspace.join("out.svg")).unwrap();
+        assert!(svg.starts_with("<svg"), "{svg}");
+        assert!(svg.contains("hello"), "{svg}");
+    }
+
+    #[tokio::test]
     async fn reserved_stub_tools_return_not_implemented_error() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
-        let err = tools.call("media_describe", r#"{}"#).await.unwrap_err();
+        let err = tools.call("cron_create", r#"{}"#).await.unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("not implemented"), "{msg}");
     }
