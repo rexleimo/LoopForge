@@ -148,13 +148,11 @@ impl Toolset {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
             "agent_send" | "agent_spawn" | "agent_list" | "agent_kill" | "agent_find"
-            | "task_post" | "task_claim" | "task_complete" | "task_list" | "event_publish" => {
+            | "task_post" | "task_claim" | "task_complete" | "task_list" | "event_publish"
+            | "schedule_create" | "schedule_list" | "schedule_delete" => {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
-            "schedule_create"
-            | "schedule_list"
-            | "schedule_delete"
-            | "knowledge_add_entity"
+            "knowledge_add_entity"
             | "knowledge_add_relation"
             | "knowledge_query"
             | "image_analyze"
@@ -1514,11 +1512,56 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         },
     });
 
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "schedule_create".to_string(),
+            description: "Create a schedule entry (persisted).".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "description": "Optional stable schedule id. If omitted, RexOS generates one." },
+                    "description": { "type": "string", "description": "Human-readable description." },
+                    "schedule": { "type": "string", "description": "Schedule expression (stored as-is)." },
+                    "agent_id": { "type": "string", "description": "Optional agent id to associate with this schedule." },
+                    "agent": { "type": "string", "description": "Alias of agent_id (optional)." },
+                    "enabled": { "type": "boolean", "description": "Whether this schedule is enabled (default: true)." }
+                },
+                "required": ["description", "schedule"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "schedule_list".to_string(),
+            description: "List schedule entries.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "schedule_delete".to_string(),
+            description: "Delete a schedule entry by id.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "description": "Schedule id." }
+                },
+                "required": ["id"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
     // Reserved tool names (stubs in RexOS for now).
     for name in [
-        "schedule_create",
-        "schedule_list",
-        "schedule_delete",
         "knowledge_add_entity",
         "knowledge_add_relation",
         "knowledge_query",
@@ -1943,7 +1986,7 @@ mod tests {
     async fn reserved_stub_tools_return_not_implemented_error() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
-        let err = tools.call("schedule_create", r#"{}"#).await.unwrap_err();
+        let err = tools.call("image_analyze", r#"{}"#).await.unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("not implemented"), "{msg}");
     }

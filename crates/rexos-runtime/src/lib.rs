@@ -187,6 +187,17 @@ impl AgentRuntime {
                             serde_json::from_str(&args_json).context("parse event_publish args")?;
                         self.event_publish(args).context("event_publish")?
                     }
+                    "schedule_create" => {
+                        let args: ScheduleCreateToolArgs = serde_json::from_str(&args_json)
+                            .context("parse schedule_create args")?;
+                        self.schedule_create(args).context("schedule_create")?
+                    }
+                    "schedule_list" => self.schedule_list().context("schedule_list")?,
+                    "schedule_delete" => {
+                        let args: ScheduleDeleteToolArgs = serde_json::from_str(&args_json)
+                            .context("parse schedule_delete args")?;
+                        self.schedule_delete(&args.id).context("schedule_delete")?
+                    }
                     _ => tools
                         .call(&call.function.name, &args_json)
                         .await
@@ -572,6 +583,65 @@ impl AgentRuntime {
             .context("kv_set rexos.events")?;
         Ok("ok".to_string())
     }
+
+    fn schedules_get(&self) -> anyhow::Result<Vec<ScheduleRecord>> {
+        let key = "rexos.schedules";
+        let raw = self
+            .memory
+            .kv_get(key)
+            .context("kv_get rexos.schedules")?
+            .unwrap_or_else(|| "[]".to_string());
+        let schedules: Vec<ScheduleRecord> = serde_json::from_str(&raw).unwrap_or_default();
+        Ok(schedules)
+    }
+
+    fn schedules_set(&self, schedules: &[ScheduleRecord]) -> anyhow::Result<()> {
+        let key = "rexos.schedules";
+        let raw = serde_json::to_string(schedules).context("serialize rexos.schedules")?;
+        self.memory
+            .kv_set(key, &raw)
+            .context("kv_set rexos.schedules")?;
+        Ok(())
+    }
+
+    fn schedule_create(&self, args: ScheduleCreateToolArgs) -> anyhow::Result<String> {
+        let id = args.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+        let mut schedules = self.schedules_get()?;
+        if let Some(existing) = schedules.iter().find(|s| s.id == id) {
+            return Ok(serde_json::to_string(existing).unwrap_or_else(|_| "ok".to_string()));
+        }
+
+        let agent_id = args.agent_id.or(args.agent);
+        let record = ScheduleRecord {
+            id: id.clone(),
+            description: args.description,
+            schedule: args.schedule,
+            agent_id,
+            created_at: Self::now_epoch_seconds(),
+            enabled: args.enabled.unwrap_or(true),
+        };
+
+        schedules.push(record.clone());
+        self.schedules_set(&schedules)?;
+
+        Ok(serde_json::to_string(&record).unwrap_or_else(|_| "ok".to_string()))
+    }
+
+    fn schedule_list(&self) -> anyhow::Result<String> {
+        let schedules = self.schedules_get()?;
+        Ok(serde_json::to_string(&schedules).context("serialize schedule_list")?)
+    }
+
+    fn schedule_delete(&self, id: &str) -> anyhow::Result<String> {
+        let mut schedules = self.schedules_get()?;
+        let before = schedules.len();
+        schedules.retain(|s| s.id != id);
+        if schedules.len() == before {
+            return Ok(format!("error: schedule not found: {id}"));
+        }
+        self.schedules_set(&schedules)?;
+        Ok("ok".to_string())
+    }
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -703,6 +773,35 @@ struct EventPublishToolArgs {
     event_type: String,
     #[serde(default)]
     payload: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct ScheduleRecord {
+    id: String,
+    description: String,
+    schedule: String,
+    agent_id: Option<String>,
+    created_at: i64,
+    enabled: bool,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ScheduleCreateToolArgs {
+    #[serde(default)]
+    id: Option<String>,
+    description: String,
+    schedule: String,
+    #[serde(default)]
+    agent_id: Option<String>,
+    #[serde(default)]
+    agent: Option<String>,
+    #[serde(default)]
+    enabled: Option<bool>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct ScheduleDeleteToolArgs {
+    id: String,
 }
 
 #[derive(Debug, serde::Deserialize)]

@@ -60,19 +60,19 @@ RexOS 会强制超时，并使用尽量最小的环境。
 - `web_search` → DuckDuckGo HTML 搜索（best-effort；返回简短文本列表）
 - `memory_store` / `memory_recall` → 共享 KV（持久化在 `~/.rexos/rexos.db`）
 
-## Runtime 协作工具
+## Runtime 协作与调度工具
 
 以下工具由 agent runtime 实现（不是独立的 `Toolset`），状态会持久化到 `~/.rexos/rexos.db`：
 
 - `agent_spawn` / `agent_list` / `agent_find` / `agent_send` / `agent_kill`
 - `task_post` / `task_claim` / `task_complete` / `task_list`
 - `event_publish`
+- `schedule_create` / `schedule_list` / `schedule_delete`
 
 ## 预留工具（stubs）
 
 以下工具名已定义，但当前会直接返回 `tool not implemented yet: <name>`：
 
-`schedule_create`, `schedule_list`, `schedule_delete`,
 `knowledge_add_entity`, `knowledge_add_relation`, `knowledge_query`,
 `image_analyze`, `location_get`,
 `media_describe`, `media_transcribe`, `image_generate`,

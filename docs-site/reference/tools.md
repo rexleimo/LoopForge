@@ -60,19 +60,19 @@ These tool names exist for compatibility and map to RexOS built-ins:
 - `web_search` → DuckDuckGo HTML search (best-effort; returns a short text list)
 - `memory_store` / `memory_recall` → shared KV store persisted in `~/.rexos/rexos.db`
 
-## Runtime collaboration tools
+## Runtime collaboration and scheduling tools
 
 These tools are implemented by the agent runtime (not by the standalone `Toolset`) and persist state in `~/.rexos/rexos.db`:
 
 - `agent_spawn` / `agent_list` / `agent_find` / `agent_send` / `agent_kill`
 - `task_post` / `task_claim` / `task_complete` / `task_list`
 - `event_publish`
+- `schedule_create` / `schedule_list` / `schedule_delete`
 
 ## Reserved tools (stubs)
 
 The following tool names are defined but currently return `tool not implemented yet: <name>`:
 
-`schedule_create`, `schedule_list`, `schedule_delete`,
 `knowledge_add_entity`, `knowledge_add_relation`, `knowledge_query`,
 `image_analyze`, `location_get`,
 `media_describe`, `media_transcribe`, `image_generate`,
