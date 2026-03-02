@@ -90,6 +90,32 @@ def main() -> int:
                         continue
                     page.fill(selector, text, timeout=timeout_ms)
                     respond({"success": True, "data": {"selector": selector, "typed": text}})
+                elif action == "PressKey":
+                    key = cmd.get("key", "")
+                    selector = cmd.get("selector", "")
+                    if not key:
+                        respond({"success": False, "error": "missing key"})
+                        continue
+                    if selector:
+                        page.press(selector, key, timeout=timeout_ms)
+                    else:
+                        page.keyboard.press(key)
+                    try:
+                        page.wait_for_load_state("domcontentloaded", timeout=timeout_ms)
+                    except Exception:
+                        pass
+                    current_url = page.url
+                    respond(
+                        {
+                            "success": True,
+                            "data": {
+                                "key": key,
+                                "selector": selector or None,
+                                "title": page.title(),
+                                "url": current_url,
+                            },
+                        }
+                    )
                 elif action == "ReadPage":
                     content = "(empty)"
                     try:
@@ -145,4 +171,3 @@ def respond(obj) -> None:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

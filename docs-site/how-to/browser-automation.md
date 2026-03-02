@@ -18,6 +18,7 @@ If your Python executable isn't `python3`, set `REXOS_BROWSER_PYTHON` (example: 
 - `browser_navigate` — open a URL (SSRF-protected by default)
 - `browser_click` — click by CSS selector (best-effort text fallback)
 - `browser_type` — fill an input
+- `browser_press_key` — press a key (example: `Enter` to submit a form)
 - `browser_read_page` — return `{title,url,content}` (content is truncated)
 - `browser_screenshot` — write a PNG to a workspace-relative path
 - `browser_close` — close the session (idempotent)
@@ -27,6 +28,7 @@ If your Python executable isn't `python3`, set `REXOS_BROWSER_PYTHON` (example: 
 1. `browser_navigate` to the entry page
 2. `browser_read_page` to confirm state
 3. One small action: `browser_click` or `browser_type`
+   - If you need to submit a form, use `browser_press_key` with `Enter`.
 4. `browser_read_page` again to confirm the page changed
 5. Repeat until done, then `browser_screenshot` for evidence and `browser_close`
 
@@ -46,7 +48,7 @@ If a CSS selector fails, `browser_click` will try a **best-effort visible-text f
 Use this as a starting point for agent prompts:
 
 ```text
-You may use RexOS browser tools (browser_navigate/click/type/read_page/screenshot/close).
+You may use RexOS browser tools (browser_navigate/click/type/press_key/read_page/screenshot/close).
 
 Rules:
 - Always call browser_read_page after navigate/click/type to verify page state before the next step.

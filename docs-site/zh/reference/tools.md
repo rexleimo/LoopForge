@@ -35,7 +35,7 @@ RexOS 会强制超时，并使用尽量最小的环境。
 
 浏览器工具通过 Python Playwright bridge 提供无头浏览器自动化能力：
 
-- `browser_navigate` / `browser_click` / `browser_type` / `browser_read_page` / `browser_screenshot` / `browser_close`
+- `browser_navigate` / `browser_click` / `browser_type` / `browser_press_key` / `browser_read_page` / `browser_screenshot` / `browser_close`
 
 说明：
 

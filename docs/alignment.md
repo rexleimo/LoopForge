@@ -106,9 +106,9 @@
 
 新增：
 - `web_fetch`：SSRF 防护（默认拒绝 loopback/private/link-local），支持 `allow_private=true`（便于本地测试/内网）
-- 兼容工具面（aliases + stubs）：
-  - 已实现：`file_read/file_write/file_list`、`apply_patch`、`shell_exec`、`web_search`、`memory_store/memory_recall`
-  - 已对齐命名但未实现（stub）：`agent_*` / `task_*` / `schedule_*` / `knowledge_*` / `cron_*` / `channel_send` / `a2a_*` / `process_*` 等（会返回 not implemented）
+- 兼容工具面（aliases + reserved names）：
+  - Toolset：`file_*`、`apply_patch`、`shell_exec`、`web_search`、`web_fetch`、`browser_*`、`a2a_*`、`docker_exec`、`process_*`、`speech_to_text`、`text_to_speech`、`canvas_present`
+  - Runtime：`memory_*`、`agent_*`、`hand_*`、`task_*`、`event_publish`、`schedule_*`、`knowledge_*`、`cron_*`、`channel_send`
 
 对应实现：
 - `crates/rexos-tools/src/lib.rs`：`fs_read/fs_write/shell/web_fetch`

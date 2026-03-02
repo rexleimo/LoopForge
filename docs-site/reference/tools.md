@@ -35,7 +35,7 @@ By default it rejects loopback/private IPs (basic SSRF protection). For local te
 
 Browser tools enable headless browser automation via a Python Playwright bridge:
 
-- `browser_navigate` / `browser_click` / `browser_type` / `browser_read_page` / `browser_screenshot` / `browser_close`
+- `browser_navigate` / `browser_click` / `browser_type` / `browser_press_key` / `browser_read_page` / `browser_screenshot` / `browser_close`
 
 Notes:
 

@@ -89,6 +89,7 @@ impl Toolset {
             browser_navigate_def(),
             browser_click_def(),
             browser_type_def(),
+            browser_press_key_def(),
             browser_read_page_def(),
             browser_screenshot_def(),
             browser_close_def(),
@@ -262,6 +263,12 @@ impl Toolset {
                 let args: BrowserTypeArgs =
                     serde_json::from_str(arguments_json).context("parse browser_type arguments")?;
                 self.browser_type(&args.selector, &args.text).await
+            }
+            "browser_press_key" => {
+                let args: BrowserPressKeyArgs = serde_json::from_str(arguments_json)
+                    .context("parse browser_press_key arguments")?;
+                self.browser_press_key(args.selector.as_deref(), &args.key)
+                    .await
             }
             "browser_read_page" => {
                 let _args: serde_json::Value = serde_json::from_str(arguments_json)
@@ -1289,6 +1296,24 @@ impl Toolset {
         Ok(resp.into_tool_output()?)
     }
 
+    async fn browser_press_key(&self, selector: Option<&str>, key: &str) -> anyhow::Result<String> {
+        let mut guard = self.browser.lock().await;
+        let session = guard
+            .as_mut()
+            .context("browser session not started; call browser_navigate first")?;
+
+        let mut cmd = serde_json::json!({
+            "action": "PressKey",
+            "key": key,
+        });
+        if let Some(sel) = selector {
+            cmd["selector"] = serde_json::Value::String(sel.to_string());
+        }
+
+        let resp = session.send(cmd).await?;
+        Ok(resp.into_tool_output()?)
+    }
+
     async fn browser_read_page(&self) -> anyhow::Result<String> {
         let mut guard = self.browser.lock().await;
         let session = guard
@@ -1735,6 +1760,13 @@ struct BrowserClickArgs {
 struct BrowserTypeArgs {
     selector: String,
     text: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct BrowserPressKeyArgs {
+    key: String,
+    #[serde(default)]
+    selector: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -3184,6 +3216,26 @@ fn browser_type_def() -> ToolDefinition {
     }
 }
 
+fn browser_press_key_def() -> ToolDefinition {
+    ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "browser_press_key".to_string(),
+            description: "Press a key in the browser (optionally on a target element)."
+                .to_string(),
+            parameters: serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "key": { "type": "string", "description": "Key to press (example: Enter, Escape, ArrowDown, Control+A)." },
+                    "selector": { "type": "string", "description": "Optional CSS selector to target before pressing the key." }
+                },
+                "required": ["key"],
+                "additionalProperties": false
+            }),
+        },
+    }
+}
+
 fn browser_read_page_def() -> ToolDefinition {
     ToolDefinition {
         kind: "function".to_string(),
@@ -3332,6 +3384,7 @@ mod tests {
             "browser_navigate",
             "browser_click",
             "browser_type",
+            "browser_press_key",
             "browser_read_page",
             "browser_screenshot",
             "browser_close",
@@ -4006,6 +4059,22 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn browser_press_key_requires_session() {
+        let tmp = tempfile::tempdir().unwrap();
+        let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
+
+        let err = tools
+            .call("browser_press_key", r#"{ "key": "Enter" }"#)
+            .await
+            .unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("browser_navigate") || msg.contains("session"),
+            "{msg}"
+        );
+    }
+
+    #[tokio::test]
     async fn browser_read_page_requires_session() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
@@ -4058,6 +4127,13 @@ mod tests {
             )
             .await
             .unwrap();
+
+        let out = tools
+            .call("browser_press_key", r#"{ "key": "Enter" }"#)
+            .await
+            .unwrap();
+        let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+        assert_eq!(v["key"], "Enter");
 
         let page = tools.call("browser_read_page", r#"{}"#).await.unwrap();
         let v: serde_json::Value = serde_json::from_str(&page).unwrap();
@@ -4137,6 +4213,8 @@ for line in sys.stdin:
         resp = {"success": True, "data": {"clicked": cmd.get("selector", "")}}
     elif action == "Type":
         resp = {"success": True, "data": {"typed": cmd.get("text", ""), "selector": cmd.get("selector", "")}}
+    elif action == "PressKey":
+        resp = {"success": True, "data": {"key": cmd.get("key", ""), "selector": cmd.get("selector", "")}}
     elif action == "Close":
         resp = {"success": True, "data": {"status": "closed"}}
         sys.stdout.write(json.dumps(resp) + "\n")
