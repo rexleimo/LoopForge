@@ -177,6 +177,10 @@ impl Toolset {
             | "agent_list"
             | "agent_kill"
             | "agent_find"
+            | "hand_list"
+            | "hand_activate"
+            | "hand_status"
+            | "hand_deactivate"
             | "task_post"
             | "task_claim"
             | "task_complete"
@@ -194,10 +198,9 @@ impl Toolset {
             | "channel_send" => {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
-            "hand_list" | "hand_activate" | "hand_status" | "hand_deactivate" | "a2a_discover"
-            | "a2a_send" | "text_to_speech" | "speech_to_text" | "docker_exec"
-            | "process_start" | "process_poll" | "process_write" | "process_kill"
-            | "process_list" | "canvas_present" => {
+            "a2a_discover" | "a2a_send" | "text_to_speech" | "speech_to_text" | "docker_exec"
+            | "process_start" | "process_poll" | "process_write" | "process_kill" | "process_list"
+            | "canvas_present" => {
                 bail!("tool not implemented yet: {name}")
             }
             _ => bail!("unknown tool: {name}"),
@@ -2056,12 +2059,67 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         },
     });
 
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "hand_list".to_string(),
+            description: "List available Hands (curated autonomous packages) and their activation status.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "hand_activate".to_string(),
+            description: "Activate a Hand (spawns a specialized agent instance).".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "hand_id": { "type": "string", "description": "Hand id (e.g. 'browser', 'coder')." },
+                    "config": { "type": "object", "description": "Optional hand configuration (stored and appended to the hand system prompt)." }
+                },
+                "required": ["hand_id"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "hand_status".to_string(),
+            description: "Get status for a Hand by id.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "hand_id": { "type": "string", "description": "Hand id." }
+                },
+                "required": ["hand_id"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "hand_deactivate".to_string(),
+            description: "Deactivate a running Hand instance.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "instance_id": { "type": "string", "description": "Hand instance id returned by hand_activate." }
+                },
+                "required": ["instance_id"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
     // Reserved tool names (stubs in RexOS for now).
     for name in [
-        "hand_list",
-        "hand_activate",
-        "hand_status",
-        "hand_deactivate",
         "a2a_discover",
         "a2a_send",
         "text_to_speech",
@@ -2530,12 +2588,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn reserved_stub_tools_return_not_implemented_error() {
+    async fn hand_tools_are_reported_as_runtime_implemented() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
         let err = tools.call("hand_list", r#"{}"#).await.unwrap_err();
         let msg = err.to_string();
-        assert!(msg.contains("not implemented"), "{msg}");
+        assert!(msg.contains("runtime"), "{msg}");
     }
 
     #[tokio::test]

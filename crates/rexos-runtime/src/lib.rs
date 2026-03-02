@@ -283,6 +283,23 @@ impl AgentRuntime {
                             .await
                             .context("agent_send")?
                     }
+                    "hand_list" => self.hand_list().context("hand_list")?,
+                    "hand_activate" => {
+                        let args: HandActivateToolArgs =
+                            serde_json::from_str(&args_json).context("parse hand_activate args")?;
+                        self.hand_activate(args).context("hand_activate")?
+                    }
+                    "hand_status" => {
+                        let args: HandStatusToolArgs =
+                            serde_json::from_str(&args_json).context("parse hand_status args")?;
+                        self.hand_status(&args.hand_id).context("hand_status")?
+                    }
+                    "hand_deactivate" => {
+                        let args: HandDeactivateToolArgs = serde_json::from_str(&args_json)
+                            .context("parse hand_deactivate args")?;
+                        self.hand_deactivate(&args.instance_id)
+                            .context("hand_deactivate")?
+                    }
                     "task_post" => {
                         let args: TaskPostToolArgs =
                             serde_json::from_str(&args_json).context("parse task_post args")?;
@@ -581,6 +598,219 @@ impl AgentRuntime {
             Ok(v) => Ok(v),
             Err(e) => Ok(format!("error: {e}")),
         }
+    }
+
+    fn hand_defs() -> Vec<HandDef> {
+        vec![
+            HandDef {
+                id: "browser",
+                name: "Browser",
+                description: "A focused web-browsing helper (use browser_* tools).",
+                system_prompt: "You are a focused browser assistant. Use browser_* tools to navigate, read pages, and summarize findings clearly. Be careful with SSRF protections and only browse relevant URLs.",
+            },
+            HandDef {
+                id: "coder",
+                name: "Coder",
+                description: "A focused coding helper (use fs_* and shell).",
+                system_prompt: "You are a focused coding assistant. Use fs_read/fs_write/apply_patch and shell to implement changes safely. Prefer small commits, run tests, and explain how to reproduce.",
+            },
+            HandDef {
+                id: "researcher",
+                name: "Researcher",
+                description: "A focused research helper (use web_search/web_fetch).",
+                system_prompt: "You are a focused research assistant. Use web_search and web_fetch to gather information, then summarize with clear attribution. Avoid speculation and keep outputs concise.",
+            },
+        ]
+    }
+
+    fn hands_instances_index(&self) -> anyhow::Result<Vec<String>> {
+        let raw = self
+            .memory
+            .kv_get("rexos.hands.instances.index")
+            .context("kv_get rexos.hands.instances.index")?
+            .unwrap_or_else(|| "[]".to_string());
+        Ok(serde_json::from_str(&raw).unwrap_or_default())
+    }
+
+    fn put_hands_instances_index(&self, ids: &[String]) -> anyhow::Result<()> {
+        let raw = serde_json::to_string(ids).context("serialize hands instances index")?;
+        self.memory
+            .kv_set("rexos.hands.instances.index", &raw)
+            .context("kv_set rexos.hands.instances.index")?;
+        Ok(())
+    }
+
+    fn hand_instance_key(instance_id: &str) -> String {
+        format!("rexos.hands.instances.{instance_id}")
+    }
+
+    fn get_hand_instance(&self, instance_id: &str) -> anyhow::Result<Option<HandInstanceRecord>> {
+        let raw = self
+            .memory
+            .kv_get(&Self::hand_instance_key(instance_id))
+            .with_context(|| format!("kv_get hand instance {instance_id}"))?;
+        let Some(raw) = raw else {
+            return Ok(None);
+        };
+        let record: HandInstanceRecord = serde_json::from_str(&raw)
+            .with_context(|| format!("parse hand instance {instance_id}"))?;
+        Ok(Some(record))
+    }
+
+    fn put_hand_instance(&self, record: &HandInstanceRecord) -> anyhow::Result<()> {
+        let raw = serde_json::to_string(record).context("serialize hand instance record")?;
+        self.memory
+            .kv_set(&Self::hand_instance_key(&record.instance_id), &raw)
+            .with_context(|| format!("kv_set hand instance {}", record.instance_id))?;
+        Ok(())
+    }
+
+    fn hand_list(&self) -> anyhow::Result<String> {
+        let defs = Self::hand_defs();
+        let index = self.hands_instances_index()?;
+
+        let mut instances = Vec::new();
+        for id in index {
+            if let Some(record) = self.get_hand_instance(&id)? {
+                instances.push(record);
+            }
+        }
+
+        let out: Vec<serde_json::Value> = defs
+            .into_iter()
+            .map(|d| {
+                let active = instances
+                    .iter()
+                    .filter(|r| r.hand_id == d.id && r.status == HandInstanceStatus::Active)
+                    .max_by_key(|r| r.created_at);
+
+                serde_json::json!({
+                    "id": d.id,
+                    "name": d.name,
+                    "description": d.description,
+                    "status": if active.is_some() { "active" } else { "available" },
+                    "instance_id": active.as_ref().map(|r| r.instance_id.clone()),
+                    "agent_id": active.as_ref().map(|r| r.agent_id.clone()),
+                })
+            })
+            .collect();
+
+        Ok(serde_json::to_string(&out).context("serialize hand_list")?)
+    }
+
+    fn hand_activate(&self, args: HandActivateToolArgs) -> anyhow::Result<String> {
+        let hand_id = args.hand_id.trim();
+        if hand_id.is_empty() {
+            bail!("hand_id is empty");
+        }
+
+        let def = Self::hand_defs()
+            .into_iter()
+            .find(|d| d.id == hand_id)
+            .ok_or_else(|| anyhow::anyhow!("unknown hand_id: {hand_id}"))?;
+
+        let instance_id = uuid::Uuid::new_v4().to_string();
+        let agent_id = instance_id.clone();
+
+        let mut system_prompt = def.system_prompt.to_string();
+        if let Some(cfg) = args.config.as_ref() {
+            system_prompt.push_str("\n\nHand config (JSON):\n");
+            system_prompt.push_str(&serde_json::to_string_pretty(cfg).unwrap_or_default());
+        }
+
+        let _ = self.agent_spawn(AgentSpawnToolArgs {
+            agent_id: Some(agent_id.clone()),
+            name: Some(format!("hand:{hand_id}")),
+            system_prompt: Some(system_prompt),
+            manifest_toml: None,
+        })?;
+
+        let record = HandInstanceRecord {
+            instance_id: instance_id.clone(),
+            hand_id: hand_id.to_string(),
+            agent_id: agent_id.clone(),
+            status: HandInstanceStatus::Active,
+            created_at: Self::now_epoch_seconds(),
+            deactivated_at: None,
+            config: args.config.unwrap_or(serde_json::Value::Null),
+        };
+        self.put_hand_instance(&record)?;
+
+        let mut index = self.hands_instances_index()?;
+        if !index.iter().any(|id| id == &instance_id) {
+            index.push(instance_id.clone());
+            self.put_hands_instances_index(&index)?;
+        }
+
+        Ok(serde_json::json!({
+            "instance_id": instance_id,
+            "hand_id": hand_id,
+            "agent_id": agent_id,
+            "status": "active",
+        })
+        .to_string())
+    }
+
+    fn hand_status(&self, hand_id: &str) -> anyhow::Result<String> {
+        let hand_id = hand_id.trim();
+        if hand_id.is_empty() {
+            bail!("hand_id is empty");
+        }
+
+        let index = self.hands_instances_index()?;
+        let mut active: Option<HandInstanceRecord> = None;
+
+        for id in index {
+            let Some(record) = self.get_hand_instance(&id)? else {
+                continue;
+            };
+            if record.hand_id != hand_id {
+                continue;
+            }
+            if record.status != HandInstanceStatus::Active {
+                continue;
+            }
+
+            if active
+                .as_ref()
+                .map(|r| r.created_at <= record.created_at)
+                .unwrap_or(true)
+            {
+                active = Some(record);
+            }
+        }
+
+        let Some(active) = active else {
+            return Ok(serde_json::json!({
+                "hand_id": hand_id,
+                "status": "inactive",
+            })
+            .to_string());
+        };
+
+        Ok(serde_json::to_string(&active).context("serialize hand_status")?)
+    }
+
+    fn hand_deactivate(&self, instance_id: &str) -> anyhow::Result<String> {
+        let instance_id = instance_id.trim();
+        if instance_id.is_empty() {
+            bail!("instance_id is empty");
+        }
+
+        let Some(mut record) = self.get_hand_instance(instance_id)? else {
+            return Ok(format!("error: hand instance not found: {instance_id}"));
+        };
+
+        if record.status == HandInstanceStatus::Deactivated {
+            return Ok("ok".to_string());
+        }
+
+        record.status = HandInstanceStatus::Deactivated;
+        record.deactivated_at = Some(Self::now_epoch_seconds());
+        self.put_hand_instance(&record)?;
+
+        let _ = self.agent_kill(&record.agent_id);
+        Ok("ok".to_string())
     }
 
     fn tasks_index(&self) -> anyhow::Result<Vec<String>> {
@@ -1114,6 +1344,51 @@ struct AgentKillToolArgs {
 #[derive(Debug, serde::Deserialize)]
 struct AgentFindToolArgs {
     query: String,
+}
+
+#[derive(Debug, Clone)]
+struct HandDef {
+    id: &'static str,
+    name: &'static str,
+    description: &'static str,
+    system_prompt: &'static str,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum HandInstanceStatus {
+    Active,
+    Deactivated,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct HandInstanceRecord {
+    instance_id: String,
+    hand_id: String,
+    agent_id: String,
+    status: HandInstanceStatus,
+    created_at: i64,
+    #[serde(default)]
+    deactivated_at: Option<i64>,
+    #[serde(default)]
+    config: serde_json::Value,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct HandActivateToolArgs {
+    hand_id: String,
+    #[serde(default)]
+    config: Option<serde_json::Value>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct HandStatusToolArgs {
+    hand_id: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct HandDeactivateToolArgs {
+    instance_id: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
