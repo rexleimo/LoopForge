@@ -13,6 +13,18 @@ python3 -m playwright install chromium
 
 If your Python executable isn't `python3`, set `REXOS_BROWSER_PYTHON` (example: `python`).
 
+## Headless vs GUI
+
+By default, RexOS launches Chromium in **headless** mode.
+
+To show the browser window (local debugging / demos), set `headless=false` on the first `browser_navigate` call:
+
+```json
+{ "url": "https://www.baidu.com", "headless": false }
+```
+
+You can also set `REXOS_BROWSER_HEADLESS=0` to make GUI mode the default when `headless` is not provided.
+
 ## Tool set
 
 - `browser_navigate` — open a URL (SSRF-protected by default)
@@ -75,4 +87,5 @@ rexos agent run --workspace . --prompt "Use browser tools to open https://exampl
 
 - Error mentions Playwright missing: run the install commands in “Prerequisites”.
 - Error mentions `python3` missing: set `REXOS_BROWSER_PYTHON=python`.
+- No browser window appears: it's headless by default; use `headless=false` (or set `REXOS_BROWSER_HEADLESS=0`).
 - Error mentions session not started: call `browser_navigate` first.

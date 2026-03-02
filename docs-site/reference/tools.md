@@ -40,6 +40,7 @@ Browser tools enable headless browser automation via a Python Playwright bridge:
 Notes:
 
 - `browser_navigate` is SSRF-protected by default (denies loopback/private targets unless `allow_private=true`).
+- Headless by default. To show a GUI window, pass `headless=false` to `browser_navigate` (or set `REXOS_BROWSER_HEADLESS=0` as a default).
 - `browser_screenshot` writes a PNG to a workspace-relative path (no absolute paths, no `..`, no symlink escapes).
 - Requires Python + Playwright:
 

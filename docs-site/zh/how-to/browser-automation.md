@@ -13,6 +13,18 @@ python3 -m playwright install chromium
 
 如果你的 Python 可执行文件不是 `python3`，可以通过环境变量 `REXOS_BROWSER_PYTHON` 指定（例如 `python`）。
 
+## Headless / 有界面
+
+RexOS 默认以 **headless** 模式启动 Chromium。
+
+如果你想看到浏览器窗口（本地调试 / 演示），在第一次 `browser_navigate` 时设置 `headless=false`：
+
+```json
+{ "url": "https://www.baidu.com", "headless": false }
+```
+
+你也可以设置 `REXOS_BROWSER_HEADLESS=0`，让未显式传入 `headless` 时默认使用有界面模式。
+
 ## 工具集
 
 - `browser_navigate`：打开 URL（默认带 SSRF 防护）
@@ -72,4 +84,5 @@ rexos agent run --workspace . --prompt "使用 browser 工具打开 https://exam
 
 - 报错提示 Playwright 缺失：按“前置条件”安装。
 - 报错提示找不到 `python3`：设置 `REXOS_BROWSER_PYTHON=python`。
+- 看不到浏览器窗口：默认是 headless；用 `headless=false`（或设置 `REXOS_BROWSER_HEADLESS=0`）。
 - 报错提示 session 未启动：先调用 `browser_navigate`。

@@ -143,8 +143,8 @@ impl Toolset {
                 self.shell(&args.command, timeout_ms).await
             }
             "docker_exec" => {
-                let args: DockerExecArgs = serde_json::from_str(arguments_json)
-                    .context("parse docker_exec arguments")?;
+                let args: DockerExecArgs =
+                    serde_json::from_str(arguments_json).context("parse docker_exec arguments")?;
                 self.docker_exec(&args.command).await
             }
             "process_start" => {
@@ -189,8 +189,8 @@ impl Toolset {
                 self.web_search(&args.query, args.max_results).await
             }
             "a2a_discover" => {
-                let args: A2aDiscoverArgs = serde_json::from_str(arguments_json)
-                    .context("parse a2a_discover arguments")?;
+                let args: A2aDiscoverArgs =
+                    serde_json::from_str(arguments_json).context("parse a2a_discover arguments")?;
                 self.a2a_discover(&args.url, args.allow_private).await
             }
             "a2a_send" => {
@@ -201,8 +201,13 @@ impl Toolset {
                     .as_deref()
                     .or(args.url.as_deref())
                     .context("missing agent_url (or url) for a2a_send")?;
-                self.a2a_send(url, &args.message, args.session_id.as_deref(), args.allow_private)
-                    .await
+                self.a2a_send(
+                    url,
+                    &args.message,
+                    args.session_id.as_deref(),
+                    args.allow_private,
+                )
+                .await
             }
             "image_analyze" => {
                 let args: ImageAnalyzeArgs = serde_json::from_str(arguments_json)
@@ -247,8 +252,13 @@ impl Toolset {
             "browser_navigate" => {
                 let args: BrowserNavigateArgs = serde_json::from_str(arguments_json)
                     .context("parse browser_navigate arguments")?;
-                self.browser_navigate(&args.url, args.timeout_ms, args.allow_private)
-                    .await
+                self.browser_navigate(
+                    &args.url,
+                    args.timeout_ms,
+                    args.allow_private,
+                    args.headless,
+                )
+                .await
             }
             "browser_close" => {
                 let _args: serde_json::Value = serde_json::from_str(arguments_json)
@@ -630,10 +640,8 @@ impl Toolset {
             stderr: stderr_buf,
         };
 
-        mgr.processes.insert(
-            process_id.clone(),
-            Arc::new(tokio::sync::Mutex::new(entry)),
-        );
+        mgr.processes
+            .insert(process_id.clone(), Arc::new(tokio::sync::Mutex::new(entry)));
 
         Ok(serde_json::json!({
             "process_id": process_id,
@@ -704,10 +712,7 @@ impl Toolset {
 
         let timeout = Duration::from_secs(5);
         let mut guard = entry.lock().await;
-        let stdin = guard
-            .stdin
-            .as_mut()
-            .context("process stdin is closed")?;
+        let stdin = guard.stdin.as_mut().context("process stdin is closed")?;
 
         tokio::time::timeout(timeout, stdin.write_all(data.as_bytes()))
             .await
@@ -1155,7 +1160,8 @@ impl Toolset {
             bytes.extend_from_slice(&sample.to_le_bytes());
         }
 
-        std::fs::write(&out_path, &bytes).with_context(|| format!("write {}", out_path.display()))?;
+        std::fs::write(&out_path, &bytes)
+            .with_context(|| format!("write {}", out_path.display()))?;
 
         Ok(serde_json::json!({
             "path": rel,
@@ -1216,7 +1222,8 @@ impl Toolset {
             "<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"><title>{safe_title}</title></head>\n<body>\n{sanitized}\n</body>\n</html>\n"
         );
 
-        std::fs::write(&out_path, &full).with_context(|| format!("write {}", out_path.display()))?;
+        std::fs::write(&out_path, &full)
+            .with_context(|| format!("write {}", out_path.display()))?;
 
         Ok(serde_json::json!({
             "canvas_id": canvas_id,
@@ -1232,6 +1239,7 @@ impl Toolset {
         url: &str,
         _timeout_ms: Option<u64>,
         allow_private: bool,
+        headless: Option<bool>,
     ) -> anyhow::Result<String> {
         let url = reqwest::Url::parse(url).context("parse url")?;
         match url.scheme() {
@@ -1255,7 +1263,15 @@ impl Toolset {
 
         let mut guard = self.browser.lock().await;
         if guard.is_none() {
-            *guard = Some(BrowserSession::spawn().await?);
+            let headless = headless.unwrap_or_else(browser_headless_default);
+            *guard = Some(BrowserSession::spawn(headless).await?);
+        } else if let Some(requested) = headless {
+            let session_headless = guard.as_ref().map(|s| s.headless).unwrap_or(true);
+            if session_headless != requested {
+                bail!(
+                    "browser session already started with headless={session_headless}; call browser_close before starting a new session with headless={requested}"
+                );
+            }
         }
 
         let session = guard.as_mut().expect("set above");
@@ -1473,6 +1489,7 @@ impl BridgeResponse {
 }
 
 struct BrowserSession {
+    headless: bool,
     child: tokio::process::Child,
     stdin: tokio::process::ChildStdin,
     stdout: BufReader<tokio::process::ChildStdout>,
@@ -1485,21 +1502,18 @@ impl std::fmt::Debug for BrowserSession {
 }
 
 impl BrowserSession {
-    async fn spawn() -> anyhow::Result<Self> {
+    async fn spawn(headless: bool) -> anyhow::Result<Self> {
         let python = browser_python_exe();
         let script_path = browser_bridge_script_path()?;
 
         let mut cmd = tokio::process::Command::new(python);
         cmd.arg("-u").arg(script_path);
-        cmd.args([
-            "--headless",
-            "--width",
-            "1280",
-            "--height",
-            "720",
-            "--timeout",
-            "30",
-        ]);
+        if headless {
+            cmd.arg("--headless");
+        } else {
+            cmd.arg("--no-headless");
+        }
+        cmd.args(["--width", "1280", "--height", "720", "--timeout", "30"]);
         cmd.stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null());
@@ -1510,6 +1524,7 @@ impl BrowserSession {
         let stdout = child.stdout.take().context("capture bridge stdout")?;
 
         let mut session = Self {
+            headless,
             child,
             stdin,
             stdout: BufReader::new(stdout),
@@ -1566,6 +1581,17 @@ impl Drop for BrowserSession {
     fn drop(&mut self) {
         let _ = self.child.start_kill();
     }
+}
+
+fn browser_headless_default() -> bool {
+    if let Ok(v) = std::env::var("REXOS_BROWSER_HEADLESS") {
+        match v.trim().to_ascii_lowercase().as_str() {
+            "0" | "false" | "no" | "off" => return false,
+            "1" | "true" | "yes" | "on" => return true,
+            _ => {}
+        }
+    }
+    true
 }
 
 fn browser_python_exe() -> String {
@@ -1793,6 +1819,8 @@ struct BrowserNavigateArgs {
     timeout_ms: Option<u64>,
     #[serde(default)]
     allow_private: bool,
+    #[serde(default)]
+    headless: Option<bool>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -1879,8 +1907,8 @@ fn contains_event_handler_attr(lower: &str) -> bool {
 
         if i > 0 {
             let prev = bytes[i - 1];
-            let ok_boundary = prev.is_ascii_whitespace()
-                || matches!(prev, b'<' | b'"' | b'\'' | b'/' | b'=');
+            let ok_boundary =
+                prev.is_ascii_whitespace() || matches!(prev, b'<' | b'"' | b'\'' | b'/' | b'=');
             if !ok_boundary {
                 continue;
             }
@@ -1917,16 +1945,8 @@ fn sanitize_canvas_html(html: &str, max_bytes: usize) -> anyhow::Result<String> 
     let lower = html.to_ascii_lowercase();
 
     for tag in [
-        "<script",
-        "</script",
-        "<iframe",
-        "</iframe",
-        "<object",
-        "</object",
-        "<embed",
-        "</embed",
-        "<applet",
-        "</applet",
+        "<script", "</script", "<iframe", "</iframe", "<object", "</object", "<embed", "</embed",
+        "<applet", "</applet",
     ] {
         if lower.contains(tag) {
             bail!("forbidden html tag detected: {tag}");
@@ -2905,7 +2925,9 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
             name: "hand_list".to_string(),
-            description: "List available Hands (curated autonomous packages) and their activation status.".to_string(),
+            description:
+                "List available Hands (curated autonomous packages) and their activation status."
+                    .to_string(),
             parameters: json!({
                 "type": "object",
                 "properties": {},
@@ -3222,7 +3244,8 @@ fn browser_navigate_def() -> ToolDefinition {
                 "properties": {
                     "url": { "type": "string", "description": "HTTP(S) URL to open." },
                     "timeout_ms": { "type": "integer", "description": "Timeout in milliseconds (default 30000).", "minimum": 1 },
-                    "allow_private": { "type": "boolean", "description": "Allow loopback/private IPs (default false)." }
+                    "allow_private": { "type": "boolean", "description": "Allow loopback/private IPs (default false)." },
+                    "headless": { "type": "boolean", "description": "Run the browser in headless mode (default true). Set false to show a GUI window." }
                 },
                 "required": ["url"],
                 "additionalProperties": false
@@ -3275,8 +3298,7 @@ fn browser_press_key_def() -> ToolDefinition {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
             name: "browser_press_key".to_string(),
-            description: "Press a key in the browser (optionally on a target element)."
-                .to_string(),
+            description: "Press a key in the browser (optionally on a target element).".to_string(),
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -3650,7 +3672,10 @@ mod tests {
 
         let bytes = std::fs::read(workspace.join("out.wav")).unwrap();
         assert!(bytes.starts_with(b"RIFF"), "missing RIFF header");
-        assert!(bytes.windows(4).any(|w| w == b"WAVE"), "missing WAVE header");
+        assert!(
+            bytes.windows(4).any(|w| w == b"WAVE"),
+            "missing WAVE header"
+        );
     }
 
     #[tokio::test]
@@ -3905,10 +3930,7 @@ mod tests {
         let _ = tools
             .call(
                 "process_write",
-                &format!(
-                    r#"{{ "process_id": "{}", "data": "hi" }}"#,
-                    process_id
-                ),
+                &format!(r#"{{ "process_id": "{}", "data": "hi" }}"#, process_id),
             )
             .await
             .unwrap();
@@ -3972,7 +3994,10 @@ mod tests {
             .get("saved_to")
             .and_then(|v| v.as_str())
             .expect("saved_to");
-        assert!(saved_to.ends_with(".html"), "unexpected saved_to: {saved_to}");
+        assert!(
+            saved_to.ends_with(".html"),
+            "unexpected saved_to: {saved_to}"
+        );
 
         let html = std::fs::read_to_string(workspace.join(saved_to)).unwrap();
         assert!(html.contains("<h1>Hello</h1>"), "{html}");
@@ -4226,7 +4251,10 @@ mod tests {
         assert_eq!(v["key"], "Enter");
 
         let out = tools
-            .call("browser_wait_for", r#"{ "text": "hello", "timeout_ms": 1 }"#)
+            .call(
+                "browser_wait_for",
+                r#"{ "text": "hello", "timeout_ms": 1 }"#,
+            )
             .await
             .unwrap();
         let v: serde_json::Value = serde_json::from_str(&out).unwrap();
@@ -4249,6 +4277,39 @@ mod tests {
 
         let out = tools.call("browser_close", r#"{}"#).await.unwrap();
         assert_eq!(out.trim(), "ok");
+    }
+
+    #[tokio::test]
+    async fn browser_navigate_honors_headless_flag() {
+        let _lock = ENV_LOCK.lock().unwrap();
+
+        let tmp = tempfile::tempdir().unwrap();
+        let workspace = tmp.path().join("ws");
+        std::fs::create_dir_all(&workspace).unwrap();
+
+        let bridge_path = tmp.path().join("bridge.py");
+        std::fs::write(&bridge_path, stub_bridge_script()).unwrap();
+
+        let python = if cfg!(windows) { "python" } else { "python3" };
+        let _python_guard = EnvVarGuard::set("REXOS_BROWSER_PYTHON", python);
+        let _bridge_guard = EnvVarGuard::set("REXOS_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
+
+        let tools = Toolset::new(workspace).unwrap();
+
+        let out = tools
+            .call(
+                "browser_navigate",
+                r#"{ "url": "http://127.0.0.1:1/", "allow_private": true, "headless": false }"#,
+            )
+            .await
+            .unwrap();
+
+        let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+        assert_eq!(
+            v.get("headless").and_then(|v| v.as_bool()),
+            Some(false),
+            "{v}"
+        );
     }
 
     struct EnvVarGuard {
@@ -4286,7 +4347,8 @@ parser.add_argument("--no-headless", dest="headless", action="store_false")
 parser.add_argument("--width", type=int, default=1280)
 parser.add_argument("--height", type=int, default=720)
 parser.add_argument("--timeout", type=int, default=30)
-parser.parse_args()
+args = parser.parse_args()
+headless = bool(args.headless)
 
 sys.stdout.write(json.dumps({"success": True, "data": {"status": "ready"}}) + "\n")
 sys.stdout.flush()
@@ -4301,7 +4363,7 @@ for line in sys.stdin:
     action = cmd.get("action", "")
     if action == "Navigate":
         current_url = cmd.get("url", "")
-        resp = {"success": True, "data": {"title": "Stub", "url": current_url}}
+        resp = {"success": True, "data": {"title": "Stub", "url": current_url, "headless": headless}}
     elif action == "ReadPage":
         resp = {"success": True, "data": {"title": "Stub", "url": current_url, "content": "hello"}}
     elif action == "Screenshot":

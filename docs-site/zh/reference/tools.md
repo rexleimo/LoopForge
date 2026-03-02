@@ -40,6 +40,7 @@ RexOS 会强制超时，并使用尽量最小的环境。
 说明：
 
 - `browser_navigate` 默认带 SSRF 防护（拒绝 loopback/private 目标，除非 `allow_private=true`）。
+- 默认是 headless。如需显示浏览器窗口，可在 `browser_navigate` 传 `headless=false`（或设置 `REXOS_BROWSER_HEADLESS=0` 作为默认值）。
 - `browser_screenshot` 只允许写入 workspace 相对路径（不允许绝对路径、不允许 `..`、不允许通过 symlink 逃逸）。
 - 需要 Python + Playwright：
 
