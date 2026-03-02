@@ -147,17 +147,11 @@ impl Toolset {
             "memory_store" | "memory_recall" => {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
-            "agent_send"
-            | "agent_spawn"
-            | "agent_list"
-            | "agent_kill"
-            | "agent_find"
-            | "task_post"
-            | "task_claim"
-            | "task_complete"
-            | "task_list"
-            | "event_publish"
-            | "schedule_create"
+            "agent_send" | "agent_spawn" | "agent_list" | "agent_kill" | "agent_find"
+            | "task_post" | "task_claim" | "task_complete" | "task_list" | "event_publish" => {
+                bail!("tool '{name}' is implemented in the runtime, not Toolset")
+            }
+            "schedule_create"
             | "schedule_list"
             | "schedule_delete"
             | "knowledge_add_entity"
@@ -1362,18 +1356,166 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         },
     });
 
+    // Collaboration/runtime tools (implemented in the agent runtime; persisted in shared memory).
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "agent_spawn".to_string(),
+            description: "Create an agent session record (persisted) and return its details."
+                .to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "agent_id": { "type": "string", "description": "Optional stable agent id. If omitted, RexOS generates one." },
+                    "name": { "type": "string", "description": "Optional human-friendly name." },
+                    "system_prompt": { "type": "string", "description": "Optional system prompt for the agent session." },
+                    "manifest_toml": { "type": "string", "description": "Optional agent manifest (TOML). RexOS will best-effort extract name + system prompt." }
+                },
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "agent_list".to_string(),
+            description: "List known agent sessions.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "agent_find".to_string(),
+            description: "Find agent sessions by id or name (substring match).".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "query": { "type": "string", "description": "Search query (case-insensitive substring)." }
+                },
+                "required": ["query"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "agent_kill".to_string(),
+            description: "Mark an agent session as killed.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "agent_id": { "type": "string", "description": "Target agent id." }
+                },
+                "required": ["agent_id"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "agent_send".to_string(),
+            description: "Send a message to an agent session and return its response.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "agent_id": { "type": "string", "description": "Target agent id." },
+                    "message": { "type": "string", "description": "Message to send." }
+                },
+                "required": ["agent_id", "message"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "task_post".to_string(),
+            description: "Post a task into the shared task board.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "task_id": { "type": "string", "description": "Optional stable task id. If omitted, RexOS generates one." },
+                    "title": { "type": "string", "description": "Short title." },
+                    "description": { "type": "string", "description": "Task description." },
+                    "assigned_to": { "type": "string", "description": "Optional assignee agent id." }
+                },
+                "required": ["title", "description"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "task_list".to_string(),
+            description: "List tasks (optionally filtered by status).".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "status": { "type": "string", "description": "Optional filter: pending | claimed | completed." }
+                },
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "task_claim".to_string(),
+            description: "Claim the next available pending task.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "agent_id": { "type": "string", "description": "Optional agent id claiming the task." }
+                },
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "task_complete".to_string(),
+            description: "Mark a task as completed.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "task_id": { "type": "string", "description": "Task id." },
+                    "result": { "type": "string", "description": "Completion result summary." }
+                },
+                "required": ["task_id", "result"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "event_publish".to_string(),
+            description: "Publish an event into the shared event log.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "event_type": { "type": "string", "description": "Event type/name." },
+                    "payload": { "type": "object", "description": "Optional event payload." }
+                },
+                "required": ["event_type"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
     // Reserved tool names (stubs in RexOS for now).
     for name in [
-        "agent_send",
-        "agent_spawn",
-        "agent_list",
-        "agent_kill",
-        "agent_find",
-        "task_post",
-        "task_claim",
-        "task_complete",
-        "task_list",
-        "event_publish",
         "schedule_create",
         "schedule_list",
         "schedule_delete",
@@ -1789,10 +1931,19 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn stub_tools_return_not_implemented_error() {
+    async fn runtime_tools_are_reported_as_runtime_implemented() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
         let err = tools.call("agent_send", r#"{}"#).await.unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("runtime"), "{msg}");
+    }
+
+    #[tokio::test]
+    async fn reserved_stub_tools_return_not_implemented_error() {
+        let tmp = tempfile::tempdir().unwrap();
+        let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
+        let err = tools.call("schedule_create", r#"{}"#).await.unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("not implemented"), "{msg}");
     }
