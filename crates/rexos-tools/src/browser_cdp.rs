@@ -39,6 +39,8 @@ impl CdpBrowserSession {
         if let Ok(v) = std::env::var("REXOS_BROWSER_CDP_HTTP") {
             let v = v.trim().to_string();
             if !v.is_empty() {
+                let base = reqwest::Url::parse(&v).context("parse REXOS_BROWSER_CDP_HTTP")?;
+                validate_remote_cdp_base_url(&base)?;
                 return Self::connect_remote(http, &v, headless, allow_private).await;
             }
         }
@@ -53,6 +55,7 @@ impl CdpBrowserSession {
         allow_private: bool,
     ) -> anyhow::Result<Self> {
         let base = reqwest::Url::parse(base_http).context("parse REXOS_BROWSER_CDP_HTTP")?;
+        validate_remote_cdp_base_url(&base)?;
         let page_ws = find_or_create_page_ws(&http, &base).await?;
         let cdp = CdpConnection::connect(&page_ws).await?;
 
@@ -77,7 +80,8 @@ impl CdpBrowserSession {
 
         let port = pick_unused_port().context("pick unused port")?;
 
-        let user_data_dir = std::env::temp_dir().join(format!("rexos-chrome-{}", uuid::Uuid::new_v4()));
+        let user_data_dir =
+            std::env::temp_dir().join(format!("rexos-chrome-{}", uuid::Uuid::new_v4()));
         let user_data_dir_arg = user_data_dir.to_string_lossy().to_string();
 
         let mut args = vec![
@@ -104,7 +108,12 @@ impl CdpBrowserSession {
 
         if std::env::var("REXOS_BROWSER_NO_SANDBOX")
             .ok()
-            .map(|v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+            .map(|v| {
+                matches!(
+                    v.trim().to_ascii_lowercase().as_str(),
+                    "1" | "true" | "yes" | "on"
+                )
+            })
             .unwrap_or(false)
         {
             args.push("--no-sandbox".to_string());
@@ -311,7 +320,9 @@ impl CdpBrowserSession {
 
         tokio::time::sleep(Duration::from_millis(250)).await;
         wait_for_load(&self.cdp).await;
-        let info = page_info(&self.cdp).await.unwrap_or_else(|_| serde_json::json!({}));
+        let info = page_info(&self.cdp)
+            .await
+            .unwrap_or_else(|_| serde_json::json!({}));
         let mut obj = info.as_object().cloned().unwrap_or_default();
         obj.insert("key".to_string(), Value::String(key.to_string()));
         obj.insert(
@@ -392,7 +403,11 @@ impl CdpBrowserSession {
     }
 
     pub async fn read_page(&self) -> anyhow::Result<Value> {
-        let val = self.cdp.run_js(EXTRACT_CONTENT_JS).await.context("read page js")?;
+        let val = self
+            .cdp
+            .run_js(EXTRACT_CONTENT_JS)
+            .await
+            .context("read page js")?;
         let parsed: Value = val
             .as_str()
             .and_then(|s| serde_json::from_str(s).ok())
@@ -403,7 +418,10 @@ impl CdpBrowserSession {
     pub async fn screenshot(&self) -> anyhow::Result<Value> {
         let result = self
             .cdp
-            .send("Page.captureScreenshot", serde_json::json!({ "format": "png" }))
+            .send(
+                "Page.captureScreenshot",
+                serde_json::json!({ "format": "png" }),
+            )
             .await
             .context("Page.captureScreenshot")?;
         let b64 = result.get("data").and_then(|v| v.as_str()).unwrap_or("");
@@ -422,7 +440,11 @@ impl CdpBrowserSession {
     }
 
     pub async fn current_url(&self) -> anyhow::Result<String> {
-        let v = self.cdp.run_js("location.href").await.context("location.href")?;
+        let v = self
+            .cdp
+            .run_js("location.href")
+            .await
+            .context("location.href")?;
         Ok(v.as_str().unwrap_or("").to_string())
     }
 
@@ -435,6 +457,43 @@ impl CdpBrowserSession {
             let _ = std::fs::remove_dir_all(dir);
         }
     }
+}
+
+fn validate_remote_cdp_base_url(base: &reqwest::Url) -> anyhow::Result<()> {
+    match base.scheme() {
+        "http" | "https" => {}
+        _ => anyhow::bail!("REXOS_BROWSER_CDP_HTTP must be http(s)"),
+    }
+
+    let host = base.host_str().unwrap_or("");
+    if host.is_empty() {
+        anyhow::bail!("REXOS_BROWSER_CDP_HTTP is missing host");
+    }
+
+    if is_loopback_host(host) {
+        return Ok(());
+    }
+
+    let allow = std::env::var("REXOS_BROWSER_CDP_ALLOW_REMOTE")
+        .ok()
+        .map(|v| {
+            matches!(
+                v.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes" | "on"
+            )
+        })
+        .unwrap_or(false);
+    if allow {
+        return Ok(());
+    }
+
+    anyhow::bail!(
+        "REXOS_BROWSER_CDP_HTTP points to non-loopback host ({host}). This is powerful and unsafe by default. Set REXOS_BROWSER_CDP_ALLOW_REMOTE=1 to allow (prefer a TLS tunnel / tailnet-only endpoint)."
+    );
+}
+
+fn is_loopback_host(host: &str) -> bool {
+    matches!(host, "127.0.0.1" | "localhost" | "::1")
 }
 
 impl Drop for CdpBrowserSession {
@@ -452,6 +511,39 @@ struct KeyEvent {
     key: &'static str,
     code: &'static str,
     vkey: i32,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    #[test]
+    fn validate_remote_cdp_base_url_rejects_non_loopback_by_default() {
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        std::env::remove_var("REXOS_BROWSER_CDP_ALLOW_REMOTE");
+        let url = reqwest::Url::parse("http://example.com:9222").unwrap();
+        let err = validate_remote_cdp_base_url(&url).unwrap_err();
+        assert!(err.to_string().contains("ALLOW_REMOTE"), "{err}");
+    }
+
+    #[test]
+    fn validate_remote_cdp_base_url_allows_loopback() {
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        std::env::remove_var("REXOS_BROWSER_CDP_ALLOW_REMOTE");
+        let url = reqwest::Url::parse("http://127.0.0.1:9222").unwrap();
+        validate_remote_cdp_base_url(&url).unwrap();
+    }
+
+    #[test]
+    fn validate_remote_cdp_base_url_allows_non_loopback_with_opt_in() {
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        std::env::set_var("REXOS_BROWSER_CDP_ALLOW_REMOTE", "1");
+        let url = reqwest::Url::parse("http://example.com:9222").unwrap();
+        validate_remote_cdp_base_url(&url).unwrap();
+        std::env::remove_var("REXOS_BROWSER_CDP_ALLOW_REMOTE");
+    }
 }
 
 fn key_event_fields(key: &str) -> Option<KeyEvent> {
@@ -528,7 +620,10 @@ async fn read_devtools_url(stderr: tokio::process::ChildStderr) -> anyhow::Resul
     }
 }
 
-async fn find_or_create_page_ws(http: &reqwest::Client, base: &reqwest::Url) -> anyhow::Result<String> {
+async fn find_or_create_page_ws(
+    http: &reqwest::Client,
+    base: &reqwest::Url,
+) -> anyhow::Result<String> {
     // Prefer /json/new (creates a fresh tab).
     let new_url = base.join("/json/new").context("join /json/new")?;
     if let Ok(resp) = http.get(new_url).send().await {
@@ -728,10 +823,7 @@ fn find_chromium() -> anyhow::Result<PathBuf> {
         if p.exists() {
             return Ok(p);
         }
-        bail!(
-            "REXOS_BROWSER_CHROME_PATH does not exist: {}",
-            p.display()
-        );
+        bail!("REXOS_BROWSER_CHROME_PATH does not exist: {}", p.display());
     }
 
     if let Ok(path) = std::env::var("CHROME_PATH") {
@@ -760,7 +852,9 @@ fn find_chromium() -> anyhow::Result<PathBuf> {
         }
     }
 
-    bail!("could not find Chrome/Chromium. Install Chrome/Chromium or set REXOS_BROWSER_CHROME_PATH.")
+    bail!(
+        "could not find Chrome/Chromium. Install Chrome/Chromium or set REXOS_BROWSER_CHROME_PATH."
+    )
 }
 
 fn find_in_path(name: &str) -> Option<PathBuf> {

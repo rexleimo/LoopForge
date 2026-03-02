@@ -1,5 +1,15 @@
 # 故障排查
 
+## 第一步：跑 `rexos doctor`
+
+如果你不确定哪里出了问题，建议先跑：
+
+```bash
+rexos doctor
+```
+
+它会检查：`~/.rexos` 路径、`config.toml`、provider 的环境变量、（本地时）Ollama 连通性、浏览器/CDP 连通性，以及 `git` 等基础依赖。
+
 ## 文档站点显示 “There isn't a GitHub Pages site here” / “GitHub Pages is designed to host…”
 
 如果你访问 `https://os.rexai.top/` 看到的是 GitHub Pages 的占位/404 页面，通常说明：
@@ -72,4 +82,3 @@ export ZHIPUAI_API_KEY="id.secret"
 ```
 
 如果 key 形如 `id.secret`，RexOS 会自动签发短期 JWT（无需你手动生成 token）。
-

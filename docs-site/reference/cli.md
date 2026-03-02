@@ -5,6 +5,7 @@ RexOS ships a single binary: `rexos`.
 ## Top-level commands
 
 - `rexos init` — initialize `~/.rexos` (config + database)
+- `rexos doctor` — diagnose common setup issues (config, providers, browser, tooling)
 - `rexos agent run` — run a single agent session in a workspace
 - `rexos channel drain` — drain queued outbox messages once
 - `rexos channel worker` — run a polling outbox dispatcher

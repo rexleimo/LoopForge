@@ -134,52 +134,83 @@ impl OpenAiCompatibleClient {
         })
     }
 
-    pub async fn chat_completions(&self, req: ChatCompletionRequest) -> anyhow::Result<ChatMessage> {
+    pub async fn chat_completions(
+        &self,
+        req: ChatCompletionRequest,
+    ) -> anyhow::Result<ChatMessage> {
         let url = format!("{}/chat/completions", self.base_url);
 
-        let mut http_req = self.http.post(url).json(&req);
-        if let Some(key) = &self.api_key {
-            if !key.is_empty() {
-                http_req = http_req.bearer_auth(key);
+        let max_retries = llm_retry_max();
+
+        for attempt in 0..=max_retries {
+            let mut http_req = self.http.post(&url).json(&req);
+            if let Some(key) = &self.api_key {
+                if !key.is_empty() {
+                    http_req = http_req.bearer_auth(key);
+                }
+            }
+
+            let resp = http_req.send().await;
+            match resp {
+                Ok(resp) => {
+                    if resp.status().is_success() {
+                        let body: RawChatCompletionResponse = resp
+                            .json()
+                            .await
+                            .context("decode chat completion response")?;
+
+                        let choice = body.choices.into_iter().next().context("no choices")?;
+                        let raw = choice.message;
+
+                        let mut tool_calls = raw.tool_calls;
+                        if tool_calls.as_ref().map(|c| c.is_empty()).unwrap_or(true) {
+                            if let Some(fc) = raw.function_call {
+                                tool_calls = Some(vec![ToolCall {
+                                    id: "call_1".to_string(),
+                                    kind: "function".to_string(),
+                                    function: ToolFunction {
+                                        name: fc.name,
+                                        arguments: fc.arguments,
+                                    },
+                                }]);
+                            }
+                        }
+
+                        return Ok(ChatMessage {
+                            role: raw.role,
+                            content: raw.content,
+                            name: raw.name,
+                            tool_call_id: raw.tool_call_id,
+                            tool_calls,
+                        });
+                    }
+
+                    let status = resp.status();
+                    let body = resp.text().await.unwrap_or_default();
+                    let retryable = is_retryable_status(status);
+                    if attempt < max_retries && retryable {
+                        sleep_retry_backoff(attempt + 1).await;
+                        continue;
+                    }
+
+                    anyhow::bail!(
+                        "chat completion HTTP error (status {}): {}",
+                        status,
+                        truncate_one_line(&body, 400)
+                    );
+                }
+                Err(e) => {
+                    let retryable = is_retryable_reqwest_error(&e);
+                    if attempt < max_retries && retryable {
+                        sleep_retry_backoff(attempt + 1).await;
+                        continue;
+                    }
+                    return Err(e).context("send chat completion request");
+                }
             }
         }
 
-        let resp = http_req
-            .send()
-            .await
-            .context("send chat completion request")?
-            .error_for_status()
-            .context("chat completion HTTP error")?;
-
-        let body: RawChatCompletionResponse = resp
-            .json()
-            .await
-            .context("decode chat completion response")?;
-
-        let choice = body.choices.into_iter().next().context("no choices")?;
-        let raw = choice.message;
-
-        let mut tool_calls = raw.tool_calls;
-        if tool_calls.as_ref().map(|c| c.is_empty()).unwrap_or(true) {
-            if let Some(fc) = raw.function_call {
-                tool_calls = Some(vec![ToolCall {
-                    id: "call_1".to_string(),
-                    kind: "function".to_string(),
-                    function: ToolFunction {
-                        name: fc.name,
-                        arguments: fc.arguments,
-                    },
-                }]);
-            }
-        }
-
-        Ok(ChatMessage {
-            role: raw.role,
-            content: raw.content,
-            name: raw.name,
-            tool_call_id: raw.tool_call_id,
-            tool_calls,
-        })
+        unreachable!("retry loop should return or bail")
     }
 }
 
@@ -192,4 +223,53 @@ fn openai_compat_timeout() -> Duration {
         },
         Err(_) => Duration::from_secs(DEFAULT_SECS),
     }
+}
+
+fn llm_retry_max() -> u32 {
+    const DEFAULT: u32 = 2;
+    match std::env::var("REXOS_LLM_RETRY_MAX") {
+        Ok(v) => v.trim().parse::<u32>().ok().unwrap_or(DEFAULT),
+        Err(_) => DEFAULT,
+    }
+}
+
+fn is_retryable_status(status: reqwest::StatusCode) -> bool {
+    matches!(status.as_u16(), 429 | 500 | 502 | 503 | 504)
+}
+
+fn is_retryable_reqwest_error(err: &reqwest::Error) -> bool {
+    err.is_timeout() || err.is_connect()
+}
+
+async fn sleep_retry_backoff(retry_number: u32) {
+    // Exponential backoff with small jitter (no extra RNG dependency).
+    let base_ms: u64 = 250;
+    let cap_ms: u64 = 2_000;
+
+    let shift: u32 = retry_number.saturating_sub(1).min(31);
+    let exp = 1u64.checked_shl(shift).unwrap_or(u64::MAX);
+    let delay_ms = base_ms.saturating_mul(exp).min(cap_ms);
+
+    let jitter_window = (delay_ms / 4).max(1);
+    let jitter = match std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH) {
+        Ok(d) => (d.subsec_nanos() as u64) % jitter_window,
+        Err(_) => 0,
+    };
+
+    tokio::time::sleep(Duration::from_millis(delay_ms + jitter)).await;
+}
+
+fn truncate_one_line(s: &str, max_len: usize) -> String {
+    let mut out = String::new();
+    for ch in s.chars() {
+        if ch == '\n' || ch == '\r' {
+            break;
+        }
+        out.push(ch);
+        if out.len() >= max_len {
+            out.push_str("…");
+            break;
+        }
+    }
+    out.trim().to_string()
 }

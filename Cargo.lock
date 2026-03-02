@@ -1189,9 +1189,15 @@ name = "rexos-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "axum",
  "clap",
+ "reqwest",
  "rexos",
+ "serde",
+ "serde_json",
+ "tempfile",
  "tokio",
+ "toml",
  "uuid",
 ]
 
@@ -1239,6 +1245,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "tokio",
 ]
 
 [[package]]

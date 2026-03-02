@@ -21,6 +21,12 @@ If you already have a browser running with a remote debugging port (or you run o
 export REXOS_BROWSER_CDP_HTTP="http://127.0.0.1:9222"
 ```
 
+By default, RexOS only allows **loopback** CDP endpoints. To attach to a non-loopback CDP URL, you must explicitly opt in:
+
+```bash
+export REXOS_BROWSER_CDP_ALLOW_REMOTE=1
+```
+
 For a copy/paste Docker GUI sandbox (Chromium + noVNC) that exposes CDP on `127.0.0.1:9222`, see: [GUI Smoke Check](browser-use-cases/gui-smoke-check.md).
 
 ## Headless vs GUI

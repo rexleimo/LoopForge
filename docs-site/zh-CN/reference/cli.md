@@ -5,6 +5,7 @@ RexOS 提供单个二进制：`rexos`。
 ## 顶层命令
 
 - `rexos init` — 初始化 `~/.rexos`（配置 + 数据库）
+- `rexos doctor` — 诊断常见配置问题（配置文件、providers、浏览器、基础依赖）
 - `rexos agent run` — 在 workspace 中运行一次 agent session
 - `rexos channel drain` — 执行一次 outbox drain（投递队列中的消息）
 - `rexos channel worker` — 运行轮询 outbox 的 dispatcher

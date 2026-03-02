@@ -5,9 +5,12 @@ use axum::routing::post;
 use axum::{Json, Router};
 use serde_json::json;
 
+static ENV_LOCK: Mutex<()> = Mutex::new(());
+
 #[derive(Clone, Default)]
 struct TestState {
     captured: Arc<Mutex<Option<serde_json::Value>>>,
+    calls: Arc<Mutex<u32>>,
 }
 
 struct EnvVarGuard {
@@ -67,11 +70,9 @@ async fn openai_compat_client_posts_and_parses_tool_calls() {
         axum::serve(listener, app).await.unwrap();
     });
 
-    let client = rexos::llm::openai_compat::OpenAiCompatibleClient::new(
-        format!("http://{addr}/v1"),
-        None,
-    )
-    .unwrap();
+    let client =
+        rexos::llm::openai_compat::OpenAiCompatibleClient::new(format!("http://{addr}/v1"), None)
+            .unwrap();
 
     let msg = rexos::llm::openai_compat::ChatMessage {
         role: rexos::llm::openai_compat::Role::User,
@@ -103,6 +104,72 @@ async fn openai_compat_client_posts_and_parses_tool_calls() {
     assert_eq!(captured["model"], "test-model");
     assert_eq!(captured["messages"][0]["role"], "user");
     assert_eq!(captured["messages"][0]["content"], "read file");
+
+    server.abort();
+}
+
+#[tokio::test]
+async fn openai_compat_client_retries_transient_http_errors() {
+    let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let _guard = EnvVarGuard::set("REXOS_LLM_RETRY_MAX", "1");
+
+    async fn handler(
+        State(state): State<TestState>,
+        Json(payload): Json<serde_json::Value>,
+    ) -> Result<Json<serde_json::Value>, axum::http::StatusCode> {
+        *state.captured.lock().unwrap() = Some(payload);
+        let mut calls = state.calls.lock().unwrap();
+        *calls += 1;
+
+        if *calls == 1 {
+            return Err(axum::http::StatusCode::SERVICE_UNAVAILABLE);
+        }
+
+        Ok(Json(json!({
+            "choices": [{
+                "index": 0,
+                "message": { "role": "assistant", "content": "ok" },
+                "finish_reason": "stop"
+            }]
+        })))
+    }
+
+    let state = TestState::default();
+    let app = Router::new()
+        .route("/v1/chat/completions", post(handler))
+        .with_state(state.clone());
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+
+    let client =
+        rexos::llm::openai_compat::OpenAiCompatibleClient::new(format!("http://{addr}/v1"), None)
+            .unwrap();
+
+    let msg = rexos::llm::openai_compat::ChatMessage {
+        role: rexos::llm::openai_compat::Role::User,
+        content: Some("hello".to_string()),
+        name: None,
+        tool_call_id: None,
+        tool_calls: None,
+    };
+
+    let res = client
+        .chat_completions(rexos::llm::openai_compat::ChatCompletionRequest {
+            model: "test-model".to_string(),
+            messages: vec![msg],
+            tools: vec![],
+            temperature: None,
+        })
+        .await
+        .unwrap();
+
+    assert_eq!(res.role, rexos::llm::openai_compat::Role::Assistant);
+    assert_eq!(res.content.as_deref(), Some("ok"));
+    assert_eq!(*state.calls.lock().unwrap(), 2);
 
     server.abort();
 }
@@ -141,11 +208,9 @@ async fn openai_compat_client_parses_legacy_function_call_into_tool_call() {
         axum::serve(listener, app).await.unwrap();
     });
 
-    let client = rexos::llm::openai_compat::OpenAiCompatibleClient::new(
-        format!("http://{addr}/v1"),
-        None,
-    )
-    .unwrap();
+    let client =
+        rexos::llm::openai_compat::OpenAiCompatibleClient::new(format!("http://{addr}/v1"), None)
+            .unwrap();
 
     let msg = rexos::llm::openai_compat::ChatMessage {
         role: rexos::llm::openai_compat::Role::User,
@@ -179,7 +244,9 @@ async fn openai_compat_client_parses_legacy_function_call_into_tool_call() {
 
 #[tokio::test]
 async fn openai_compat_client_timeout_can_be_overridden_via_env() {
+    let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let _guard = EnvVarGuard::set("REXOS_OPENAI_COMPAT_TIMEOUT_SECS", "1");
+    let _retry_guard = EnvVarGuard::set("REXOS_LLM_RETRY_MAX", "0");
 
     async fn handler() -> Json<serde_json::Value> {
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -199,11 +266,9 @@ async fn openai_compat_client_timeout_can_be_overridden_via_env() {
         axum::serve(listener, app).await.unwrap();
     });
 
-    let client = rexos::llm::openai_compat::OpenAiCompatibleClient::new(
-        format!("http://{addr}/v1"),
-        None,
-    )
-    .unwrap();
+    let client =
+        rexos::llm::openai_compat::OpenAiCompatibleClient::new(format!("http://{addr}/v1"), None)
+            .unwrap();
 
     let msg = rexos::llm::openai_compat::ChatMessage {
         role: rexos::llm::openai_compat::Role::User,

@@ -3,6 +3,8 @@ use std::path::PathBuf;
 
 use rexos::{config::RexosConfig, memory::MemoryStore, paths::RexosPaths};
 
+mod doctor;
+
 #[derive(Debug, Parser)]
 #[command(name = "rexos")]
 #[command(about = "RexOS: long-running agent operating system", long_about = None)]
@@ -15,6 +17,18 @@ struct Cli {
 enum Command {
     /// Initialize ~/.rexos (config + database)
     Init,
+    /// Diagnose common setup issues (config, providers, browser, tooling)
+    Doctor {
+        /// Print JSON output (machine-readable)
+        #[arg(long)]
+        json: bool,
+        /// Exit non-zero if any warnings are detected
+        #[arg(long)]
+        strict: bool,
+        /// Timeout for network probes (milliseconds)
+        #[arg(long, default_value_t = 1500)]
+        timeout_ms: u64,
+    },
     /// Run an agent session (LLM + tools + memory)
     Agent {
         #[command(subcommand)]
@@ -143,6 +157,29 @@ async fn main() -> anyhow::Result<()> {
             RexosConfig::ensure_default(&paths)?;
             MemoryStore::open_or_create(&paths)?;
             println!("Initialized {}", paths.base_dir.display());
+        }
+        Command::Doctor {
+            json,
+            strict,
+            timeout_ms,
+        } => {
+            let paths = RexosPaths::discover()?;
+            let report = doctor::run_doctor(doctor::DoctorOptions {
+                paths,
+                timeout: std::time::Duration::from_millis(timeout_ms),
+            })
+            .await?;
+
+            if json {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                println!("{}", report.to_text());
+            }
+
+            let code = report.exit_code(strict);
+            if code != 0 {
+                std::process::exit(code);
+            }
         }
         Command::Agent { command } => match command {
             AgentCommand::Run {

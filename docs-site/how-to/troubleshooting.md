@@ -1,5 +1,15 @@
 # Troubleshooting
 
+## First step: run `rexos doctor`
+
+If you’re not sure what’s wrong, start here:
+
+```bash
+rexos doctor
+```
+
+It checks: `~/.rexos` paths, `config.toml`, provider env vars, Ollama connectivity (when local), browser/CDP connectivity, and core tooling like `git`.
+
 ## Docs site shows “There isn't a GitHub Pages site here” / “GitHub Pages is designed to host…”
 
 If `https://os.rexai.top/` shows the GitHub Pages placeholder/404 page, it usually means the repo's Pages site hasn’t been enabled yet (or the Docs workflow never deployed).
@@ -69,4 +79,3 @@ export ZHIPUAI_API_KEY="id.secret"
 ```
 
 If the key looks like `id.secret`, RexOS will sign a short-lived JWT automatically.
-
