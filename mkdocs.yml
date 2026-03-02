@@ -78,6 +78,10 @@ plugins:
             Notifications: 通知
             Browser Automation: 浏览器自动化
             Browser Use Cases: 浏览器案例
+            GUI Smoke Check: 有界面 smoke check
+            Baidu Weather (Ollama): 百度今天天气（Ollama）
+            Wikipedia Summary: Wikipedia 总结
+            Smoke Test (Source): Smoke test（从源码）
             Configuration: 配置
             Providers & Routing: Providers 与路由
             Operations: 运维
@@ -156,7 +160,12 @@ nav:
           - Routing Recipes: examples/routing-recipes.md
           - Daemon Health Check: examples/daemon-health.md
           - Notifications: examples/notifications.md
-      - Browser Use Cases: how-to/browser-use-cases.md
+      - Browser Use Cases:
+          - Index: how-to/browser-use-cases.md
+          - GUI Smoke Check: how-to/browser-use-cases/gui-smoke-check.md
+          - Baidu Weather (Ollama): how-to/browser-use-cases/baidu-weather.md
+          - Wikipedia Summary: how-to/browser-use-cases/wikipedia-summary.md
+          - Smoke Test (Source): how-to/browser-use-cases/smoke-test.md
   - Reference:
       - CLI: reference/cli.md
       - Config: reference/config.md
