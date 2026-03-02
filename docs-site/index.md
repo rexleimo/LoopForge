@@ -8,6 +8,7 @@
 [Harness tutorial](tutorials/harness-long-task.md){ .md-button }
 [Providers & routing](how-to/providers.md){ .md-button }
 [Use cases](how-to/use-cases.md){ .md-button }
+[Browser use cases](how-to/browser-use-cases.md){ .md-button }
 
 <p class="rexos-muted">
 Develop locally with small models on Ollama, then switch routing to GLM / MiniMax / DeepSeek / Kimi / Qwen / NVIDIA NIM when you need more capability.

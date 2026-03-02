@@ -10,6 +10,7 @@
 [Harness 长任务](tutorials/harness-long-task.md){ .md-button }
 [Providers 与路由](how-to/providers.md){ .md-button }
 [常见场景](how-to/use-cases.md){ .md-button }
+[浏览器案例](how-to/browser-use-cases.md){ .md-button }
 
 <p class="rexos-muted">
 研发调试阶段用 Ollama 小模型先跑通逻辑；需要更强能力时，把路由切到 GLM / MiniMax / DeepSeek / Kimi / Qwen / NVIDIA NIM。
