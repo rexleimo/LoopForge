@@ -21,6 +21,11 @@ async fn browser_baidu_search_weather_and_summarize_with_ollama_smoke() {
     let model = std::env::var("REXOS_OLLAMA_MODEL").unwrap_or_else(|_| "qwen3:4b".to_string());
     let query =
         std::env::var("REXOS_BAIDU_WEATHER_QUERY").unwrap_or_else(|_| "北京 今天天气".to_string());
+    let keep_workspace_dir = std::env::var("REXOS_BROWSER_SMOKE_WORKSPACE")
+        .ok()
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
+    let keep_artifacts = keep_workspace_dir.is_some();
     let headless = match std::env::var("REXOS_BROWSER_HEADLESS") {
         Ok(v) => match v.trim().to_ascii_lowercase().as_str() {
             "1" | "true" | "yes" | "on" => true,
@@ -34,8 +39,21 @@ async fn browser_baidu_search_weather_and_summarize_with_ollama_smoke() {
         .and_then(|v| v.trim().parse().ok())
         .unwrap_or(if headless { 0 } else { 1500 });
 
-    let tmp = tempfile::tempdir().unwrap();
-    let workspace = tmp.path().to_path_buf();
+    let (tmp, workspace) = match keep_workspace_dir.as_deref() {
+        Some(dir) => {
+            let p = std::path::PathBuf::from(dir);
+            std::fs::create_dir_all(&p).expect("create REXOS_BROWSER_SMOKE_WORKSPACE");
+            println!("[rexos][baidu_weather] artifacts_dir={}", p.display());
+            (None, p)
+        }
+        None => {
+            let tmp = tempfile::tempdir().unwrap();
+            let workspace = tmp.path().to_path_buf();
+            (Some(tmp), workspace)
+        }
+    };
+
+    let _tmp_guard = tmp;
     let tools = Toolset::new(workspace.clone()).unwrap();
 
     // 1) Open Baidu homepage.
@@ -170,6 +188,14 @@ async fn browser_baidu_search_weather_and_summarize_with_ollama_smoke() {
         screenshot_path.display()
     );
 
+    if keep_artifacts {
+        let notes_dir = workspace.join("notes");
+        std::fs::create_dir_all(&notes_dir).expect("create notes/");
+        let page_dump: String = page_text.chars().take(24_000).collect();
+        std::fs::write(notes_dir.join("baidu_weather_page.txt"), page_dump)
+            .expect("write notes/baidu_weather_page.txt");
+    }
+
     if demo_pause_ms > 0 {
         tokio::time::sleep(std::time::Duration::from_millis(demo_pause_ms)).await;
     }
@@ -216,6 +242,13 @@ async fn browser_baidu_search_weather_and_summarize_with_ollama_smoke() {
     println!("[rexos][baidu_weather] query={query}");
     println!("[rexos][baidu_weather] url={page_url}");
     println!("[rexos][baidu_weather] summary={summary}");
+
+    if keep_artifacts {
+        let notes_dir = workspace.join("notes");
+        std::fs::create_dir_all(&notes_dir).expect("create notes/");
+        std::fs::write(notes_dir.join("weather.md"), format!("{summary}\n"))
+            .expect("write notes/weather.md");
+    }
 
     assert!(!summary.trim().is_empty(), "empty summary");
 }

@@ -12,9 +12,15 @@ Notes:
 - If you want to force the legacy Playwright backend for this smoke test:
   - `export REXOS_BROWSER_BACKEND=playwright`
   - then install Playwright as described in [Browser Automation](../browser-automation.md).
+- By default this test uses a temp workspace and cleans it up. If you want to keep screenshots + page dumps:
+  - `export REXOS_BROWSER_SMOKE_WORKSPACE=./rexos-browser-smoke` (or any directory)
 
 Expected output includes a line like:
 
 - `[rexos][baidu_weather] summary=...`
 
-This test uses a temp workspace and cleans it up. Use the other recipes if you want to keep screenshots and files.
+When `REXOS_BROWSER_SMOKE_WORKSPACE` is set, the test writes:
+
+- `.rexos/browser/baidu_weather.png`
+- `notes/baidu_weather_page.txt`
+- `notes/weather.md`
