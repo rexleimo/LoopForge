@@ -198,6 +198,25 @@ impl AgentRuntime {
                             .context("parse schedule_delete args")?;
                         self.schedule_delete(&args.id).context("schedule_delete")?
                     }
+                    "knowledge_add_entity" => {
+                        let args: KnowledgeAddEntityToolArgs = serde_json::from_str(&args_json)
+                            .context("parse knowledge_add_entity args")?;
+                        self.knowledge_add_entity(args)
+                            .context("knowledge_add_entity")?
+                    }
+                    "knowledge_add_relation" => {
+                        let args: KnowledgeAddRelationToolArgs =
+                            serde_json::from_str(&args_json)
+                                .context("parse knowledge_add_relation args")?;
+                        self.knowledge_add_relation(args)
+                            .context("knowledge_add_relation")?
+                    }
+                    "knowledge_query" => {
+                        let args: KnowledgeQueryToolArgs = serde_json::from_str(&args_json)
+                            .context("parse knowledge_query args")?;
+                        self.knowledge_query(&args.query)
+                            .context("knowledge_query")?
+                    }
                     _ => tools
                         .call(&call.function.name, &args_json)
                         .await
@@ -642,6 +661,133 @@ impl AgentRuntime {
         self.schedules_set(&schedules)?;
         Ok("ok".to_string())
     }
+
+    fn knowledge_entities_get(&self) -> anyhow::Result<Vec<KnowledgeEntityRecord>> {
+        let key = "rexos.knowledge.entities";
+        let raw = self
+            .memory
+            .kv_get(key)
+            .context("kv_get rexos.knowledge.entities")?
+            .unwrap_or_else(|| "[]".to_string());
+        let entities: Vec<KnowledgeEntityRecord> = serde_json::from_str(&raw).unwrap_or_default();
+        Ok(entities)
+    }
+
+    fn knowledge_entities_set(&self, entities: &[KnowledgeEntityRecord]) -> anyhow::Result<()> {
+        let key = "rexos.knowledge.entities";
+        let raw = serde_json::to_string(entities).context("serialize rexos.knowledge.entities")?;
+        self.memory
+            .kv_set(key, &raw)
+            .context("kv_set rexos.knowledge.entities")?;
+        Ok(())
+    }
+
+    fn knowledge_relations_get(&self) -> anyhow::Result<Vec<KnowledgeRelationRecord>> {
+        let key = "rexos.knowledge.relations";
+        let raw = self
+            .memory
+            .kv_get(key)
+            .context("kv_get rexos.knowledge.relations")?
+            .unwrap_or_else(|| "[]".to_string());
+        let relations: Vec<KnowledgeRelationRecord> =
+            serde_json::from_str(&raw).unwrap_or_default();
+        Ok(relations)
+    }
+
+    fn knowledge_relations_set(&self, relations: &[KnowledgeRelationRecord]) -> anyhow::Result<()> {
+        let key = "rexos.knowledge.relations";
+        let raw =
+            serde_json::to_string(relations).context("serialize rexos.knowledge.relations")?;
+        self.memory
+            .kv_set(key, &raw)
+            .context("kv_set rexos.knowledge.relations")?;
+        Ok(())
+    }
+
+    fn knowledge_add_entity(&self, args: KnowledgeAddEntityToolArgs) -> anyhow::Result<String> {
+        let id = args.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+        let mut entities = self.knowledge_entities_get()?;
+        if let Some(existing) = entities.iter().find(|e| e.id == id) {
+            return Ok(serde_json::to_string(existing).unwrap_or_else(|_| "ok".to_string()));
+        }
+
+        let now = Self::now_epoch_seconds();
+        let record = KnowledgeEntityRecord {
+            id: id.clone(),
+            name: args.name,
+            entity_type: args.entity_type,
+            properties: args.properties,
+            created_at: now,
+            updated_at: now,
+        };
+
+        entities.push(record.clone());
+        self.knowledge_entities_set(&entities)?;
+
+        Ok(serde_json::to_string(&record).unwrap_or_else(|_| "ok".to_string()))
+    }
+
+    fn knowledge_add_relation(&self, args: KnowledgeAddRelationToolArgs) -> anyhow::Result<String> {
+        let id = args.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+        let mut relations = self.knowledge_relations_get()?;
+        if let Some(existing) = relations.iter().find(|r| r.id == id) {
+            return Ok(serde_json::to_string(existing).unwrap_or_else(|_| "ok".to_string()));
+        }
+
+        let record = KnowledgeRelationRecord {
+            id: id.clone(),
+            source: args.source,
+            relation: args.relation,
+            target: args.target,
+            properties: args.properties,
+            created_at: Self::now_epoch_seconds(),
+        };
+
+        relations.push(record.clone());
+        self.knowledge_relations_set(&relations)?;
+
+        Ok(serde_json::to_string(&record).unwrap_or_else(|_| "ok".to_string()))
+    }
+
+    fn knowledge_query(&self, query: &str) -> anyhow::Result<String> {
+        let q = query.trim().to_lowercase();
+        if q.is_empty() {
+            return Ok(r#"{"entities":[],"relations":[]}"#.to_string());
+        }
+
+        let entities = self.knowledge_entities_get()?;
+        let relations = self.knowledge_relations_get()?;
+
+        let matched_entities: Vec<KnowledgeEntityRecord> = entities
+            .into_iter()
+            .filter(|e| {
+                e.id.to_lowercase().contains(&q)
+                    || e.name.to_lowercase().contains(&q)
+                    || e.entity_type.to_lowercase().contains(&q)
+            })
+            .collect();
+
+        let matched_entity_ids: std::collections::HashSet<String> =
+            matched_entities.iter().map(|e| e.id.clone()).collect();
+
+        let matched_relations: Vec<KnowledgeRelationRecord> = relations
+            .into_iter()
+            .filter(|r| {
+                r.id.to_lowercase().contains(&q)
+                    || r.source.to_lowercase().contains(&q)
+                    || r.target.to_lowercase().contains(&q)
+                    || r.relation.to_lowercase().contains(&q)
+                    || matched_entity_ids.contains(&r.source)
+                    || matched_entity_ids.contains(&r.target)
+            })
+            .collect();
+
+        Ok(serde_json::json!({
+            "entities": matched_entities,
+            "relations": matched_relations,
+        })
+        .to_string())
+    }
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -802,6 +948,52 @@ struct ScheduleCreateToolArgs {
 #[derive(Debug, serde::Deserialize)]
 struct ScheduleDeleteToolArgs {
     id: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct KnowledgeEntityRecord {
+    id: String,
+    name: String,
+    entity_type: String,
+    properties: serde_json::Map<String, serde_json::Value>,
+    created_at: i64,
+    updated_at: i64,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct KnowledgeRelationRecord {
+    id: String,
+    source: String,
+    relation: String,
+    target: String,
+    properties: serde_json::Map<String, serde_json::Value>,
+    created_at: i64,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct KnowledgeAddEntityToolArgs {
+    #[serde(default)]
+    id: Option<String>,
+    name: String,
+    entity_type: String,
+    #[serde(default)]
+    properties: serde_json::Map<String, serde_json::Value>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct KnowledgeAddRelationToolArgs {
+    #[serde(default)]
+    id: Option<String>,
+    source: String,
+    relation: String,
+    target: String,
+    #[serde(default)]
+    properties: serde_json::Map<String, serde_json::Value>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct KnowledgeQueryToolArgs {
+    query: String,
 }
 
 #[derive(Debug, serde::Deserialize)]

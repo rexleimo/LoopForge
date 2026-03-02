@@ -68,12 +68,12 @@ These tools are implemented by the agent runtime (not by the standalone `Toolset
 - `task_post` / `task_claim` / `task_complete` / `task_list`
 - `event_publish`
 - `schedule_create` / `schedule_list` / `schedule_delete`
+- `knowledge_add_entity` / `knowledge_add_relation` / `knowledge_query`
 
 ## Reserved tools (stubs)
 
 The following tool names are defined but currently return `tool not implemented yet: <name>`:
 
-`knowledge_add_entity`, `knowledge_add_relation`, `knowledge_query`,
 `image_analyze`, `location_get`,
 `media_describe`, `media_transcribe`, `image_generate`,
 `cron_create`, `cron_list`, `cron_cancel`,

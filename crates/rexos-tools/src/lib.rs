@@ -147,38 +147,30 @@ impl Toolset {
             "memory_store" | "memory_recall" => {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
-            "agent_send" | "agent_spawn" | "agent_list" | "agent_kill" | "agent_find"
-            | "task_post" | "task_claim" | "task_complete" | "task_list" | "event_publish"
-            | "schedule_create" | "schedule_list" | "schedule_delete" => {
+            "agent_send"
+            | "agent_spawn"
+            | "agent_list"
+            | "agent_kill"
+            | "agent_find"
+            | "task_post"
+            | "task_claim"
+            | "task_complete"
+            | "task_list"
+            | "event_publish"
+            | "schedule_create"
+            | "schedule_list"
+            | "schedule_delete"
+            | "knowledge_add_entity"
+            | "knowledge_add_relation"
+            | "knowledge_query" => {
                 bail!("tool '{name}' is implemented in the runtime, not Toolset")
             }
-            "knowledge_add_entity"
-            | "knowledge_add_relation"
-            | "knowledge_query"
-            | "image_analyze"
-            | "location_get"
-            | "media_describe"
-            | "media_transcribe"
-            | "image_generate"
-            | "cron_create"
-            | "cron_list"
-            | "cron_cancel"
-            | "channel_send"
-            | "hand_list"
-            | "hand_activate"
-            | "hand_status"
-            | "hand_deactivate"
-            | "a2a_discover"
-            | "a2a_send"
-            | "text_to_speech"
-            | "speech_to_text"
-            | "docker_exec"
-            | "process_start"
-            | "process_poll"
-            | "process_write"
-            | "process_kill"
-            | "process_list"
-            | "canvas_present" => bail!("tool not implemented yet: {name}"),
+            "image_analyze" | "location_get" | "media_describe" | "media_transcribe"
+            | "image_generate" | "cron_create" | "cron_list" | "cron_cancel" | "channel_send"
+            | "hand_list" | "hand_activate" | "hand_status" | "hand_deactivate"
+            | "a2a_discover" | "a2a_send" | "text_to_speech" | "speech_to_text" | "docker_exec"
+            | "process_start" | "process_poll" | "process_write" | "process_kill"
+            | "process_list" | "canvas_present" => bail!("tool not implemented yet: {name}"),
             _ => bail!("unknown tool: {name}"),
         }
     }
@@ -1560,11 +1552,61 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         },
     });
 
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "knowledge_add_entity".to_string(),
+            description: "Add an entity to the shared knowledge graph.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "description": "Optional stable entity id. If omitted, RexOS generates one." },
+                    "name": { "type": "string", "description": "Entity name." },
+                    "entity_type": { "type": "string", "description": "Entity type (free-form string)." },
+                    "properties": { "type": "object", "description": "Optional properties map.", "additionalProperties": true }
+                },
+                "required": ["name", "entity_type"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "knowledge_add_relation".to_string(),
+            description: "Add a relation to the shared knowledge graph.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "description": "Optional stable relation id. If omitted, RexOS generates one." },
+                    "source": { "type": "string", "description": "Source entity id." },
+                    "relation": { "type": "string", "description": "Relation type/name." },
+                    "target": { "type": "string", "description": "Target entity id." },
+                    "properties": { "type": "object", "description": "Optional properties map.", "additionalProperties": true }
+                },
+                "required": ["source", "relation", "target"],
+                "additionalProperties": false
+            }),
+        },
+    });
+    defs.push(ToolDefinition {
+        kind: "function".to_string(),
+        function: ToolFunctionDefinition {
+            name: "knowledge_query".to_string(),
+            description: "Query the shared knowledge graph.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "query": { "type": "string", "description": "Query string (substring match)." }
+                },
+                "required": ["query"],
+                "additionalProperties": false
+            }),
+        },
+    });
+
     // Reserved tool names (stubs in RexOS for now).
     for name in [
-        "knowledge_add_entity",
-        "knowledge_add_relation",
-        "knowledge_query",
         "image_analyze",
         "location_get",
         "media_describe",
