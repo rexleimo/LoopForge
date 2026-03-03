@@ -26,6 +26,9 @@ pub struct Toolset {
 
 const PROCESS_MAX_PROCESSES: usize = 5;
 const PROCESS_OUTPUT_MAX_BYTES: usize = 200_000;
+const PROCESS_OUTPUT_HEAD_MAX_BYTES: usize = 20_000;
+const PROCESS_OUTPUT_TAIL_MAX_BYTES: usize =
+    PROCESS_OUTPUT_MAX_BYTES - PROCESS_OUTPUT_HEAD_MAX_BYTES;
 const TOOL_OUTPUT_MIDDLE_OMISSION_MARKER: &str = "\n\n[... middle omitted ...]\n\n";
 
 struct ProcessManager {
@@ -48,6 +51,74 @@ impl ProcessManager {
     }
 }
 
+#[derive(Debug, Default)]
+struct ProcessOutputBuffer {
+    head: Vec<u8>,
+    tail: Vec<u8>,
+    total_bytes: usize,
+}
+
+impl ProcessOutputBuffer {
+    fn push(&mut self, chunk: &[u8]) {
+        if chunk.is_empty() {
+            return;
+        }
+
+        self.total_bytes = self.total_bytes.saturating_add(chunk.len());
+
+        if self.head.len() < PROCESS_OUTPUT_HEAD_MAX_BYTES {
+            let remaining = PROCESS_OUTPUT_HEAD_MAX_BYTES - self.head.len();
+            let take = remaining.min(chunk.len());
+            self.head.extend_from_slice(&chunk[..take]);
+        }
+
+        self.tail.extend_from_slice(chunk);
+        if self.tail.len() > PROCESS_OUTPUT_TAIL_MAX_BYTES {
+            let start = self.tail.len() - PROCESS_OUTPUT_TAIL_MAX_BYTES;
+            let tail = self.tail.split_off(start);
+            self.tail = tail;
+        }
+    }
+
+    fn take_text(&mut self) -> (String, bool) {
+        if self.total_bytes == 0 {
+            return (String::new(), false);
+        }
+
+        let truncated = self.total_bytes > PROCESS_OUTPUT_MAX_BYTES;
+        let out = if truncated {
+            let head = Toolset::decode_process_output(self.head.clone());
+            let tail = Toolset::decode_process_output(self.tail.clone());
+            format!("{head}{TOOL_OUTPUT_MIDDLE_OMISSION_MARKER}{tail}")
+        } else {
+            let bytes = self.reconstruct_all_bytes();
+            Toolset::decode_process_output(bytes)
+        };
+
+        self.head.clear();
+        self.tail.clear();
+        self.total_bytes = 0;
+
+        (out, truncated)
+    }
+
+    fn reconstruct_all_bytes(&self) -> Vec<u8> {
+        if self.total_bytes <= self.tail.len() {
+            return self.tail.clone();
+        }
+
+        let tail_start = self.total_bytes.saturating_sub(self.tail.len());
+        let overlap = self.head.len().saturating_sub(tail_start);
+
+        let mut out = Vec::with_capacity(self.head.len() + self.tail.len().saturating_sub(overlap));
+        out.extend_from_slice(&self.head);
+        if overlap < self.tail.len() {
+            out.extend_from_slice(&self.tail[overlap..]);
+        }
+        out
+    }
+}
+
 struct ProcessEntry {
     command: String,
     args: Vec<String>,
@@ -55,8 +126,8 @@ struct ProcessEntry {
     exit_code: Option<i32>,
     child: tokio::process::Child,
     stdin: Option<tokio::process::ChildStdin>,
-    stdout: Arc<tokio::sync::Mutex<Vec<u8>>>,
-    stderr: Arc<tokio::sync::Mutex<Vec<u8>>>,
+    stdout: Arc<tokio::sync::Mutex<ProcessOutputBuffer>>,
+    stderr: Arc<tokio::sync::Mutex<ProcessOutputBuffer>>,
 }
 
 impl Drop for ProcessEntry {
@@ -587,7 +658,7 @@ impl Toolset {
 
     fn spawn_process_output_reader(
         mut stream: impl tokio::io::AsyncRead + Unpin + Send + 'static,
-        buffer: Arc<tokio::sync::Mutex<Vec<u8>>>,
+        buffer: Arc<tokio::sync::Mutex<ProcessOutputBuffer>>,
     ) {
         tokio::spawn(async move {
             let mut tmp = [0u8; 4096];
@@ -601,12 +672,7 @@ impl Toolset {
                 }
 
                 let mut buf = buffer.lock().await;
-                buf.extend_from_slice(&tmp[..n]);
-                if buf.len() > PROCESS_OUTPUT_MAX_BYTES {
-                    let start = buf.len() - PROCESS_OUTPUT_MAX_BYTES;
-                    let tail = buf.split_off(start);
-                    *buf = tail;
-                }
+                buf.push(&tmp[..n]);
             }
         });
     }
@@ -714,8 +780,8 @@ impl Toolset {
         let stdout = child.stdout.take().context("process stdout is not piped")?;
         let stderr = child.stderr.take().context("process stderr is not piped")?;
 
-        let stdout_buf = Arc::new(tokio::sync::Mutex::new(Vec::new()));
-        let stderr_buf = Arc::new(tokio::sync::Mutex::new(Vec::new()));
+        let stdout_buf = Arc::new(tokio::sync::Mutex::new(ProcessOutputBuffer::default()));
+        let stderr_buf = Arc::new(tokio::sync::Mutex::new(ProcessOutputBuffer::default()));
         Self::spawn_process_output_reader(stdout, stdout_buf.clone());
         Self::spawn_process_output_reader(stderr, stderr_buf.clone());
 
@@ -765,20 +831,20 @@ impl Toolset {
             )
         };
 
-        let stdout = {
+        let (stdout, stdout_truncated) = {
             let mut buf = stdout_buf.lock().await;
-            let bytes = std::mem::take(&mut *buf);
-            Self::decode_process_output(bytes)
+            buf.take_text()
         };
-        let stderr = {
+        let (stderr, stderr_truncated) = {
             let mut buf = stderr_buf.lock().await;
-            let bytes = std::mem::take(&mut *buf);
-            Self::decode_process_output(bytes)
+            buf.take_text()
         };
 
         Ok(serde_json::json!({
             "stdout": stdout,
             "stderr": stderr,
+            "stdout_truncated": stdout_truncated,
+            "stderr_truncated": stderr_truncated,
             "exit_code": exit_code,
             "alive": alive,
         })
@@ -4760,6 +4826,108 @@ mod tests {
             }),
             "process still listed after kill: {lv}"
         );
+    }
+
+    #[tokio::test]
+    async fn process_poll_truncation_preserves_head_and_tail() {
+        use std::time::Duration;
+
+        let tmp = tempfile::tempdir().unwrap();
+        let workspace = tmp.path().join("ws");
+        std::fs::create_dir_all(&workspace).unwrap();
+
+        let tools = Toolset::new(workspace).unwrap();
+
+        let start_args = if cfg!(windows) {
+            serde_json::json!({
+                "command": "powershell",
+                "args": [
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    "[Console]::Out.WriteLine('HEAD_START'); [Console]::Out.Write(('A' * 350000)); [Console]::Out.WriteLine(''); [Console]::Out.WriteLine('TAIL_END'); [Console]::Out.Flush(); Start-Sleep -Seconds 5"
+                ]
+            })
+        } else {
+            serde_json::json!({
+                "command": "bash",
+                "args": ["-lc", "echo HEAD_START; head -c 350000 < /dev/zero | tr '\\0' 'A'; echo; echo TAIL_END; sleep 5"]
+            })
+        };
+
+        let out = tools
+            .call("process_start", &start_args.to_string())
+            .await
+            .unwrap();
+        let v: serde_json::Value = serde_json::from_str(&out).expect("process_start is json");
+        let process_id = v
+            .get("process_id")
+            .and_then(|v| v.as_str())
+            .expect("process_id")
+            .to_string();
+
+        // Give the process time to emit enough output to overflow the buffer before we poll.
+        tokio::time::sleep(Duration::from_millis(if cfg!(windows) { 1200 } else { 500 })).await;
+
+        let deadline = tokio::time::Instant::now()
+            + if cfg!(windows) {
+                Duration::from_secs(10)
+            } else {
+                Duration::from_secs(5)
+            };
+
+        let mut seen = String::new();
+        loop {
+            let poll = tools
+                .call(
+                    "process_poll",
+                    &format!(r#"{{ "process_id": "{}" }}"#, process_id),
+                )
+                .await
+                .unwrap();
+            let pv: serde_json::Value = serde_json::from_str(&poll).expect("process_poll is json");
+            let stdout = pv.get("stdout").and_then(|v| v.as_str()).unwrap_or("");
+            let stderr = pv.get("stderr").and_then(|v| v.as_str()).unwrap_or("");
+            seen.push_str(stdout);
+            seen.push_str(stderr);
+
+            if seen.contains("TAIL_END") {
+                break;
+            }
+            if pv.get("alive").and_then(|v| v.as_bool()) == Some(false) {
+                break;
+            }
+            if tokio::time::Instant::now() >= deadline {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+
+        assert!(
+            seen.contains("TAIL_END"),
+            "did not see TAIL_END\noutput:\n{}",
+            seen
+        );
+        assert!(
+            seen.contains("HEAD_START"),
+            "expected truncated output to preserve head and tail\noutput:\n{}",
+            seen
+        );
+        assert!(
+            seen.contains("[... middle omitted ...]"),
+            "expected omission marker in truncated output\noutput:\n{}",
+            seen
+        );
+
+        let _ = tools
+            .call(
+                "process_kill",
+                &format!(r#"{{ "process_id": "{}" }}"#, process_id),
+            )
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
