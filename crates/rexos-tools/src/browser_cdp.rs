@@ -549,8 +549,37 @@ struct KeyEvent {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::extract::State;
+    use axum::http::StatusCode;
+    use axum::routing::get;
+    use axum::{Json, Router};
+    use serde_json::json;
+    use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
+    use std::sync::Arc;
 
     static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    struct EnvVarGuard {
+        key: &'static str,
+        previous: Option<std::ffi::OsString>,
+    }
+
+    impl EnvVarGuard {
+        fn set(key: &'static str, value: impl AsRef<std::ffi::OsStr>) -> Self {
+            let previous = std::env::var_os(key);
+            std::env::set_var(key, value);
+            Self { key, previous }
+        }
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            match &self.previous {
+                Some(v) => std::env::set_var(self.key, v),
+                None => std::env::remove_var(self.key),
+            }
+        }
+    }
 
     #[test]
     fn validate_remote_cdp_base_url_rejects_non_loopback_by_default() {
@@ -576,6 +605,102 @@ mod tests {
         let url = reqwest::Url::parse("http://example.com:9222").unwrap();
         validate_remote_cdp_base_url(&url).unwrap();
         std::env::remove_var("REXOS_BROWSER_CDP_ALLOW_REMOTE");
+    }
+
+    #[tokio::test]
+    async fn find_or_create_page_ws_bypasses_proxy_for_loopback() {
+        async fn new_handler() -> Json<serde_json::Value> {
+            Json(json!({
+                "webSocketDebuggerUrl": "ws://127.0.0.1/devtools/page/1"
+            }))
+        }
+
+        async fn list_handler() -> Json<serde_json::Value> {
+            Json(json!([{
+                "type": "page",
+                "webSocketDebuggerUrl": "ws://127.0.0.1/devtools/page/1"
+            }]))
+        }
+
+        let app = Router::new()
+            .route("/json/new", get(new_handler))
+            .route("/json/list", get(list_handler));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+
+        let proxy = reqwest::Proxy::http("http://127.0.0.1:1").unwrap();
+        let http = reqwest::Client::builder()
+            .proxy(proxy)
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(Duration::from_secs(5))
+            .build()
+            .unwrap();
+
+        let base = reqwest::Url::parse(&format!("http://{addr}")).unwrap();
+        let ws = find_or_create_page_ws(&http, &base).await.unwrap();
+        assert_eq!(ws, "ws://127.0.0.1/devtools/page/1");
+
+        server.abort();
+    }
+
+    #[tokio::test]
+    async fn cdp_tab_mode_reuse_skips_json_new() {
+        #[derive(Clone)]
+        struct StateData {
+            calls_new: Arc<AtomicUsize>,
+        }
+
+        async fn new_handler(State(state): State<StateData>) -> (StatusCode, Json<serde_json::Value>) {
+            state.calls_new.fetch_add(1, AtomicOrdering::Relaxed);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": "disabled" })),
+            )
+        }
+
+        async fn list_handler() -> Json<serde_json::Value> {
+            Json(json!([{
+                "type": "page",
+                "webSocketDebuggerUrl": "ws://127.0.0.1/devtools/page/2"
+            }]))
+        }
+
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _mode_guard = EnvVarGuard::set("REXOS_BROWSER_CDP_TAB_MODE", "reuse");
+
+        let state = StateData {
+            calls_new: Arc::new(AtomicUsize::new(0)),
+        };
+
+        let app = Router::new()
+            .route("/json/new", get(new_handler))
+            .route("/json/list", get(list_handler))
+            .with_state(state.clone());
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+
+        let http = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .timeout(Duration::from_secs(5))
+            .build()
+            .unwrap();
+
+        let base = reqwest::Url::parse(&format!("http://{addr}")).unwrap();
+        let ws = find_or_create_page_ws(&http, &base).await.unwrap();
+        assert_eq!(ws, "ws://127.0.0.1/devtools/page/2");
+        assert_eq!(
+            state.calls_new.load(AtomicOrdering::Relaxed),
+            0,
+            "expected /json/new not to be called in reuse mode"
+        );
+
+        server.abort();
     }
 }
 
@@ -657,13 +782,35 @@ async fn find_or_create_page_ws(
     http: &reqwest::Client,
     base: &reqwest::Url,
 ) -> anyhow::Result<String> {
+    let loopback_client = base
+        .host_str()
+        .filter(|host| is_loopback_host(host))
+        .map(|_| {
+            reqwest::Client::builder()
+                .no_proxy()
+                .redirect(reqwest::redirect::Policy::none())
+                .timeout(Duration::from_secs(30))
+                .build()
+        })
+        .transpose()
+        .context("build loopback CDP http client")?;
+    let http = loopback_client.as_ref().unwrap_or(http);
+
+    let tab_mode = std::env::var("REXOS_BROWSER_CDP_TAB_MODE")
+        .ok()
+        .map(|v| v.trim().to_ascii_lowercase())
+        .unwrap_or_else(|| "new".to_string());
+    let reuse_tab = matches!(tab_mode.as_str(), "reuse" | "existing" | "list");
+
     // Prefer /json/new (creates a fresh tab).
-    let new_url = base.join("/json/new").context("join /json/new")?;
-    if let Ok(resp) = http.get(new_url).send().await {
-        if resp.status().is_success() {
-            let v: Value = resp.json().await.unwrap_or(Value::Null);
-            if let Some(ws) = v.get("webSocketDebuggerUrl").and_then(|v| v.as_str()) {
-                return Ok(ws.to_string());
+    if !reuse_tab {
+        let new_url = base.join("/json/new").context("join /json/new")?;
+        if let Ok(resp) = http.get(new_url).send().await {
+            if resp.status().is_success() {
+                let v: Value = resp.json().await.unwrap_or(Value::Null);
+                if let Some(ws) = v.get("webSocketDebuggerUrl").and_then(|v| v.as_str()) {
+                    return Ok(ws.to_string());
+                }
             }
         }
     }
