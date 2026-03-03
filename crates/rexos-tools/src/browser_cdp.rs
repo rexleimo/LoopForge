@@ -702,6 +702,43 @@ mod tests {
 
         server.abort();
     }
+
+    #[tokio::test]
+    async fn read_devtools_url_includes_stderr_tail_on_exit() {
+        let mut cmd = if cfg!(windows) {
+            let mut cmd = tokio::process::Command::new("powershell");
+            cmd.args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "[Console]::Error.WriteLine('ERR_LINE_1'); [Console]::Error.WriteLine('ERR_LINE_2'); exit 1",
+            ]);
+            cmd
+        } else {
+            let mut cmd = tokio::process::Command::new("bash");
+            cmd.args([
+                "-lc",
+                "echo ERR_LINE_1 1>&2; echo ERR_LINE_2 1>&2; exit 1",
+            ]);
+            cmd
+        };
+
+        cmd.stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::piped());
+
+        let mut child = cmd.spawn().unwrap();
+        let stderr = child.stderr.take().unwrap();
+
+        let err = read_devtools_url(stderr).await.unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("ERR_LINE_1"), "{msg}");
+        assert!(msg.contains("ERR_LINE_2"), "{msg}");
+
+        let _ = child.wait().await;
+    }
 }
 
 fn key_event_fields(key: &str) -> Option<KeyEvent> {
@@ -752,15 +789,29 @@ fn pick_unused_port() -> anyhow::Result<u16> {
 }
 
 async fn read_devtools_url(stderr: tokio::process::ChildStderr) -> anyhow::Result<String> {
+    use std::collections::VecDeque;
+
+    const MAX_TAIL_LINES: usize = 20;
+    const MAX_LINE_CHARS: usize = 500;
+
     let reader = tokio::io::BufReader::new(stderr);
     let mut lines = reader.lines();
     let deadline = tokio::time::Instant::now() + Duration::from_secs(CDP_CONNECT_TIMEOUT_SECS);
+    let mut tail: VecDeque<String> = VecDeque::new();
 
     loop {
-        let line = tokio::time::timeout_at(deadline, lines.next_line())
-            .await
-            .map_err(|_| anyhow::anyhow!("timed out waiting for Chromium to start"))?
-            .context("read Chromium stderr")?;
+        let line = match tokio::time::timeout_at(deadline, lines.next_line()).await {
+            Ok(line) => line.context("read Chromium stderr")?,
+            Err(_) => {
+                let tail = tail.iter().cloned().collect::<Vec<_>>().join("\n");
+                if tail.is_empty() {
+                    bail!("timed out waiting for Chromium to start");
+                }
+                bail!(
+                    "timed out waiting for Chromium to start\n\nChromium stderr (tail):\n{tail}"
+                );
+            }
+        };
 
         match line {
             Some(l) if l.contains("DevTools listening on") => {
@@ -772,8 +823,27 @@ async fn read_devtools_url(stderr: tokio::process::ChildStderr) -> anyhow::Resul
                     .to_string();
                 return Ok(url);
             }
-            Some(_) => continue,
-            None => bail!("Chromium exited before printing DevTools URL"),
+            Some(mut l) => {
+                l = l.trim_end().to_string();
+                if l.len() > MAX_LINE_CHARS {
+                    l.truncate(MAX_LINE_CHARS);
+                    l.push_str("...");
+                }
+                tail.push_back(l);
+                if tail.len() > MAX_TAIL_LINES {
+                    tail.pop_front();
+                }
+                continue;
+            }
+            None => {
+                let tail = tail.iter().cloned().collect::<Vec<_>>().join("\n");
+                if tail.is_empty() {
+                    bail!("Chromium exited before printing DevTools URL");
+                }
+                bail!(
+                    "Chromium exited before printing DevTools URL.\n\nChromium stderr (tail):\n{tail}"
+                );
+            }
         }
     }
 }
