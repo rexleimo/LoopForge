@@ -16,8 +16,11 @@ Pick a scenario and run it locally. Each page is designed to be **copy‑paste f
   Open a real page, extract key facts, and save a screenshot.  
   [Open](browser-evidence.md)
 
+- :material-file-pdf-box: **PDF summary**  
+  Extract PDF text with `pdf` and write a concise summary.  
+  [Open](pdf-summarize.md)
+
 </div>
 
 !!! tip "New to RexOS?"
     Start with the [New User Walkthrough](../../tutorials/new-user-walkthrough.md).
-

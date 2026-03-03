@@ -10,7 +10,7 @@ Use this index when writing prompts/manifests that need exact tool names:
 
 ### Core
 
-`fs_read`, `fs_write`, `shell`, `web_fetch`
+`fs_read`, `fs_write`, `shell`, `web_fetch`, `pdf`, `pdf_extract`
 
 ### Browser
 
@@ -65,6 +65,24 @@ Fetch an HTTP(S) URL and return a small response body.
 
 By default it rejects loopback/private IPs (basic SSRF protection). For local testing you can set `allow_private=true`.
 
+## `pdf`
+
+Extract text from a workspace PDF file (best-effort).
+
+Arguments:
+
+- `path` (required): workspace-relative `.pdf` path
+- `max_pages` (optional): default 10, max 50
+- `max_chars` (optional): default 12000, max 50000
+
+Returns JSON:
+
+- `path`
+- `text` (possibly truncated)
+- `truncated` (bool)
+- `bytes` (file size)
+- `pages_extracted`
+
 ## `browser_*` (CDP)
 
 Browser tools enable headless browser automation via **Chrome DevTools Protocol (CDP)** (no Python by default):
@@ -78,6 +96,8 @@ Notes:
 - `browser_screenshot` writes a PNG to a workspace-relative path (no absolute paths, no `..`, no symlink escapes).
 - Default backend is CDP and requires a local Chromium-based browser (Chrome/Chromium/Edge). If RexOS can’t find it, set `REXOS_BROWSER_CHROME_PATH`.
 - Optional remote CDP: set `REXOS_BROWSER_CDP_HTTP` (example: `http://127.0.0.1:9222`).
+- Optional remote tab mode: set `REXOS_BROWSER_CDP_TAB_MODE=reuse` to skip `/json/new` and reuse an existing page target (default: `new`).
+- Loopback CDP HTTP (`127.0.0.1` / `localhost`) bypasses proxy settings to avoid corporate proxy misconfig breaking local automation.
 - Optional legacy backend (Playwright bridge): set `REXOS_BROWSER_BACKEND=playwright` and install Python + Playwright:
 
   ```bash

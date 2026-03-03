@@ -85,6 +85,7 @@ plugins:
             Repo Onboarding (10 minutes): 新仓库上手（10 分钟）
             Web Research Memo: 网页资料调研 Memo
             Browser Evidence Capture: 浏览器取证
+            PDF Summary: PDF 总结
             Browser Automation: 浏览器自动化
             Browser Use Cases: 浏览器案例
             GUI Smoke Check: 有界面 smoke check
@@ -177,6 +178,7 @@ nav:
           - Repo Onboarding (10 minutes): examples/case-tasks/repo-onboarding.md
           - Web Research Memo: examples/case-tasks/web-research-memo.md
           - Browser Evidence Capture: examples/case-tasks/browser-evidence.md
+          - PDF Summary: examples/case-tasks/pdf-summarize.md
       - Browser Use Cases:
           - Index: how-to/browser-use-cases.md
           - GUI Smoke Check: how-to/browser-use-cases/gui-smoke-check.md

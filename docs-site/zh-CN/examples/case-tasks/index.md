@@ -16,8 +16,11 @@
   打开真实网页，抽取关键字段，并保存截图作为证据。  
   [打开](browser-evidence.md)
 
+- :material-file-pdf-box: **PDF 总结**  
+  用 `pdf` 提取 PDF 文本并生成简短总结。  
+  [打开](pdf-summarize.md)
+
 </div>
 
 !!! tip "第一次使用 RexOS？"
     建议先跑一遍 [新人复习](../../tutorials/new-user-walkthrough.md)。
-
