@@ -4,13 +4,16 @@
   {{ super() }}
 
   {# Basic SEO/social metadata. Keep it lightweight and static (no extra plugins). #}
+  {% set og_image = config.site_url ~ 'assets/images/logo.svg' %}
   <meta property="og:site_name" content="{{ config.site_name }}" />
   <meta property="og:title" content="{{ page.title }} - {{ config.site_name }}" />
   <meta property="og:description" content="{{ config.site_description }}" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="{{ page.canonical_url }}" />
+  <meta property="og:image" content="{{ og_image }}" />
 
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="{{ page.title }} - {{ config.site_name }}" />
   <meta name="twitter:description" content="{{ config.site_description }}" />
+  <meta name="twitter:image" content="{{ og_image }}" />
 {% endblock %}

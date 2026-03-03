@@ -8,6 +8,7 @@
 [Harness tutorial](tutorials/harness-long-task.md){ .md-button }
 [Providers & routing](how-to/providers.md){ .md-button }
 [Use cases](how-to/use-cases.md){ .md-button }
+[Case tasks](examples/case-tasks/index.md){ .md-button }
 [Browser use cases](how-to/browser-use-cases.md){ .md-button }
 
 <p class="rexos-muted">

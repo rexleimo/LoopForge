@@ -5,6 +5,7 @@
 建议从这里开始：
 
 - [环境自检](../examples/sanity-check.md)
+- [案例任务（可复制粘贴）](../examples/case-tasks/index.md)
 - [Harness 配方（Checkpoints）](../examples/harness-recipes.md)
 - [机械化改动](../examples/mechanical-edits.md)
 - [路由示例](../examples/routing-recipes.md)

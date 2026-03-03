@@ -35,7 +35,7 @@ RexOS 会强制超时，并使用尽量最小的环境。
 
 浏览器工具默认通过 **Chrome DevTools Protocol（CDP）** 提供无头浏览器自动化能力（无需 Python）：
 
-- `browser_navigate` / `browser_click` / `browser_type` / `browser_press_key` / `browser_wait_for` / `browser_read_page` / `browser_screenshot` / `browser_close`
+- `browser_navigate` / `browser_back` / `browser_scroll` / `browser_click` / `browser_type` / `browser_press_key` / `browser_wait` / `browser_wait_for` / `browser_read_page` / `browser_run_js` / `browser_screenshot` / `browser_close`
 
 说明：
 
@@ -50,6 +50,10 @@ RexOS 会强制超时，并使用尽量最小的环境。
   python3 -m pip install playwright
   python3 -m playwright install chromium
   ```
+
+`browser_wait` 是一个“只等 selector”的兼容工具。需要等待 selector 或文本时，优先用 `browser_wait_for`。
+
+`browser_run_js` 适用于 selector 不好写时抽取结构化字段（例如某个 heading）。在不可信页面上使用要谨慎。
 
 ## 兼容别名
 

@@ -74,6 +74,7 @@ plugins:
             Long Task With Harness: Harness 长任务
             Examples: 案例代码
             Common Use Cases: 常见场景
+            Case Tasks: 案例任务
             Index: 目录
             Setup Sanity Check: 环境自检
             Harness Recipes: Harness 配方
@@ -81,6 +82,9 @@ plugins:
             Routing Recipes: 路由示例
             Daemon Health Check: Daemon 健康检查
             Notifications: 通知
+            Repo Onboarding (10 minutes): 新仓库上手（10 分钟）
+            Web Research Memo: 网页资料调研 Memo
+            Browser Evidence Capture: 浏览器取证
             Browser Automation: 浏览器自动化
             Browser Use Cases: 浏览器案例
             GUI Smoke Check: 有界面 smoke check
@@ -168,6 +172,11 @@ nav:
           - Routing Recipes: examples/routing-recipes.md
           - Daemon Health Check: examples/daemon-health.md
           - Notifications: examples/notifications.md
+      - Case Tasks:
+          - Index: examples/case-tasks/index.md
+          - Repo Onboarding (10 minutes): examples/case-tasks/repo-onboarding.md
+          - Web Research Memo: examples/case-tasks/web-research-memo.md
+          - Browser Evidence Capture: examples/case-tasks/browser-evidence.md
       - Browser Use Cases:
           - Index: how-to/browser-use-cases.md
           - GUI Smoke Check: how-to/browser-use-cases/gui-smoke-check.md

@@ -61,11 +61,15 @@ python3 -m playwright install chromium
 ## 工具集
 
 - `browser_navigate`：打开 URL（默认带 SSRF 防护）
+- `browser_back`：回退历史
+- `browser_scroll`：滚动页面
 - `browser_click`：按 CSS selector 点击（会做尽力的可见文本 fallback）
 - `browser_type`：填写输入框
 - `browser_press_key`：按键（例如用 `Enter` 提交表单）
+- `browser_wait`：等待 selector（兼容工具）
 - `browser_wait_for`：等待 selector/text 出现
 - `browser_read_page`：返回 `{title,url,content}`（content 会被截断）
+- `browser_run_js`：执行 JS 表达式并返回结果
 - `browser_screenshot`：把 PNG 写入 workspace 相对路径
 - `browser_close`：关闭 session（可重复调用）
 
@@ -93,7 +97,7 @@ python3 -m playwright install chromium
 ## Prompt 模板（可直接复制）
 
 ```text
-你可以使用 RexOS 的 browser 工具（browser_navigate/click/type/press_key/wait_for/read_page/screenshot/close）。
+你可以使用 RexOS 的 browser 工具（browser_navigate/back/scroll/click/type/press_key/wait/wait_for/read_page/run_js/screenshot/close）。
 
 规则：
 - navigate/click/type/press_key 之后尽快 browser_read_page；如果页面异步更新，先 browser_wait_for 再 read_page。

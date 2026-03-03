@@ -35,7 +35,7 @@ By default it rejects loopback/private IPs (basic SSRF protection). For local te
 
 Browser tools enable headless browser automation via **Chrome DevTools Protocol (CDP)** (no Python by default):
 
-- `browser_navigate` / `browser_click` / `browser_type` / `browser_press_key` / `browser_wait_for` / `browser_read_page` / `browser_screenshot` / `browser_close`
+- `browser_navigate` / `browser_back` / `browser_scroll` / `browser_click` / `browser_type` / `browser_press_key` / `browser_wait` / `browser_wait_for` / `browser_read_page` / `browser_run_js` / `browser_screenshot` / `browser_close`
 
 Notes:
 
@@ -50,6 +50,10 @@ Notes:
   python3 -m pip install playwright
   python3 -m playwright install chromium
   ```
+
+`browser_wait` is a selector-only helper (compat). Prefer `browser_wait_for` when you need to wait for **selector or text**.
+
+`browser_run_js` is useful for extracting structured values (like a specific heading) when selectors are tricky. Use it carefully on untrusted pages.
 
 ## Compatibility aliases
 
