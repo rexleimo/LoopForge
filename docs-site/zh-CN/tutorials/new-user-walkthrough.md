@@ -30,6 +30,27 @@ ollama pull llama3.2
 default_model = "qwen3:4b" # 示例：换成你本机已有的模型
 ```
 
+## 0.5) 一条命令完成 onboarding（推荐）
+
+如果你想一次性跑完 `init + 配置校验 + doctor + 首个任务`：
+
+```bash
+rexos onboard --workspace rexos-onboard-demo
+```
+
+可选：
+
+```bash
+# 只做环境与配置检查，不跑首个 agent 任务
+rexos onboard --workspace rexos-onboard-demo --skip-agent
+```
+
+预期：
+- 输出 config 校验结果
+- 输出 doctor 汇总
+- 在 workspace 里跑一条首任务（除非传 `--skip-agent`）
+- 打印 `session_id` 便于续跑
+
 ## 1) 初始化 RexOS
 
 ```bash

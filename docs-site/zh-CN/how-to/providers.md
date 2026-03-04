@@ -147,3 +147,27 @@ MINIMAX_API_KEY=<key> REXOS_MINIMAX_MODEL=<model> cargo test -p rexos --test min
 # NVIDIA NIM（OpenAI-compatible）
 NVIDIA_API_KEY=<key> REXOS_NVIDIA_MODEL=<model> cargo test -p rexos --test nvidia_nim_smoke -- --ignored
 ```
+
+## Provider 质量报告（适合 nightly）
+
+生成 provider 质量报告（JSON + Markdown）：
+
+```bash
+# 只生成计划（不执行测试）
+python3 scripts/provider_health_report.py --out-dir .tmp/provider-health
+
+# 执行可用 provider 的 smoke 测试
+python3 scripts/provider_health_report.py --out-dir .tmp/provider-health --run
+```
+
+产物：
+- `.tmp/provider-health/provider-health.json`
+- `.tmp/provider-health/provider-health.md`
+
+提示：
+- 设置 `ZHIPUAI_API_KEY` / `MINIMAX_API_KEY` / `NVIDIA_API_KEY` 后会自动纳入对应检查。
+- 在没有本地 Ollama 的 CI 环境中，可设置：
+
+```bash
+export REXOS_SKIP_OLLAMA_SMOKE=1
+```

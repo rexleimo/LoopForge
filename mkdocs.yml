@@ -108,6 +108,7 @@ plugins:
             Tools: 工具
             Blog: 博客
             RexOS vs OpenFang/OpenClaw: RexOS 与 OpenFang/OpenClaw
+            Editorial Calendar: 内容发布日历
   - search:
       lang:
         - en
@@ -194,6 +195,7 @@ nav:
   - Blog:
       - Index: blog/index.md
       - RexOS vs OpenFang/OpenClaw: blog/rexos-vs-openfang-openclaw.md
+      - Editorial Calendar: blog/editorial-calendar.md
   - Reference:
       - CLI: reference/cli.md
       - Config: reference/config.md

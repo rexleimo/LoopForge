@@ -12,6 +12,15 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("python3 -m unittest", ci)
         self.assertIn("scripts.tests.test_verify_version_changelog", ci)
         self.assertIn("scripts.tests.test_verify_release_consistency", ci)
+        self.assertIn("scripts.tests.test_provider_health_report", ci)
+
+    def test_provider_nightly_workflow_generates_health_artifacts(self):
+        workflow = (
+            REPO_ROOT / ".github/workflows/provider-nightly.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("schedule:", workflow)
+        self.assertIn("provider_health_report.py", workflow)
+        self.assertIn("upload-artifact@v4", workflow)
 
     def test_release_dry_run_workflow_builds_but_does_not_publish(self):
         workflow = (

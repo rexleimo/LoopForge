@@ -30,6 +30,27 @@ ollama pull llama3.2
 default_model = "qwen3:4b" # example: pick a model you already have
 ```
 
+## 0.5) One-command onboarding (recommended)
+
+If you want a single command to run `init + config check + doctor + first task`:
+
+```bash
+rexos onboard --workspace rexos-onboard-demo
+```
+
+Optional:
+
+```bash
+# only run setup checks (skip first agent task)
+rexos onboard --workspace rexos-onboard-demo --skip-agent
+```
+
+Expected:
+- prints config validation result
+- prints doctor summary
+- runs one first task in the workspace (unless `--skip-agent`)
+- prints `session_id` for continuation
+
 ## 1) Initialize RexOS
 
 ```bash

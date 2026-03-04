@@ -5,6 +5,7 @@ RexOS 提供单个二进制：`rexos`。
 ## 顶层命令
 
 - `rexos init` — 初始化 `~/.rexos`（配置 + 数据库）
+- `rexos onboard` — 一键 onboarding（`init` + 配置校验 + `doctor` + 可选首任务）
 - `rexos doctor` — 诊断常见配置问题（配置文件、providers、浏览器、基础依赖）
 - `rexos agent run` — 在 workspace 中运行一次 agent session
 - `rexos channel drain` — 执行一次 outbox drain（投递队列中的消息）
@@ -18,6 +19,7 @@ RexOS 提供单个二进制：`rexos`。
 === "macOS/Linux"
     ```bash
     rexos init
+    rexos onboard --workspace rexos-onboard-demo
 
     mkdir -p rexos-work
     rexos agent run --workspace rexos-work --prompt "Create hello.txt"
@@ -34,6 +36,7 @@ RexOS 提供单个二进制：`rexos`。
 === "Windows (PowerShell)"
     ```powershell
     rexos init
+    rexos onboard --workspace rexos-onboard-demo
 
     mkdir rexos-work
     rexos agent run --workspace rexos-work --prompt "Create hello.txt"

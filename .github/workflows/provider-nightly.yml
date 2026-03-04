@@ -1,0 +1,45 @@
+name: Provider Nightly
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  provider-health:
+    name: provider health report
+    runs-on: ubuntu-latest
+    env:
+      ZHIPUAI_API_KEY: ${{ secrets.ZHIPUAI_API_KEY }}
+      MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      REXOS_GLM_MODEL: glm-4
+      REXOS_MINIMAX_MODEL: MiniMax-M2.5
+      REXOS_NVIDIA_MODEL: meta/llama-3.2-3b-instruct
+      REXOS_SKIP_OLLAMA_SMOKE: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Generate provider report (dry-run baseline)
+        run: python3 scripts/provider_health_report.py --out-dir .tmp/provider-health
+
+      - name: Generate provider report (run available provider smokes)
+        run: python3 scripts/provider_health_report.py --out-dir .tmp/provider-health --run
+
+      - name: Upload provider report artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-health-report
+          path: .tmp/provider-health/

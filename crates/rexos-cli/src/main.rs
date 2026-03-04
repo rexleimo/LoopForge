@@ -4,7 +4,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command as ProcessCommand;
 
-use rexos::{config::RexosConfig, memory::MemoryStore, paths::RexosPaths};
+use rexos::{
+    config::{ProviderKind, RexosConfig},
+    memory::MemoryStore,
+    paths::RexosPaths,
+};
 
 mod doctor;
 
@@ -41,6 +45,21 @@ struct Cli {
 enum Command {
     /// Initialize ~/.rexos (config + database)
     Init,
+    /// One-command onboarding check (init + config + doctor + optional first task)
+    Onboard {
+        /// Workspace directory for the first verification run
+        #[arg(long, default_value = "rexos-onboard-demo")]
+        workspace: PathBuf,
+        /// Prompt for the first verification run
+        #[arg(long, default_value = "Create hello.txt with the word hi")]
+        prompt: String,
+        /// Skip running the first agent task and only run setup checks
+        #[arg(long)]
+        skip_agent: bool,
+        /// Timeout for doctor probes (milliseconds)
+        #[arg(long, default_value_t = 1500)]
+        timeout_ms: u64,
+    },
     /// Diagnose common setup issues (config, providers, browser, tooling)
     Doctor {
         /// Print JSON output (machine-readable)
@@ -253,6 +272,93 @@ async fn main() -> anyhow::Result<()> {
             RexosConfig::ensure_default(&paths)?;
             MemoryStore::open_or_create(&paths)?;
             println!("Initialized {}", paths.base_dir.display());
+        }
+        Command::Onboard {
+            workspace,
+            prompt,
+            skip_agent,
+            timeout_ms,
+        } => {
+            let paths = RexosPaths::discover()?;
+            paths.ensure_dirs()?;
+            RexosConfig::ensure_default(&paths)?;
+            MemoryStore::open_or_create(&paths)?;
+            println!("Initialized {}", paths.base_dir.display());
+
+            let report = validate_config(&paths);
+            if !report.valid {
+                println!("config invalid: {}", report.config_path);
+                for err in &report.errors {
+                    println!("- {err}");
+                }
+                std::process::exit(1);
+            }
+            println!("config valid: {}", report.config_path);
+
+            let doctor_report = doctor::run_doctor(doctor::DoctorOptions {
+                paths: paths.clone(),
+                timeout: std::time::Duration::from_millis(timeout_ms),
+            })
+            .await?;
+            println!("{}", doctor_report.to_text());
+            if doctor_report.summary.error > 0 {
+                std::process::exit(1);
+            }
+
+            std::fs::create_dir_all(&workspace)
+                .with_context(|| format!("create workspace: {}", workspace.display()))?;
+            println!("workspace ready: {}", workspace.display());
+
+            if skip_agent {
+                println!("onboard done (skipped first agent run)");
+                return Ok(());
+            }
+
+            let cfg = RexosConfig::load(&paths)?;
+            let mut cfg = cfg;
+            if cfg.router.coding.provider.trim() == "ollama" {
+                let maybe_ollama = cfg.providers.get("ollama").cloned();
+                if let Some(ollama) = maybe_ollama {
+                    if ollama.kind == ProviderKind::OpenAiCompatible {
+                        if let Ok(models) =
+                            fetch_openai_compat_models(&ollama.base_url, timeout_ms).await
+                        {
+                            if let Some(selected) =
+                                select_onboard_model(&ollama.default_model, &models)
+                            {
+                                if selected != ollama.default_model {
+                                    if let Some(p) = cfg.providers.get_mut("ollama") {
+                                        p.default_model = selected.clone();
+                                    }
+                                    println!(
+                                        "onboard: ollama default model '{}' not available, using '{}'",
+                                        ollama.default_model, selected
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            let memory = MemoryStore::open_or_create(&paths)?;
+            let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg)?;
+            let router = rexos::router::ModelRouter::new(cfg.router);
+            let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
+
+            let session_id = rexos::harness::resolve_session_id(&workspace)?;
+            let out = agent
+                .run_session(
+                    workspace.clone(),
+                    &session_id,
+                    None,
+                    &prompt,
+                    rexos::router::TaskKind::Coding,
+                )
+                .await?;
+            println!("{out}");
+            eprintln!("[rexos] session_id={session_id}");
+            println!("onboard done (first agent run completed)");
         }
         Command::Doctor {
             json,
@@ -574,6 +680,63 @@ fn validate_config(paths: &RexosPaths) -> ConfigValidationReport {
     }
 }
 
+fn select_onboard_model(preferred: &str, available: &[String]) -> Option<String> {
+    if available.is_empty() {
+        return None;
+    }
+    let preferred = preferred.trim();
+    if !preferred.is_empty() {
+        if let Some(hit) = available
+            .iter()
+            .find(|m| m.trim().eq_ignore_ascii_case(preferred))
+        {
+            return Some(hit.clone());
+        }
+    }
+
+    if let Some(chat_like) = available.iter().find(|m| {
+        let lower = m.to_ascii_lowercase();
+        !lower.contains("embed")
+    }) {
+        return Some(chat_like.clone());
+    }
+    Some(available[0].clone())
+}
+
+async fn fetch_openai_compat_models(base_url: &str, timeout_ms: u64) -> anyhow::Result<Vec<String>> {
+    let endpoint = format!("{}/models", base_url.trim_end_matches('/'));
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_millis(timeout_ms.max(500)))
+        .build()
+        .context("build model probe http client")?;
+    let res = client.get(&endpoint).send().await?;
+    if !res.status().is_success() {
+        anyhow::bail!("GET {endpoint} -> {}", res.status());
+    }
+    let v: serde_json::Value = res.json().await?;
+    let mut out = Vec::new();
+    if let Some(arr) = v.get("data").and_then(|x| x.as_array()) {
+        for item in arr {
+            if let Some(id) = item.get("id").and_then(|x| x.as_str()) {
+                let id = id.trim();
+                if !id.is_empty() {
+                    out.push(id.to_string());
+                    continue;
+                }
+            }
+            if let Some(name) = item.get("name").and_then(|x| x.as_str()) {
+                let name = name.trim();
+                if !name.is_empty() {
+                    out.push(name.to_string());
+                }
+            }
+        }
+    }
+    out.sort();
+    out.dedup();
+    Ok(out)
+}
+
 fn parse_release_tag_version(tag: &str) -> Option<String> {
     let tag = tag.trim();
     let version = tag.strip_prefix('v')?;
@@ -867,6 +1030,16 @@ mod tests {
     }
 
     #[test]
+    fn cli_parses_onboard_subcommand() {
+        let parsed =
+            Cli::try_parse_from(["rexos", "onboard", "--workspace", "rexos-onboard-demo"]);
+        assert!(
+            parsed.is_ok(),
+            "expected `rexos onboard` to parse, got: {parsed:?}"
+        );
+    }
+
+    #[test]
     fn release_metadata_check_passes_when_versions_match() {
         let cargo = r#"
 [workspace]
@@ -932,5 +1105,33 @@ edition = "2021"
             report.errors.iter().any(|e| e.contains("parse config TOML")),
             "expected parse error, got {report:?}"
         );
+    }
+
+    #[test]
+    fn select_onboard_model_prefers_configured_when_available() {
+        let selected = select_onboard_model(
+            "llama3.2",
+            &["qwen3:4b".to_string(), "llama3.2".to_string()],
+        );
+        assert_eq!(selected.as_deref(), Some("llama3.2"));
+    }
+
+    #[test]
+    fn select_onboard_model_falls_back_to_first_non_embedding() {
+        let selected = select_onboard_model(
+            "llama3.2",
+            &[
+                "nomic-embed-text:latest".to_string(),
+                "qwen3:4b".to_string(),
+            ],
+        );
+        assert_eq!(selected.as_deref(), Some("qwen3:4b"));
+    }
+
+    #[test]
+    fn select_onboard_model_uses_first_when_only_embedding_exists() {
+        let selected =
+            select_onboard_model("llama3.2", &["nomic-embed-text:latest".to_string()]);
+        assert_eq!(selected.as_deref(), Some("nomic-embed-text:latest"));
     }
 }

@@ -5,6 +5,7 @@ RexOS ships a single binary: `rexos`.
 ## Top-level commands
 
 - `rexos init` — initialize `~/.rexos` (config + database)
+- `rexos onboard` — one-command onboarding (`init` + config validate + `doctor` + optional first task)
 - `rexos doctor` — diagnose common setup issues (config, providers, browser, tooling)
 - `rexos agent run` — run a single agent session in a workspace
 - `rexos channel drain` — drain queued outbox messages once
@@ -20,6 +21,7 @@ RexOS ships a single binary: `rexos`.
 === "macOS/Linux"
     ```bash
     rexos init
+    rexos onboard --workspace rexos-onboard-demo
 
     mkdir -p rexos-work
     rexos agent run --workspace rexos-work --prompt "Create hello.txt"
@@ -37,6 +39,7 @@ RexOS ships a single binary: `rexos`.
 === "Windows (PowerShell)"
     ```powershell
     rexos init
+    rexos onboard --workspace rexos-onboard-demo
 
     mkdir rexos-work
     rexos agent run --workspace rexos-work --prompt "Create hello.txt"

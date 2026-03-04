@@ -5,9 +5,11 @@
 ## 最新文章
 
 - [RexOS 与 OpenFang/OpenClaw 对比（开发者视角）](rexos-vs-openfang-openclaw.md)
+- [内容发布日历](editorial-calendar.md)
 
 ## 建议阅读顺序
 
 1. 先看定位： [RexOS 与 OpenFang/OpenClaw 对比（开发者视角）](rexos-vs-openfang-openclaw.md)
 2. 再跑通首条链路： [新人复习](../tutorials/new-user-walkthrough.md)
 3. 最后套模板实操： [10 个可复制任务](../examples/case-tasks/ten-copy-paste-tasks.md)
+4. 固定输出节奏： [内容发布日历](editorial-calendar.md)

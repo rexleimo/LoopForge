@@ -126,6 +126,30 @@ MINIMAX_API_KEY=<key> REXOS_MINIMAX_MODEL=<model> cargo test -p rexos --test min
 NVIDIA_API_KEY=<key> REXOS_NVIDIA_MODEL=<model> cargo test -p rexos --test nvidia_nim_smoke -- --ignored
 ```
 
+## Provider health report (nightly-friendly)
+
+To generate a provider quality report (JSON + Markdown):
+
+```bash
+# dry-run planning (no test execution)
+python3 scripts/provider_health_report.py --out-dir .tmp/provider-health
+
+# run available provider smokes
+python3 scripts/provider_health_report.py --out-dir .tmp/provider-health --run
+```
+
+Artifacts:
+- `.tmp/provider-health/provider-health.json`
+- `.tmp/provider-health/provider-health.md`
+
+Tips:
+- Set `ZHIPUAI_API_KEY` / `MINIMAX_API_KEY` / `NVIDIA_API_KEY` to include those provider checks.
+- For CI environments without local Ollama, set:
+
+```bash
+export REXOS_SKIP_OLLAMA_SMOKE=1
+```
+
 === "Bash (macOS/Linux)"
     ```bash
     export DEEPSEEK_API_KEY="..."
