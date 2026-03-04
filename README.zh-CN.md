@@ -59,6 +59,8 @@ rexos agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the 
 ## 发版（维护者）
 
 推送一个 `v*` tag 会触发 Release 工作流，构建并把预编译压缩包上传到 GitHub Release。
+每次发版前请遵循 `docs/versioning-and-release.md` 的版本与更新说明规则。
+如果本次迭代被标记为“需要升级版本号”，则同一批改动必须同时包含版本号更新和 `CHANGELOG.md` 更新。
 
 ```bash
 git tag v0.1.0

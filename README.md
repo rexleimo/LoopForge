@@ -59,6 +59,8 @@ To run the optional NVIDIA NIM smoke test: `NVIDIA_API_KEY=<key> cargo test -p r
 ## Releasing (maintainers)
 
 Pushing a `v*` tag triggers the Release workflow which attaches prebuilt archives to a GitHub Release.
+Before every release, follow the versioning/changelog policy in `docs/versioning-and-release.md`.
+If an iteration is marked as "needs version bump", the same change set must include both version number updates and changelog updates (`CHANGELOG.md`).
 
 ```bash
 git tag v0.1.0
