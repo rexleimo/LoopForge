@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use anyhow::{bail, Context};
@@ -15,6 +15,10 @@ tokio::task_local! {
 }
 
 const MAX_AGENT_CALL_DEPTH: usize = 4;
+const MAX_TOOL_RESULT_CHARS: usize = 15_000;
+const TOOL_AUDIT_KEY: &str = "rexos.audit.tool_calls";
+const TOOL_AUDIT_MAX_RECORDS: usize = 2_000;
+const SESSION_ALLOWED_TOOLS_KEY_PREFIX: &str = "rexos.sessions.allowed_tools.";
 
 #[derive(Debug)]
 pub struct AgentRuntime {
@@ -164,7 +168,11 @@ impl AgentRuntime {
         user_prompt: &str,
         kind: TaskKind,
     ) -> anyhow::Result<String> {
-        let tools = Toolset::new(workspace_root.clone())?;
+        let allowed_tools = self.load_session_allowed_tools(session_id)?;
+        let allowed_lookup: Option<HashSet<String>> = allowed_tools
+            .as_ref()
+            .map(|tools| tools.iter().cloned().collect());
+        let tools = Toolset::new_with_allowed_tools(workspace_root.clone(), allowed_tools)?;
         let provider = self.router.provider_for(kind);
         let model = self.resolve_model(provider, kind)?;
 
@@ -241,144 +249,192 @@ impl AgentRuntime {
                     bail!("tool loop detected: {sig}");
                 }
 
+                let started_at = std::time::Instant::now();
+                if let Some(allowed) = allowed_lookup.as_ref() {
+                    if !allowed.contains(call.function.name.as_str()) {
+                        let err = format!("tool not allowed for this session: {}", call.function.name);
+                        let _ = self.append_tool_audit(ToolAuditRecord {
+                            session_id: session_id.to_string(),
+                            tool_name: call.function.name.clone(),
+                            success: false,
+                            duration_ms: started_at.elapsed().as_millis() as u64,
+                            truncated: false,
+                            error: Some(err.clone()),
+                            created_at: Self::now_epoch_seconds(),
+                        });
+                        bail!(err);
+                    }
+                }
+
                 let args_json =
                     normalize_tool_arguments(&call.function.name, &call.function.arguments);
-                let output = match call.function.name.as_str() {
-                    "memory_store" => {
-                        let args: MemoryStoreToolArgs =
-                            serde_json::from_str(&args_json).context("parse memory_store args")?;
-                        self.memory
-                            .kv_set(&args.key, &args.value)
-                            .context("memory_store kv_set")?;
-                        "ok".to_string()
-                    }
-                    "memory_recall" => {
-                        let args: MemoryRecallToolArgs =
-                            serde_json::from_str(&args_json).context("parse memory_recall args")?;
-                        self.memory
-                            .kv_get(&args.key)
-                            .context("memory_recall kv_get")?
-                            .unwrap_or_default()
-                    }
-                    "agent_spawn" => {
-                        let args: AgentSpawnToolArgs =
-                            serde_json::from_str(&args_json).context("parse agent_spawn args")?;
-                        self.agent_spawn(args).context("agent_spawn")?
-                    }
-                    "agent_list" => self.agent_list().context("agent_list")?,
-                    "agent_find" => {
-                        let args: AgentFindToolArgs =
-                            serde_json::from_str(&args_json).context("parse agent_find args")?;
-                        self.agent_find(&args.query).context("agent_find")?
-                    }
-                    "agent_kill" => {
-                        let args: AgentKillToolArgs =
-                            serde_json::from_str(&args_json).context("parse agent_kill args")?;
-                        self.agent_kill(&args.agent_id).context("agent_kill")?
-                    }
-                    "agent_send" => {
-                        let args: AgentSendToolArgs =
-                            serde_json::from_str(&args_json).context("parse agent_send args")?;
-                        self.agent_send(workspace_root.clone(), kind, args)
+                let output_result: anyhow::Result<String> = async {
+                    let output = match call.function.name.as_str() {
+                        "memory_store" => {
+                            let args: MemoryStoreToolArgs = serde_json::from_str(&args_json)
+                                .context("parse memory_store args")?;
+                            self.memory
+                                .kv_set(&args.key, &args.value)
+                                .context("memory_store kv_set")?;
+                            "ok".to_string()
+                        }
+                        "memory_recall" => {
+                            let args: MemoryRecallToolArgs = serde_json::from_str(&args_json)
+                                .context("parse memory_recall args")?;
+                            self.memory
+                                .kv_get(&args.key)
+                                .context("memory_recall kv_get")?
+                                .unwrap_or_default()
+                        }
+                        "agent_spawn" => {
+                            let args: AgentSpawnToolArgs = serde_json::from_str(&args_json)
+                                .context("parse agent_spawn args")?;
+                            self.agent_spawn(args).context("agent_spawn")?
+                        }
+                        "agent_list" => self.agent_list().context("agent_list")?,
+                        "agent_find" => {
+                            let args: AgentFindToolArgs = serde_json::from_str(&args_json)
+                                .context("parse agent_find args")?;
+                            self.agent_find(&args.query).context("agent_find")?
+                        }
+                        "agent_kill" => {
+                            let args: AgentKillToolArgs = serde_json::from_str(&args_json)
+                                .context("parse agent_kill args")?;
+                            self.agent_kill(&args.agent_id).context("agent_kill")?
+                        }
+                        "agent_send" => {
+                            let args: AgentSendToolArgs = serde_json::from_str(&args_json)
+                                .context("parse agent_send args")?;
+                            self.agent_send(workspace_root.clone(), kind, args)
+                                .await
+                                .context("agent_send")?
+                        }
+                        "hand_list" => self.hand_list().context("hand_list")?,
+                        "hand_activate" => {
+                            let args: HandActivateToolArgs = serde_json::from_str(&args_json)
+                                .context("parse hand_activate args")?;
+                            self.hand_activate(args).context("hand_activate")?
+                        }
+                        "hand_status" => {
+                            let args: HandStatusToolArgs = serde_json::from_str(&args_json)
+                                .context("parse hand_status args")?;
+                            self.hand_status(&args.hand_id).context("hand_status")?
+                        }
+                        "hand_deactivate" => {
+                            let args: HandDeactivateToolArgs = serde_json::from_str(&args_json)
+                                .context("parse hand_deactivate args")?;
+                            self.hand_deactivate(&args.instance_id)
+                                .context("hand_deactivate")?
+                        }
+                        "task_post" => {
+                            let args: TaskPostToolArgs = serde_json::from_str(&args_json)
+                                .context("parse task_post args")?;
+                            self.task_post(args).context("task_post")?
+                        }
+                        "task_list" => {
+                            let args: TaskListToolArgs = serde_json::from_str(&args_json)
+                                .context("parse task_list args")?;
+                            self.task_list(args.status.as_deref()).context("task_list")?
+                        }
+                        "task_claim" => {
+                            let args: TaskClaimToolArgs = serde_json::from_str(&args_json)
+                                .context("parse task_claim args")?;
+                            self.task_claim(args.agent_id.as_deref())
+                                .context("task_claim")?
+                        }
+                        "task_complete" => {
+                            let args: TaskCompleteToolArgs = serde_json::from_str(&args_json)
+                                .context("parse task_complete args")?;
+                            self.task_complete(&args.task_id, &args.result)
+                                .context("task_complete")?
+                        }
+                        "event_publish" => {
+                            let args: EventPublishToolArgs = serde_json::from_str(&args_json)
+                                .context("parse event_publish args")?;
+                            self.event_publish(args).context("event_publish")?
+                        }
+                        "schedule_create" => {
+                            let args: ScheduleCreateToolArgs = serde_json::from_str(&args_json)
+                                .context("parse schedule_create args")?;
+                            self.schedule_create(args).context("schedule_create")?
+                        }
+                        "schedule_list" => self.schedule_list().context("schedule_list")?,
+                        "schedule_delete" => {
+                            let args: ScheduleDeleteToolArgs = serde_json::from_str(&args_json)
+                                .context("parse schedule_delete args")?;
+                            self.schedule_delete(&args.id).context("schedule_delete")?
+                        }
+                        "cron_create" => {
+                            let args: CronCreateToolArgs = serde_json::from_str(&args_json)
+                                .context("parse cron_create args")?;
+                            self.cron_create(args).context("cron_create")?
+                        }
+                        "cron_list" => self.cron_list().context("cron_list")?,
+                        "cron_cancel" => {
+                            let args: CronCancelToolArgs = serde_json::from_str(&args_json)
+                                .context("parse cron_cancel args")?;
+                            self.cron_cancel(&args.job_id).context("cron_cancel")?
+                        }
+                        "channel_send" => {
+                            let args: ChannelSendToolArgs = serde_json::from_str(&args_json)
+                                .context("parse channel_send args")?;
+                            self.channel_send(args).context("channel_send")?
+                        }
+                        "knowledge_add_entity" => {
+                            let args: KnowledgeAddEntityToolArgs = serde_json::from_str(&args_json)
+                                .context("parse knowledge_add_entity args")?;
+                            self.knowledge_add_entity(args)
+                                .context("knowledge_add_entity")?
+                        }
+                        "knowledge_add_relation" => {
+                            let args: KnowledgeAddRelationToolArgs =
+                                serde_json::from_str(&args_json)
+                                    .context("parse knowledge_add_relation args")?;
+                            self.knowledge_add_relation(args)
+                                .context("knowledge_add_relation")?
+                        }
+                        "knowledge_query" => {
+                            let args: KnowledgeQueryToolArgs = serde_json::from_str(&args_json)
+                                .context("parse knowledge_query args")?;
+                            self.knowledge_query(&args.query).context("knowledge_query")?
+                        }
+                        _ => tools
+                            .call(&call.function.name, &args_json)
                             .await
-                            .context("agent_send")?
+                            .with_context(|| format!("tool {}", call.function.name))?,
+                    };
+                    Ok(output)
+                }
+                .await;
+
+                let duration_ms = started_at.elapsed().as_millis() as u64;
+                let output = match output_result {
+                    Ok(output) => output,
+                    Err(e) => {
+                        let err_text = e.to_string();
+                        let _ = self.append_tool_audit(ToolAuditRecord {
+                            session_id: session_id.to_string(),
+                            tool_name: call.function.name.clone(),
+                            success: false,
+                            duration_ms,
+                            truncated: false,
+                            error: Some(err_text),
+                            created_at: Self::now_epoch_seconds(),
+                        });
+                        return Err(e);
                     }
-                    "hand_list" => self.hand_list().context("hand_list")?,
-                    "hand_activate" => {
-                        let args: HandActivateToolArgs =
-                            serde_json::from_str(&args_json).context("parse hand_activate args")?;
-                        self.hand_activate(args).context("hand_activate")?
-                    }
-                    "hand_status" => {
-                        let args: HandStatusToolArgs =
-                            serde_json::from_str(&args_json).context("parse hand_status args")?;
-                        self.hand_status(&args.hand_id).context("hand_status")?
-                    }
-                    "hand_deactivate" => {
-                        let args: HandDeactivateToolArgs = serde_json::from_str(&args_json)
-                            .context("parse hand_deactivate args")?;
-                        self.hand_deactivate(&args.instance_id)
-                            .context("hand_deactivate")?
-                    }
-                    "task_post" => {
-                        let args: TaskPostToolArgs =
-                            serde_json::from_str(&args_json).context("parse task_post args")?;
-                        self.task_post(args).context("task_post")?
-                    }
-                    "task_list" => {
-                        let args: TaskListToolArgs =
-                            serde_json::from_str(&args_json).context("parse task_list args")?;
-                        self.task_list(args.status.as_deref())
-                            .context("task_list")?
-                    }
-                    "task_claim" => {
-                        let args: TaskClaimToolArgs =
-                            serde_json::from_str(&args_json).context("parse task_claim args")?;
-                        self.task_claim(args.agent_id.as_deref())
-                            .context("task_claim")?
-                    }
-                    "task_complete" => {
-                        let args: TaskCompleteToolArgs =
-                            serde_json::from_str(&args_json).context("parse task_complete args")?;
-                        self.task_complete(&args.task_id, &args.result)
-                            .context("task_complete")?
-                    }
-                    "event_publish" => {
-                        let args: EventPublishToolArgs =
-                            serde_json::from_str(&args_json).context("parse event_publish args")?;
-                        self.event_publish(args).context("event_publish")?
-                    }
-                    "schedule_create" => {
-                        let args: ScheduleCreateToolArgs = serde_json::from_str(&args_json)
-                            .context("parse schedule_create args")?;
-                        self.schedule_create(args).context("schedule_create")?
-                    }
-                    "schedule_list" => self.schedule_list().context("schedule_list")?,
-                    "schedule_delete" => {
-                        let args: ScheduleDeleteToolArgs = serde_json::from_str(&args_json)
-                            .context("parse schedule_delete args")?;
-                        self.schedule_delete(&args.id).context("schedule_delete")?
-                    }
-                    "cron_create" => {
-                        let args: CronCreateToolArgs =
-                            serde_json::from_str(&args_json).context("parse cron_create args")?;
-                        self.cron_create(args).context("cron_create")?
-                    }
-                    "cron_list" => self.cron_list().context("cron_list")?,
-                    "cron_cancel" => {
-                        let args: CronCancelToolArgs =
-                            serde_json::from_str(&args_json).context("parse cron_cancel args")?;
-                        self.cron_cancel(&args.job_id).context("cron_cancel")?
-                    }
-                    "channel_send" => {
-                        let args: ChannelSendToolArgs =
-                            serde_json::from_str(&args_json).context("parse channel_send args")?;
-                        self.channel_send(args).context("channel_send")?
-                    }
-                    "knowledge_add_entity" => {
-                        let args: KnowledgeAddEntityToolArgs = serde_json::from_str(&args_json)
-                            .context("parse knowledge_add_entity args")?;
-                        self.knowledge_add_entity(args)
-                            .context("knowledge_add_entity")?
-                    }
-                    "knowledge_add_relation" => {
-                        let args: KnowledgeAddRelationToolArgs =
-                            serde_json::from_str(&args_json)
-                                .context("parse knowledge_add_relation args")?;
-                        self.knowledge_add_relation(args)
-                            .context("knowledge_add_relation")?
-                    }
-                    "knowledge_query" => {
-                        let args: KnowledgeQueryToolArgs = serde_json::from_str(&args_json)
-                            .context("parse knowledge_query args")?;
-                        self.knowledge_query(&args.query)
-                            .context("knowledge_query")?
-                    }
-                    _ => tools
-                        .call(&call.function.name, &args_json)
-                        .await
-                        .with_context(|| format!("tool {}", call.function.name))?,
                 };
+
+                let (output, truncated) = truncate_tool_result_with_flag(output, MAX_TOOL_RESULT_CHARS);
+                let _ = self.append_tool_audit(ToolAuditRecord {
+                    session_id: session_id.to_string(),
+                    tool_name: call.function.name.clone(),
+                    success: true,
+                    duration_ms,
+                    truncated,
+                    error: None,
+                    created_at: Self::now_epoch_seconds(),
+                });
 
                 let tool_msg = ChatMessage {
                     role: Role::Tool,
@@ -410,7 +466,7 @@ impl AgentRuntime {
 
     async fn driver_chat(
         &self,
-        driver: &(dyn LlmDriver),
+        driver: &dyn LlmDriver,
         req: ChatCompletionRequest,
     ) -> anyhow::Result<ChatMessage> {
         driver.chat(req).await
@@ -422,6 +478,77 @@ impl AgentRuntime {
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_secs() as i64)
             .unwrap_or(0)
+    }
+
+    fn session_allowed_tools_key(session_id: &str) -> String {
+        format!("{SESSION_ALLOWED_TOOLS_KEY_PREFIX}{session_id}")
+    }
+
+    pub fn set_session_allowed_tools(
+        &self,
+        session_id: &str,
+        tools: Vec<String>,
+    ) -> anyhow::Result<()> {
+        let mut deduped = Vec::new();
+        let mut seen = HashSet::new();
+        for tool in tools {
+            let tool = tool.trim().to_string();
+            if tool.is_empty() {
+                continue;
+            }
+            if seen.insert(tool.clone()) {
+                deduped.push(tool);
+            }
+        }
+        let raw = serde_json::to_string(&deduped).context("serialize session allowed tools")?;
+        self.memory
+            .kv_set(&Self::session_allowed_tools_key(session_id), &raw)
+            .context("kv_set session allowed tools")?;
+        Ok(())
+    }
+
+    fn load_session_allowed_tools(&self, session_id: &str) -> anyhow::Result<Option<Vec<String>>> {
+        let raw = self
+            .memory
+            .kv_get(&Self::session_allowed_tools_key(session_id))
+            .context("kv_get session allowed tools")?;
+        let Some(raw) = raw else {
+            return Ok(None);
+        };
+        let parsed: Vec<String> = serde_json::from_str(&raw).unwrap_or_default();
+        let mut cleaned = Vec::new();
+        let mut seen = HashSet::new();
+        for tool in parsed {
+            let tool = tool.trim().to_string();
+            if tool.is_empty() {
+                continue;
+            }
+            if seen.insert(tool.clone()) {
+                cleaned.push(tool);
+            }
+        }
+        if cleaned.is_empty() {
+            return Ok(None);
+        }
+        Ok(Some(cleaned))
+    }
+
+    fn append_tool_audit(&self, record: ToolAuditRecord) -> anyhow::Result<()> {
+        let raw = self
+            .memory
+            .kv_get(TOOL_AUDIT_KEY)
+            .context("kv_get tool audit")?
+            .unwrap_or_else(|| "[]".to_string());
+        let mut records: Vec<ToolAuditRecord> = serde_json::from_str(&raw).unwrap_or_default();
+        records.push(record);
+        if records.len() > TOOL_AUDIT_MAX_RECORDS {
+            records.drain(0..(records.len() - TOOL_AUDIT_MAX_RECORDS));
+        }
+        let serialized = serde_json::to_string(&records).context("serialize tool audit")?;
+        self.memory
+            .kv_set(TOOL_AUDIT_KEY, &serialized)
+            .context("kv_set tool audit")?;
+        Ok(())
     }
 
     fn agents_index(&self) -> anyhow::Result<Vec<String>> {
@@ -1556,6 +1683,18 @@ struct OutboxMessageRecord {
     sent_at: Option<i64>,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct ToolAuditRecord {
+    session_id: String,
+    tool_name: String,
+    success: bool,
+    duration_ms: u64,
+    truncated: bool,
+    #[serde(default)]
+    error: Option<String>,
+    created_at: i64,
+}
+
 #[derive(Debug, serde::Deserialize)]
 struct ChannelSendToolArgs {
     channel: String,
@@ -1691,6 +1830,32 @@ fn into_tool_calls(calls: Vec<JsonToolCall>) -> Vec<ToolCall> {
         });
     }
     out
+}
+
+fn truncate_tool_result_with_flag(output: String, max_chars: usize) -> (String, bool) {
+    if max_chars == 0 {
+        return (String::new(), !output.is_empty());
+    }
+
+    let total_chars = output.chars().count();
+    if total_chars <= max_chars {
+        return (output, false);
+    }
+
+    let head_chars = max_chars / 2;
+    let tail_chars = max_chars - head_chars;
+    let omitted = total_chars.saturating_sub(max_chars);
+
+    let head: String = output.chars().take(head_chars).collect();
+    let tail: String = output
+        .chars()
+        .skip(total_chars.saturating_sub(tail_chars))
+        .collect();
+
+    (
+        format!("{head}\n\n[... omitted {omitted} chars ...]\n\n{tail}"),
+        true,
+    )
 }
 
 fn parse_json_tool_calls_from_value(value: serde_json::Value) -> Option<Vec<JsonToolCall>> {

@@ -1,9 +1,33 @@
+use anyhow::Context;
 use clap::Parser;
+use std::path::Path;
 use std::path::PathBuf;
+use std::process::Command as ProcessCommand;
 
 use rexos::{config::RexosConfig, memory::MemoryStore, paths::RexosPaths};
 
 mod doctor;
+
+#[derive(Debug, Clone, serde::Serialize)]
+struct ConfigValidationReport {
+    valid: bool,
+    config_path: String,
+    errors: Vec<String>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+struct ReleaseCheckItem {
+    id: String,
+    ok: bool,
+    message: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+struct ReleaseCheckReport {
+    ok: bool,
+    tag: String,
+    checks: Vec<ReleaseCheckItem>,
+}
 
 #[derive(Debug, Parser)]
 #[command(name = "rexos")]
@@ -39,6 +63,11 @@ enum Command {
         #[command(subcommand)]
         command: ChannelCommand,
     },
+    /// Config helpers
+    Config {
+        #[command(subcommand)]
+        command: ConfigCommand,
+    },
     /// Long-running harness helpers (initializer + sessions)
     Harness {
         #[command(subcommand)]
@@ -48,6 +77,21 @@ enum Command {
     Daemon {
         #[command(subcommand)]
         command: DaemonCommand,
+    },
+    /// Release assistants (metadata + preflight checks)
+    Release {
+        #[command(subcommand)]
+        command: ReleaseCommand,
+    },
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum ConfigCommand {
+    /// Validate ~/.rexos/config.toml and exit non-zero when invalid
+    Validate {
+        /// Print JSON output (machine-readable)
+        #[arg(long)]
+        json: bool,
     },
 }
 
@@ -97,6 +141,9 @@ enum AgentCommand {
         /// Task kind for model routing
         #[arg(long, value_enum, default_value_t = AgentKind::Coding)]
         kind: AgentKind,
+        /// Comma-separated allowed tool names for this session (session-level whitelist)
+        #[arg(long, value_delimiter = ',')]
+        allowed_tools: Vec<String>,
     },
 }
 
@@ -146,6 +193,25 @@ enum DaemonCommand {
     },
 }
 
+#[derive(Debug, clap::Subcommand)]
+enum ReleaseCommand {
+    /// Check release metadata and preflight conditions
+    Check {
+        /// Release tag, e.g. v0.1.0 (defaults to v<workspace version>)
+        #[arg(long)]
+        tag: Option<String>,
+        /// Repository root to check (default: current directory)
+        #[arg(long, default_value = ".")]
+        repo_root: PathBuf,
+        /// Run `cargo test --workspace --locked` as part of preflight
+        #[arg(long)]
+        run_tests: bool,
+        /// Print JSON output (machine-readable)
+        #[arg(long)]
+        json: bool,
+    },
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
@@ -188,6 +254,7 @@ async fn main() -> anyhow::Result<()> {
                 system,
                 session,
                 kind,
+                allowed_tools,
             } => {
                 let paths = RexosPaths::discover()?;
                 paths.ensure_dirs()?;
@@ -203,6 +270,9 @@ async fn main() -> anyhow::Result<()> {
                     Some(id) => id,
                     None => rexos::harness::resolve_session_id(&workspace)?,
                 };
+                if !allowed_tools.is_empty() {
+                    agent.set_session_allowed_tools(&session_id, allowed_tools)?;
+                }
                 let out = agent
                     .run_session(
                         workspace,
@@ -244,6 +314,26 @@ async fn main() -> anyhow::Result<()> {
                     let summary = dispatcher.drain_once(limit).await?;
                     println!("drain: sent={} failed={}", summary.sent, summary.failed);
                     tokio::time::sleep(std::time::Duration::from_secs(interval_secs)).await;
+                }
+            }
+        },
+        Command::Config { command } => match command {
+            ConfigCommand::Validate { json } => {
+                let paths = RexosPaths::discover()?;
+                let report = validate_config(&paths);
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&report)?);
+                } else if report.valid {
+                    println!("config valid: {}", report.config_path);
+                } else {
+                    println!("config invalid: {}", report.config_path);
+                    for err in &report.errors {
+                        println!("- {err}");
+                    }
+                }
+
+                if !report.valid {
+                    std::process::exit(1);
                 }
             }
         },
@@ -332,7 +422,361 @@ async fn main() -> anyhow::Result<()> {
                 rexos::daemon::serve(addr).await?;
             }
         },
+        Command::Release { command } => match command {
+            ReleaseCommand::Check {
+                tag,
+                repo_root,
+                run_tests,
+                json,
+            } => {
+                let report = run_release_check(&repo_root, tag.as_deref(), run_tests)?;
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&report)?);
+                } else {
+                    println!("{}", format_release_check_report(&report));
+                }
+                if !report.ok {
+                    std::process::exit(1);
+                }
+            }
+        },
     }
 
     Ok(())
+}
+
+fn validate_config(paths: &RexosPaths) -> ConfigValidationReport {
+    let config_path = paths.config_path();
+    let display_path = config_path.display().to_string();
+    let raw = match std::fs::read_to_string(&config_path) {
+        Ok(raw) => raw,
+        Err(e) => {
+            return ConfigValidationReport {
+                valid: false,
+                config_path: display_path,
+                errors: vec![format!("read config failed: {e}")],
+            };
+        }
+    };
+
+    let cfg: RexosConfig = match toml::from_str(&raw) {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            return ConfigValidationReport {
+                valid: false,
+                config_path: display_path,
+                errors: vec![format!("parse config TOML failed: {e}")],
+            };
+        }
+    };
+
+    let mut errors = Vec::new();
+    for (route_name, provider_name) in [
+        ("planning", cfg.router.planning.provider.trim()),
+        ("coding", cfg.router.coding.provider.trim()),
+        ("summary", cfg.router.summary.provider.trim()),
+    ] {
+        if provider_name.is_empty() {
+            errors.push(format!("router.{route_name}.provider is empty"));
+            continue;
+        }
+        if !cfg.providers.contains_key(provider_name) {
+            errors.push(format!(
+                "router.{route_name}.provider references unknown provider '{provider_name}'"
+            ));
+        }
+    }
+
+    ConfigValidationReport {
+        valid: errors.is_empty(),
+        config_path: display_path,
+        errors,
+    }
+}
+
+fn parse_release_tag_version(tag: &str) -> Option<String> {
+    let tag = tag.trim();
+    let version = tag.strip_prefix('v')?;
+    let parts: Vec<&str> = version.split('.').collect();
+    if parts.len() != 3 {
+        return None;
+    }
+    if parts
+        .iter()
+        .all(|p| !p.is_empty() && p.chars().all(|ch| ch.is_ascii_digit()))
+    {
+        Some(version.to_string())
+    } else {
+        None
+    }
+}
+
+fn extract_workspace_version_from_toml(cargo_toml: &str) -> Option<String> {
+    let value: toml::Value = toml::from_str(cargo_toml).ok()?;
+    value
+        .get("workspace")?
+        .get("package")?
+        .get("version")?
+        .as_str()
+        .map(|s| s.to_string())
+}
+
+fn changelog_has_release_section(changelog_text: &str, version: &str) -> bool {
+    let target = format!("## [{version}]");
+    changelog_text
+        .lines()
+        .any(|line| line.trim_start().starts_with(&target))
+}
+
+fn evaluate_release_metadata(cargo_toml: &str, changelog_text: &str, tag: &str) -> ReleaseCheckReport {
+    let mut checks = Vec::new();
+
+    let tag_version = parse_release_tag_version(tag);
+    checks.push(ReleaseCheckItem {
+        id: "tag.format".to_string(),
+        ok: tag_version.is_some(),
+        message: if tag_version.is_some() {
+            format!("tag `{tag}` matches vX.Y.Z")
+        } else {
+            format!("tag `{tag}` is invalid; expected vX.Y.Z")
+        },
+    });
+
+    let cargo_version = extract_workspace_version_from_toml(cargo_toml);
+    checks.push(ReleaseCheckItem {
+        id: "cargo.workspace_version".to_string(),
+        ok: cargo_version.is_some(),
+        message: match cargo_version.as_deref() {
+            Some(v) => format!("workspace version `{v}`"),
+            None => "failed to parse [workspace.package].version".to_string(),
+        },
+    });
+
+    let versions_match = match (tag_version.as_deref(), cargo_version.as_deref()) {
+        (Some(tag_v), Some(cargo_v)) => tag_v == cargo_v,
+        _ => false,
+    };
+    checks.push(ReleaseCheckItem {
+        id: "cargo.matches_tag".to_string(),
+        ok: versions_match,
+        message: match (tag_version.as_deref(), cargo_version.as_deref()) {
+            (Some(tag_v), Some(cargo_v)) => {
+                if tag_v == cargo_v {
+                    format!("tag version `{tag_v}` matches Cargo.toml")
+                } else {
+                    format!("tag version `{tag_v}` does not match Cargo.toml `{cargo_v}`")
+                }
+            }
+            _ => "cannot compare tag and Cargo.toml versions".to_string(),
+        },
+    });
+
+    let changelog_ok = tag_version
+        .as_deref()
+        .map(|v| changelog_has_release_section(changelog_text, v))
+        .unwrap_or(false);
+    checks.push(ReleaseCheckItem {
+        id: "changelog.section".to_string(),
+        ok: changelog_ok,
+        message: match tag_version.as_deref() {
+            Some(v) if changelog_ok => format!("found changelog section [{v}]"),
+            Some(v) => format!("missing changelog section [{v}]"),
+            None => "cannot verify changelog without valid tag".to_string(),
+        },
+    });
+
+    let ok = checks.iter().all(|c| c.ok);
+    ReleaseCheckReport {
+        ok,
+        tag: tag.to_string(),
+        checks,
+    }
+}
+
+fn run_release_check(
+    repo_root: &Path,
+    tag: Option<&str>,
+    run_tests: bool,
+) -> anyhow::Result<ReleaseCheckReport> {
+    let cargo_path = repo_root.join("Cargo.toml");
+    let changelog_path = repo_root.join("CHANGELOG.md");
+
+    let cargo_toml = std::fs::read_to_string(&cargo_path)
+        .with_context(|| format!("read {}", cargo_path.display()))?;
+    let changelog_text = std::fs::read_to_string(&changelog_path)
+        .with_context(|| format!("read {}", changelog_path.display()))?;
+
+    let default_tag = extract_workspace_version_from_toml(&cargo_toml)
+        .map(|v| format!("v{v}"))
+        .unwrap_or_else(|| "v0.0.0".to_string());
+    let resolved_tag = tag.map(|s| s.to_string()).unwrap_or(default_tag);
+
+    let mut report = evaluate_release_metadata(&cargo_toml, &changelog_text, &resolved_tag);
+
+    for (id, rel_path) in [
+        ("workflow.release", ".github/workflows/release.yml"),
+        ("workflow.release_dry_run", ".github/workflows/release-dry-run.yml"),
+        ("script.package_release", "scripts/package_release.py"),
+    ] {
+        let full = repo_root.join(rel_path);
+        let exists = full.exists();
+        report.checks.push(ReleaseCheckItem {
+            id: id.to_string(),
+            ok: exists,
+            message: if exists {
+                format!("{rel_path} exists")
+            } else {
+                format!("{rel_path} is missing")
+            },
+        });
+    }
+
+    if run_tests {
+        let status = ProcessCommand::new("cargo")
+            .arg("test")
+            .arg("--workspace")
+            .arg("--locked")
+            .current_dir(repo_root)
+            .status()
+            .context("run cargo test --workspace --locked")?;
+        report.checks.push(ReleaseCheckItem {
+            id: "preflight.tests".to_string(),
+            ok: status.success(),
+            message: format!("cargo test exit status: {status}"),
+        });
+    } else {
+        report.checks.push(ReleaseCheckItem {
+            id: "preflight.tests".to_string(),
+            ok: true,
+            message: "skipped (pass --run-tests to enable)".to_string(),
+        });
+    }
+
+    report.ok = report.checks.iter().all(|c| c.ok);
+    Ok(report)
+}
+
+fn format_release_check_report(report: &ReleaseCheckReport) -> String {
+    let mut out = String::new();
+    out.push_str(&format!("Release check for {}\n\n", report.tag));
+    for check in &report.checks {
+        let prefix = if check.ok { "OK  " } else { "ERR " };
+        out.push_str(&format!("{prefix} {}: {}\n", check.id, check.message));
+    }
+    out.push_str(&format!(
+        "\nSummary: {}\n",
+        if report.ok { "PASS" } else { "FAIL" }
+    ));
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn cli_parses_config_validate_subcommand() {
+        let parsed = Cli::try_parse_from(["rexos", "config", "validate"]);
+        assert!(
+            parsed.is_ok(),
+            "expected `rexos config validate` to parse, got: {parsed:?}"
+        );
+    }
+
+    #[test]
+    fn cli_parses_release_check_subcommand() {
+        let parsed = Cli::try_parse_from(["rexos", "release", "check", "--tag", "v0.1.0"]);
+        assert!(
+            parsed.is_ok(),
+            "expected `rexos release check` to parse, got: {parsed:?}"
+        );
+    }
+
+    #[test]
+    fn cli_parses_agent_run_allowed_tools() {
+        let parsed = Cli::try_parse_from([
+            "rexos",
+            "agent",
+            "run",
+            "--workspace",
+            ".",
+            "--prompt",
+            "x",
+            "--allowed-tools",
+            "fs_read,web_fetch",
+        ]);
+        assert!(
+            parsed.is_ok(),
+            "expected agent run with --allowed-tools to parse, got: {parsed:?}"
+        );
+    }
+
+    #[test]
+    fn release_metadata_check_passes_when_versions_match() {
+        let cargo = r#"
+[workspace]
+members = []
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+"#;
+        let changelog = "# Changelog\n\n## [0.1.0] - 2026-03-04\n";
+        let report = evaluate_release_metadata(cargo, changelog, "v0.1.0");
+        assert!(report.ok, "expected release metadata ok, got: {report:?}");
+    }
+
+    #[test]
+    fn release_metadata_check_fails_when_changelog_missing_section() {
+        let cargo = r#"
+[workspace]
+members = []
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+"#;
+        let changelog = "# Changelog\n\n## [Unreleased]\n";
+        let report = evaluate_release_metadata(cargo, changelog, "v0.1.0");
+        assert!(!report.ok, "expected release metadata fail, got: {report:?}");
+        assert!(
+            report
+                .checks
+                .iter()
+                .any(|c| c.id == "changelog.section" && !c.ok),
+            "expected changelog.section failure, got: {report:?}"
+        );
+    }
+
+    #[test]
+    fn validate_config_reports_success_for_default_config() {
+        let tmp = tempdir().unwrap();
+        let paths = RexosPaths {
+            base_dir: tmp.path().join(".rexos"),
+        };
+        paths.ensure_dirs().unwrap();
+        RexosConfig::ensure_default(&paths).unwrap();
+
+        let report = validate_config(&paths);
+        assert!(report.valid, "expected config valid, got {report:?}");
+        assert!(report.errors.is_empty(), "expected no errors, got {report:?}");
+    }
+
+    #[test]
+    fn validate_config_reports_parse_error_for_invalid_toml() {
+        let tmp = tempdir().unwrap();
+        let paths = RexosPaths {
+            base_dir: tmp.path().join(".rexos"),
+        };
+        paths.ensure_dirs().unwrap();
+        std::fs::write(paths.config_path(), "[providers\nbroken = true").unwrap();
+
+        let report = validate_config(&paths);
+        assert!(!report.valid, "expected config invalid, got {report:?}");
+        assert!(
+            report.errors.iter().any(|e| e.contains("parse config TOML")),
+            "expected parse error, got {report:?}"
+        );
+    }
 }

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::path::{Component, Path, PathBuf};
 use std::process::Stdio;
@@ -22,6 +22,7 @@ pub struct Toolset {
     http: reqwest::Client,
     browser: Arc<tokio::sync::Mutex<Option<BrowserSession>>>,
     processes: Arc<tokio::sync::Mutex<ProcessManager>>,
+    allowed_tools: Option<HashSet<String>>,
 }
 
 const PROCESS_MAX_PROCESSES: usize = 5;
@@ -138,6 +139,13 @@ impl Drop for ProcessEntry {
 
 impl Toolset {
     pub fn new(workspace_root: PathBuf) -> anyhow::Result<Self> {
+        Self::new_with_allowed_tools(workspace_root, None)
+    }
+
+    pub fn new_with_allowed_tools(
+        workspace_root: PathBuf,
+        allowed_tools: Option<Vec<String>>,
+    ) -> anyhow::Result<Self> {
         let workspace_root = workspace_root.canonicalize().with_context(|| {
             format!("canonicalize workspace root: {}", workspace_root.display())
         })?;
@@ -151,6 +159,13 @@ impl Toolset {
             http,
             browser: Arc::new(tokio::sync::Mutex::new(None)),
             processes: Arc::new(tokio::sync::Mutex::new(ProcessManager::new())),
+            allowed_tools: allowed_tools.map(|tools| {
+                tools
+                    .into_iter()
+                    .map(|name| name.trim().to_string())
+                    .filter(|name| !name.is_empty())
+                    .collect()
+            }),
         })
     }
 
@@ -176,10 +191,19 @@ impl Toolset {
             browser_close_def(),
         ];
         defs.extend(compat_tool_defs());
+        if let Some(allowed) = self.allowed_tools.as_ref() {
+            defs.retain(|def| allowed.contains(def.function.name.as_str()));
+        }
         defs
     }
 
     pub async fn call(&self, name: &str, arguments_json: &str) -> anyhow::Result<String> {
+        if let Some(allowed) = self.allowed_tools.as_ref() {
+            if !allowed.contains(name) {
+                bail!("tool not allowed for this session: {name}");
+            }
+        }
+
         match name {
             "fs_read" => {
                 let args: FsReadArgs =

@@ -1,15 +1,15 @@
-name: Release
+name: Release Dry Run
 
 on:
-  push:
-    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
-    name: build (${{ matrix.target }})
+    name: dry-run build (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -37,9 +37,6 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Verify release metadata consistency
-        run: python scripts/verify_release_consistency.py --tag "${{ github.ref_name }}"
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -49,15 +46,15 @@ jobs:
       - name: Build (release)
         run: cargo build --release -p rexos-cli --locked
 
-      - name: Package
-        run: python scripts/package_release.py --version "${{ github.ref_name }}" --target "${{ matrix.target }}" --bin "${{ matrix.bin }}" --out-dir dist
+      - name: Package (dry run)
+        run: python scripts/package_release.py --version "dryrun-${{ github.run_id }}" --target "${{ matrix.target }}" --bin "${{ matrix.bin }}" --out-dir dist
 
       - name: Smoke test packaged binary (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
           set -euo pipefail
-          version="${{ github.ref_name }}"
+          version="dryrun-${{ github.run_id }}"
           base="rexos-${version}-${{ matrix.target }}"
           archive="dist/${base}.tar.gz"
           rm -rf smoke
@@ -72,7 +69,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}"
+          $version = "dryrun-${{ github.run_id }}"
           $base = "rexos-$version-${{ matrix.target }}"
           $archive = "dist/$base.zip"
           if (!(Test-Path $archive)) { throw "missing archive: $archive" }
@@ -89,30 +86,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.target }}
+          name: dry-run-dist-${{ matrix.target }}
           path: |
             dist/*.tar.gz
             dist/*.zip
             dist/*.sha256
           if-no-files-found: error
-
-  publish:
-    name: publish (github release)
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-
-      - name: List assets
-        run: ls -la dist
-
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/**
-          generate_release_notes: true
