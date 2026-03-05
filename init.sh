@@ -8,7 +8,7 @@ echo "[loopforge] tests..."
 cargo test
 
 echo "[loopforge] smoke: CLI help"
-cargo build -p rexos-cli
+cargo build -p loopforge-cli
 ./target/debug/loopforge --help >/dev/null
 
 echo "[loopforge] done"

@@ -29,11 +29,11 @@ Download the archive for your OS from GitHub Releases, extract it, and put `loop
 
 ```bash
 # Install to ~/.cargo/bin (recommended for dev)
-cargo install --path crates/rexos-cli --locked
+cargo install --path crates/loopforge-cli --locked
 loopforge --help
 
 # Or build a local binary
-cargo build --release -p rexos-cli
+cargo build --release -p loopforge-cli
 ./target/release/loopforge --help
 ```
 

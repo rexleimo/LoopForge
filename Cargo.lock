@@ -1011,6 +1011,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 
 [[package]]
+name = "loopforge-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "clap",
+ "reqwest",
+ "rexos",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "toml",
+ "uuid",
+]
+
+[[package]]
 name = "lopdf"
 version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1422,23 +1439,6 @@ dependencies = [
  "tempfile",
  "tokio",
  "tower",
-]
-
-[[package]]
-name = "rexos-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "clap",
- "reqwest",
- "rexos",
- "serde",
- "serde_json",
- "tempfile",
- "tokio",
- "toml",
- "uuid",
 ]
 
 [[package]]

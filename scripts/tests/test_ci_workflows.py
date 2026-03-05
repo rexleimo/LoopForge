@@ -30,7 +30,7 @@ class CiWorkflowTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("pull_request", workflow)
         self.assertIn("workflow_dispatch", workflow)
-        self.assertIn("cargo build --release -p rexos-cli --locked", workflow)
+        self.assertIn("cargo build --release -p loopforge-cli --locked", workflow)
         self.assertIn("python scripts/package_release.py", workflow)
         self.assertIn("target/release/loopforge", workflow)
         self.assertNotIn("target/release/rexos", workflow)

@@ -149,7 +149,7 @@ Expected:
 ## Task 5: “ACP-like” session persistence for `rexos agent run`
 
 **Files:**
-- Modify: `crates/rexos-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/src/main.rs`
 - (Optional) Add test: `crates/rexos/tests/agent_session_persistence.rs`
 - Docs: `docs-site/tutorials/new-user-walkthrough.md`
 

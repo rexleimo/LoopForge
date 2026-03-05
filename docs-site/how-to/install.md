@@ -16,11 +16,11 @@ loopforge init
 ## Option B: Install from source (Cargo)
 
 ```bash
-cargo install --path crates/rexos-cli --locked
+cargo install --path crates/loopforge-cli --locked
 loopforge --help
 ```
 
 ## Update
 
 - If you installed via Releases: download a newer archive and replace the binary.
-- If you installed via Cargo: re-run `cargo install --path crates/rexos-cli --locked`.
+- If you installed via Cargo: re-run `cargo install --path crates/loopforge-cli --locked`.

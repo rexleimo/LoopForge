@@ -4,7 +4,7 @@
 
 **Goal:** Convert RexOS from a single crate into a modular Cargo workspace with multiple crates, while keeping the `rexos` CLI behavior and existing integration tests working.
 
-**Architecture:** Use a virtual workspace root (`Cargo.toml` with `[workspace]`). Move code into `crates/*` and introduce a small `rexos` facade crate that re-exports the public API (`rexos::agent`, `rexos::llm`, `rexos::memory`, etc.). Keep the CLI as `crates/rexos-cli` (binary name: `rexos`) that depends on the facade.
+**Architecture:** Use a virtual workspace root (`Cargo.toml` with `[workspace]`). Move code into `crates/*` and introduce a small `rexos` facade crate that re-exports the public API (`rexos::agent`, `rexos::llm`, `rexos::memory`, etc.). Keep the CLI as `crates/loopforge-cli` (binary name: `rexos`) that depends on the facade.
 
 **Tech Stack:** Rust 2021, tokio, reqwest, axum, rusqlite (bundled), clap, serde/toml/serde_json.
 
@@ -18,8 +18,8 @@
 - Modify: `README.md` (update dev commands)
 - Create: `crates/rexos/Cargo.toml`
 - Create: `crates/rexos/src/lib.rs`
-- Create: `crates/rexos-cli/Cargo.toml`
-- Create: `crates/rexos-cli/src/main.rs`
+- Create: `crates/loopforge-cli/Cargo.toml`
+- Create: `crates/loopforge-cli/src/main.rs`
 - Create: `crates/rexos-kernel/Cargo.toml`
 - Create: `crates/rexos-kernel/src/lib.rs`
 - Create: `crates/rexos-llm/Cargo.toml`
@@ -66,7 +66,7 @@ Each crate gets a minimal `lib.rs` that either owns code (moved modules) or re-e
 - Move: `src/agent/mod.rs` → `crates/rexos-runtime/src/`
 - Move: `src/harness/mod.rs` → `crates/rexos-harness/src/`
 - Move: `src/daemon/mod.rs` → `crates/rexos-daemon/src/`
-- Move: `src/main.rs` → `crates/rexos-cli/src/main.rs`
+- Move: `src/main.rs` → `crates/loopforge-cli/src/main.rs`
 - Replace: `src/lib.rs` → delete (root no longer a package)
 
 **Step 1: Wire module paths**
@@ -76,7 +76,7 @@ Each crate gets a minimal `lib.rs` that either owns code (moved modules) or re-e
 
 **Step 2: Ensure the CLI still compiles**
 
-Run: `cargo build -p rexos-cli`
+Run: `cargo build -p loopforge-cli`
 Expected: PASS
 
 ---

@@ -47,7 +47,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build (release)
-        run: cargo build --release -p rexos-cli --locked
+        run: cargo build --release -p loopforge-cli --locked
 
       - name: Package
         run: python scripts/package_release.py --version "${{ github.ref_name }}" --target "${{ matrix.target }}" --bin "${{ matrix.bin }}" --out-dir dist

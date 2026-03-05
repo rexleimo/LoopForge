@@ -13,10 +13,10 @@
 ## Task 1: Add `rexos doctor` CLI command
 
 **Files:**
-- Modify: `crates/rexos-cli/src/main.rs`
-- Create: `crates/rexos-cli/src/doctor.rs`
-- Modify: `crates/rexos-cli/Cargo.toml`
-- Test: `crates/rexos-cli/src/doctor.rs` (unit tests with local Axum server)
+- Modify: `crates/loopforge-cli/src/main.rs`
+- Create: `crates/loopforge-cli/src/doctor.rs`
+- Modify: `crates/loopforge-cli/Cargo.toml`
+- Test: `crates/loopforge-cli/src/doctor.rs` (unit tests with local Axum server)
 
 **Step 1: Define the CLI surface**
 - Add `Command::Doctor` with flags:
@@ -45,7 +45,7 @@
 - Assert JSON output includes expected statuses.
 
 **Verification**
-- Run: `cargo test -p rexos-cli`
+- Run: `cargo test -p loopforge-cli`
 
 ---
 

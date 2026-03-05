@@ -16,11 +16,11 @@ loopforge init
 ## 方案 B：从源码安装（Cargo）
 
 ```bash
-cargo install --path crates/rexos-cli --locked
+cargo install --path crates/loopforge-cli --locked
 loopforge --help
 ```
 
 ## 更新
 
 - 如果通过 Releases 安装：下载更新版本的压缩包并替换旧二进制。
-- 如果通过 Cargo 安装：重新执行 `cargo install --path crates/rexos-cli --locked`。
+- 如果通过 Cargo 安装：重新执行 `cargo install --path crates/loopforge-cli --locked`。

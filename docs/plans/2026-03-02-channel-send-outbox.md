@@ -79,7 +79,7 @@ Expected: PASS.
 ### Task 4: Add CLI command to drain/worker
 
 **Files:**
-- Modify: `crates/rexos-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/src/main.rs`
 - Modify: `docs-site/reference/cli.md`
 - Modify: `docs-site/reference/tools.md` + `docs-site/zh/reference/tools.md`
 
@@ -90,5 +90,5 @@ Expected: PASS.
 
 **Verification:**
 - `cargo test`
-- `cargo run -p rexos-cli -- channel drain` (manual smoke, optional)
+- `cargo run -p loopforge-cli -- channel drain` (manual smoke, optional)
 

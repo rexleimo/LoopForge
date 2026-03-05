@@ -59,7 +59,10 @@ struct OnboardEvent {
 
 #[derive(Debug, Parser)]
 #[command(name = "loopforge")]
-#[command(about = "LoopForge: long-running agent operating system", long_about = None)]
+#[command(
+    about = "LoopForge (formerly RexOS): long-running agent operating system",
+    long_about = None
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,

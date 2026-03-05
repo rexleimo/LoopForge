@@ -84,8 +84,8 @@ git commit -m "docs(test): add stable wikipedia browser smoke guidance"
 ### Task 3: Add One-Command Onboarding Verification (`rexos onboard`)
 
 **Files:**
-- Modify: `crates/rexos-cli/src/main.rs`
-- Test: `crates/rexos-cli/src/main.rs` (CLI parse/unit tests section)
+- Modify: `crates/loopforge-cli/src/main.rs`
+- Test: `crates/loopforge-cli/src/main.rs` (CLI parse/unit tests section)
 - Modify: `docs-site/tutorials/new-user-walkthrough.md`
 - Modify: `docs-site/zh-CN/tutorials/new-user-walkthrough.md`
 
@@ -99,7 +99,7 @@ rexos onboard --workspace rexos-onboard-demo
 **Step 2: Run targeted test**
 
 ```bash
-cargo test -p rexos-cli cli_parses_onboard_subcommand
+cargo test -p loopforge-cli cli_parses_onboard_subcommand
 ```
 Expected (before implementation): FAIL.
 
@@ -116,7 +116,7 @@ Expected (before implementation): FAIL.
 **Step 4: Re-run CLI tests**
 
 ```bash
-cargo test -p rexos-cli
+cargo test -p loopforge-cli
 ```
 
 **Step 5: Update walkthrough docs**
@@ -126,7 +126,7 @@ cargo test -p rexos-cli
 **Step 6: Commit**
 
 ```bash
-git add crates/rexos-cli/src/main.rs docs-site/tutorials/new-user-walkthrough.md docs-site/zh-CN/tutorials/new-user-walkthrough.md
+git add crates/loopforge-cli/src/main.rs docs-site/tutorials/new-user-walkthrough.md docs-site/zh-CN/tutorials/new-user-walkthrough.md
 git commit -m "feat(cli): add rexos onboard one-command verification flow"
 ```
 

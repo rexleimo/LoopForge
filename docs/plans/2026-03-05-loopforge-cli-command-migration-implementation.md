@@ -13,8 +13,8 @@
 ### Task 1: Lock migration contract with failing CLI tests
 
 **Files:**
-- Modify: `crates/rexos-cli/src/main.rs`
-- Test: `crates/rexos-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/src/main.rs`
+- Test: `crates/loopforge-cli/src/main.rs`
 
 **Step 1: Add a failing test for primary CLI name**
 
@@ -30,7 +30,7 @@ fn cli_primary_name_is_loopforge() {
 
 **Step 2: Run targeted test to confirm fail-before-change**
 
-Run: `cargo test -p rexos-cli cli_primary_name_is_loopforge`
+Run: `cargo test -p loopforge-cli cli_primary_name_is_loopforge`
 Expected: FAIL (`left: "rexos"` vs `right: "loopforge"`).
 
 **Step 3: Add a parse test for compatibility binary name**
@@ -48,28 +48,28 @@ fn cli_parses_config_validate_with_loopforge_binary_name() {
 **Step 4: Run both tests**
 
 Run:
-- `cargo test -p rexos-cli cli_primary_name_is_loopforge`
-- `cargo test -p rexos-cli cli_parses_config_validate_with_loopforge_binary_name`
+- `cargo test -p loopforge-cli cli_primary_name_is_loopforge`
+- `cargo test -p loopforge-cli cli_parses_config_validate_with_loopforge_binary_name`
 Expected: first FAIL, second PASS (documenting current parser behavior).
 
 **Step 5: Commit**
 
 ```bash
-git add crates/rexos-cli/src/main.rs
+git add crates/loopforge-cli/src/main.rs
 git commit -m "test(cli): lock loopforge primary command contract"
 ```
 
 ### Task 2: Add dual binaries and switch CLI branding to LoopForge-first
 
 **Files:**
-- Modify: `crates/rexos-cli/Cargo.toml`
-- Modify: `crates/rexos-cli/src/main.rs`
-- Modify: `crates/rexos-cli/src/doctor.rs`
-- Test: `crates/rexos-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/Cargo.toml`
+- Modify: `crates/loopforge-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/src/doctor.rs`
+- Test: `crates/loopforge-cli/src/main.rs`
 
 **Step 1: Add `loopforge` binary entry**
 
-In `crates/rexos-cli/Cargo.toml`, keep existing bin and add:
+In `crates/loopforge-cli/Cargo.toml`, keep existing bin and add:
 
 ```toml
 [[bin]]
@@ -99,13 +99,13 @@ Adjust assertion messages to LoopForge-first wording; keep at least one explicit
 
 **Step 5: Run CLI test suite**
 
-Run: `cargo test -p rexos-cli`
+Run: `cargo test -p loopforge-cli`
 Expected: PASS.
 
 **Step 6: Commit**
 
 ```bash
-git add crates/rexos-cli/Cargo.toml crates/rexos-cli/src/main.rs crates/rexos-cli/src/doctor.rs
+git add crates/loopforge-cli/Cargo.toml crates/loopforge-cli/src/main.rs crates/loopforge-cli/src/doctor.rs
 git commit -m "feat(cli): add loopforge binary and keep rexos compatibility"
 ```
 
@@ -215,12 +215,12 @@ git commit -m "docs: switch examples to loopforge command with rexos compatibili
 **Files:**
 - Modify: `docs-site/**/*.md` (remaining command examples)
 - Modify: `init.sh`
-- Modify: `crates/rexos-cli/src/main.rs` (optional deprecation notice scaffold)
-- Test: `crates/rexos-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/src/main.rs` (optional deprecation notice scaffold)
+- Test: `crates/loopforge-cli/src/main.rs`
 
 **Step 1: Inventory remaining references**
 
-Run: `rg -n "\\brexos\\b" -S docs-site README.md README.zh-CN.md crates/rexos-cli/src/main.rs init.sh`
+Run: `rg -n "\\brexos\\b" -S docs-site README.md README.zh-CN.md crates/loopforge-cli/src/main.rs init.sh`
 Expected: remaining hits are either compatibility notes or legacy internals.
 
 **Step 2: Normalize `init.sh` smoke command**
@@ -236,14 +236,14 @@ Add a guarded env-based message (`LOOPFORGE_SHOW_REXOS_COMPAT_NOTICE=1`) when in
 **Step 4: Run targeted tests and script smoke**
 
 Run:
-- `cargo test -p rexos-cli`
+- `cargo test -p loopforge-cli`
 - `./init.sh`
 Expected: PASS.
 
 **Step 5: Commit**
 
 ```bash
-git add init.sh crates/rexos-cli/src/main.rs docs-site
+git add init.sh crates/loopforge-cli/src/main.rs docs-site
 git commit -m "chore: finalize loopforge command migration sweep"
 ```
 
@@ -282,7 +282,7 @@ Expected: PASS.
 Run:
 
 ```bash
-cargo build --release -p rexos-cli --locked
+cargo build --release -p loopforge-cli --locked
 ./target/release/loopforge --help >/dev/null
 ./target/release/rexos --help >/dev/null
 ```

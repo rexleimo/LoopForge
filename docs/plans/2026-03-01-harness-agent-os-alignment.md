@@ -21,7 +21,7 @@ Add two runtime hardening pieces:
 
 **Files:**
 - Modify: `crates/rexos-harness/src/lib.rs`
-- Modify: `crates/rexos-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/src/main.rs`
 - Test: `crates/rexos/tests/harness_initializer.rs`
 
 **Step 1: Write failing test**
@@ -66,7 +66,7 @@ Extend `rexos harness init <dir>` with `--prompt <text>` and optional `--session
 
 **Files:**
 - Modify: `crates/rexos-harness/src/lib.rs`
-- Modify: `crates/rexos-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/src/main.rs`
 - Test: `crates/rexos/tests/harness_runner.rs`
 
 **Step 1: Write failing test**

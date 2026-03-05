@@ -23,7 +23,7 @@ Use a small Python (stdlib-only) packaging script to produce consistent `.tar.gz
 
 Run (local):
 ```bash
-cargo build --release -p rexos-cli
+cargo build --release -p loopforge-cli
 python3 scripts/package_release.py --version v0.0.0 --target local --bin target/release/rexos --out-dir dist
 ls -la dist
 ```
@@ -98,7 +98,7 @@ Matrix (initial):
 - `windows-latest` → `x86_64-pc-windows-msvc`
 
 Each build job:
-- `cargo build --release -p rexos-cli --locked`
+- `cargo build --release -p loopforge-cli --locked`
 - `python scripts/package_release.py --version $TAG --target $TARGET ...`
 - Upload `dist/*` as workflow artifacts
 

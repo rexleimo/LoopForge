@@ -44,7 +44,7 @@ pub fn init_workspace(workspace_dir: &Path) -> anyhow::Result<()> {
 
     std::fs::write(
         &progress_path,
-        "# RexOS Progress Log\n\nThis file is append-only.\n",
+        "# LoopForge Progress Log\n\nThis file is append-only.\n",
     )
     .with_context(|| format!("write {}", progress_path.display()))?;
 
@@ -53,7 +53,7 @@ pub fn init_workspace(workspace_dir: &Path) -> anyhow::Result<()> {
         r#"#!/usr/bin/env bash
 set -euo pipefail
 
-echo "[rexos] init.sh: customize this script for your project"
+echo "[loopforge] init.sh: customize this script for your project"
 "#,
     )
     .with_context(|| format!("write {}", init_sh_path.display()))?;
@@ -62,7 +62,7 @@ echo "[rexos] init.sh: customize this script for your project"
         &init_ps1_path,
         r#"$ErrorActionPreference = "Stop"
 
-Write-Output "[rexos] init.ps1: customize this script for your project"
+Write-Output "[loopforge] init.ps1: customize this script for your project"
 "#,
     )
     .with_context(|| format!("write {}", init_ps1_path.display()))?;
@@ -343,7 +343,7 @@ fn ensure_gitignore_has_rexos_dir(workspace_dir: &Path) -> anyhow::Result<()> {
 }
 
 fn initializer_system_prompt() -> &'static str {
-    r#"You are RexOS initializer.
+    r#"You are LoopForge initializer.
 
 Your job:
 - Generate a comprehensive `features.json` from the user prompt.
@@ -362,7 +362,7 @@ Rules:
 }
 
 fn coding_system_prompt() -> &'static str {
-    r#"You are RexOS running a long-horizon harness coding session.
+    r#"You are LoopForge running a long-horizon harness coding session.
 
 Rules:
 - Work only inside the workspace directory.

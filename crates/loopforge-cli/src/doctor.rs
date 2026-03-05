@@ -55,7 +55,7 @@ impl DoctorReport {
 
     pub fn to_text(&self) -> String {
         let mut out = String::new();
-        out.push_str("LoopForge doctor\n\n");
+        out.push_str("LoopForge doctor (compat: rexos)\n\n");
         for c in &self.checks {
             let prefix = match c.status {
                 CheckStatus::Ok => "OK  ",

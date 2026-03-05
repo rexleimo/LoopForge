@@ -41,7 +41,7 @@ edition = "2021"
         ok, message = mod.evaluate_rule(
             base_version="0.1.0",
             head_version="0.1.1",
-            changed_files={"Cargo.toml", "crates/rexos-cli/src/main.rs"},
+            changed_files={"Cargo.toml", "crates/loopforge-cli/src/main.rs"},
             changelog_text="# Changelog\n\n## [Unreleased]\n",
         )
         self.assertFalse(ok)

@@ -4,7 +4,7 @@
 
 **Goal:** Deliver the remaining large-scope roadmap capabilities in one coordinated batch: ACP-like durable events/checkpoints, workflow execution runtime, dangerous-action approvals, and GUI browser sandbox onboarding.
 
-**Architecture:** Extend `rexos-runtime` as the durable control plane (events/checkpoints/approvals/workflows), keep `rexos-tools` as schema surface, and expose operational visibility through `rexos-cli`. GUI sandbox remains opt-in via Docker + remote CDP docs/scripts.
+**Architecture:** Extend `rexos-runtime` as the durable control plane (events/checkpoints/approvals/workflows), keep `rexos-tools` as schema surface, and expose operational visibility through `loopforge-cli`. GUI sandbox remains opt-in via Docker + remote CDP docs/scripts.
 
 **Tech Stack:** Rust (`tokio`, `serde_json`, `clap`), workspace tests, MkDocs docs, Docker Compose.
 
@@ -14,7 +14,7 @@
 
 **Files:**
 - Modify: `crates/rexos-runtime/src/lib.rs`
-- Modify: `crates/rexos-cli/src/main.rs`
+- Modify: `crates/loopforge-cli/src/main.rs`
 - Test: `crates/rexos/tests/runtime_controls.rs`
 
 **Step 1: Write failing tests**
@@ -30,7 +30,7 @@
 
 **Step 3: Verify**
 - `cargo test -p rexos --test runtime_controls -- --nocapture`
-- `cargo test -p rexos-cli -- --nocapture`
+- `cargo test -p loopforge-cli -- --nocapture`
 
 ---
 
@@ -102,7 +102,7 @@
 Run:
 - `cargo test -p rexos --test runtime_controls -- --nocapture`
 - `cargo test -p rexos --test channel_dispatcher -- --nocapture`
-- `cargo test -p rexos-cli -- --nocapture`
+- `cargo test -p loopforge-cli -- --nocapture`
 - `cargo test --workspace --locked`
 
 Then commit with one batch commit for this L-phase slice.

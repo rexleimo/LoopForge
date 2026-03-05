@@ -66,7 +66,7 @@
 
 已对齐到 workspace + 多 crate 的基础形态：
 - `crates/rexos`（facade，对外 re-export，保持 `rexos::agent/llm/memory/tools/...` 路径稳定）
-- `crates/rexos-cli`（二进制 `rexos`）
+- `crates/loopforge-cli`（二进制 `rexos`）
 - `crates/rexos-kernel`（当前为 config/paths/router 等“内核基础类型”，后续可扩展为真正 kernel 组装器）
 - `crates/rexos-runtime`（agent loop）
 - `crates/rexos-memory`（SQLite 记忆）

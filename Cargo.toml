@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "crates/rexos",
-    "crates/rexos-cli",
+    "crates/loopforge-cli",
     "crates/rexos-daemon",
     "crates/rexos-harness",
     "crates/rexos-kernel",
