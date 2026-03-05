@@ -1,0 +1,19 @@
+OpenClaw 把“个人助手”热度拉起来了。我们走另一条路：把 AI 变成可交付工程产能。LoopForge = 本地优先 + 可复现 checkpoint + 可审计运行轨迹。`loopforge onboard` 先跑起来。#OpenClaw #LoopForge #AgentOS
+---
+团队真正关心的不是“会不会聊”，而是“下周还能不能复现”。LoopForge 用 workspace 产物、checkpoint 提交和路由配置，把结果稳定下来。#AI工程化 #LoopForge
+---
+OpenClaw 给我们的启发很直接：上手漏斗做得越好，增长越稳。我们对应动作是：严格 doctor、onboard 成功率指标、失败分类日报。#OpenClaw #DevTools
+---
+今天就能验证的 3 条命令：
+1) `loopforge init`
+2) `loopforge onboard --workspace lf-demo`
+3) `loopforge agent run --workspace lf-demo --prompt "Create notes/plan.md"`
+---
+OpenClaw 的强项是多渠道个人助手覆盖；LoopForge 的强项是工程交付深度：change -> verify -> checkpoint，配合本地优先模型路由。场景不同，选型要准。#AgentOS
+---
+AI 落地要看证据，不看口号。我们默认记录 onboarding 成功/失败与失败类别，再做日聚合报告。这样团队每周都能看到真实改进。#LoopForge #工程效率
+---
+借 OpenClaw 风口的正确姿势：不抄“助手叙事”，而是放大“可复现交付”。如果你在做代码任务闭环，先跑 LoopForge 的 harness 链路。#OpenClaw #AIInfra #LoopForge
+---
+发 X 前先验字数，避免临门改稿：
+`python3 scripts/x_post_lint.py --file docs/marketing/openclaw-trend-x-posts.zh-CN.txt --limit 280 --warn-at 260`
