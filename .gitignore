@@ -10,6 +10,13 @@
 # Worktrees
 /.worktrees/
 
+# Local dev/runtime artifacts
+/.tmp/
+/memory/
+/.contextdb-enable
+/.venv-docs/
+**/__pycache__/
+
 # OS files
 .DS_Store
 
