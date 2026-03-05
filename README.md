@@ -1,8 +1,14 @@
-# RexOS
+# LoopForge
 
 English | [简体中文](README.zh-CN.md)
 
-RexOS is a long-running agent operating system: persistent memory, tool sandboxing, and model routing, plus an Anthropic-style harness for multi-session work.
+LoopForge (formerly RexOS) is a long-running agent operating system: persistent memory, tool sandboxing, and model routing, plus an Anthropic-style harness for multi-session work.
+
+## Brand update
+
+- Public product name: **LoopForge**
+- Compatibility names still in use: `rexos` (CLI), `~/.rexos` (config/data dir), and `rexleimo/rexos` (repo path)
+- Existing scripts/docs using `rexos` continue to work
 
 ## Documentation
 
@@ -39,13 +45,13 @@ cargo build --release -p rexos-cli
 
 ## Run with Ollama (OpenAI-compatible)
 
-RexOS defaults to `ollama` at `http://127.0.0.1:11434/v1` in `~/.rexos/config.toml`.
+LoopForge defaults to `ollama` at `http://127.0.0.1:11434/v1` in `~/.rexos/config.toml`.
 
 ```bash
 # 1) Start Ollama
 ollama serve
 
-# 2) Init RexOS (creates ~/.rexos/config.toml + ~/.rexos/rexos.db)
+# 2) Init LoopForge (compat command: rexos)
 rexos init
 
 # 3) Run an agent session in a workspace directory
@@ -69,7 +75,7 @@ git push origin v0.1.0
 
 ## Providers & routing
 
-RexOS supports multiple LLM providers via drivers:
+LoopForge supports multiple LLM providers via drivers:
 - `openai_compatible` (Ollama / DeepSeek / Kimi / Qwen / GLM / MiniMax / NVIDIA NIM / OpenAI-compatible gateways)
 - `dashscope_native` (Alibaba DashScope Generation API / Qwen native)
 - `zhipu_native` (Zhipu GLM native auth/token handling)
@@ -97,7 +103,7 @@ provider = "ollama"
 model = "default" # uses providers.<name>.default_model
 ```
 
-To switch providers, set the provider's `api_key_env` (if needed) and update `[router.*]` to point at the provider you want. If you keep `model = "default"`, RexOS uses `providers.<name>.default_model`.
+To switch providers, set the provider's `api_key_env` (if needed) and update `[router.*]` to point at the provider you want. If you keep `model = "default"`, LoopForge uses `providers.<name>.default_model`.
 
 Built-in presets include:
 - `deepseek` (OpenAI-compatible)

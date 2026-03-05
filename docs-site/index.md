@@ -1,8 +1,8 @@
 <div class="rexos-hero" markdown>
 
-# RexOS
+# LoopForge
 
-**Long-running Agent OS**: durable harness + SQLite memory + sandboxed tools + multi-provider routing.
+**Long-running Agent OS by Rex**: durable harness + SQLite memory + sandboxed tools + multi-provider routing.
 
 [Get started (Ollama)](tutorials/quickstart-ollama.md){ .md-button .md-button--primary }
 [Harness tutorial](tutorials/harness-long-task.md){ .md-button }
@@ -18,6 +18,8 @@ Develop locally with small models on Ollama, then switch routing to GLM / MiniMa
 </p>
 
 </div>
+
+> Brand update: LoopForge is the public name (formerly RexOS). Compatibility remains unchanged for now: CLI is still `rexos`, and config/data path is still `~/.rexos`.
 
 <div class="grid cards" markdown>
 
@@ -48,7 +50,7 @@ Make sure you have at least one **chat model** available in Ollama (not embeddin
     # 1) Start Ollama
     ollama serve
 
-    # 2) Init RexOS (~/.rexos/config.toml + ~/.rexos/rexos.db)
+    # 2) Init LoopForge (compat command: rexos)
     rexos init
 
     # 3) Run a workspace session
@@ -61,7 +63,7 @@ Make sure you have at least one **chat model** available in Ollama (not embeddin
     # 1) Start Ollama
     ollama serve
 
-    # 2) Init RexOS (~/.rexos/config.toml + ~/.rexos/rexos.db)
+    # 2) Init LoopForge (compat command: rexos)
     rexos init
 
     # 3) Run a workspace session
@@ -73,7 +75,7 @@ Make sure you have at least one **chat model** available in Ollama (not embeddin
 
 ```mermaid
 flowchart LR
-  U[You] -->|prompt| R[RexOS CLI]
+  U[You] -->|prompt| R[LoopForge CLI]
   R --> M[(SQLite memory)]
   R --> W[(Workspace sandbox)]
   R --> G[(Git checkpoints)]
@@ -90,5 +92,6 @@ flowchart LR
 - Explore common recipes: `how-to/use-cases.md`
 - Start from beginner Q&A: `how-to/faq.md`
 - Copy/paste 10 practical tasks: `examples/case-tasks/ten-copy-paste-tasks.md`
+- Read the brand intro: `blog/what-is-loopforge.md`
 - Read the positioning article: `blog/rexos-vs-openfang-openclaw.md`
 - Switch providers (GLM/MiniMax native + NVIDIA NIM included): `how-to/providers.md`

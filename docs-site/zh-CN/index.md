@@ -1,10 +1,10 @@
 <div class="rexos-hero" markdown>
 
-# RexOS
+# LoopForge
 
 简体中文 | [English](../index.md)
 
-**长任务 Agent OS**：durable harness + SQLite 记忆 + 工具沙盒 + 多 Provider 路由。
+**Rex 体系下的长任务 Agent OS**：durable harness + SQLite 记忆 + 工具沙盒 + 多 Provider 路由。
 
 [快速开始（Ollama）](tutorials/quickstart-ollama.md){ .md-button .md-button--primary }
 [Harness 长任务](tutorials/harness-long-task.md){ .md-button }
@@ -20,6 +20,8 @@
 </p>
 
 </div>
+
+> 品牌更新：对外名称已升级为 LoopForge（原 RexOS）。当前兼容保持不变：CLI 仍是 `rexos`，配置/数据目录仍是 `~/.rexos`。
 
 <div class="grid cards" markdown>
 
@@ -50,7 +52,7 @@
     # 1) 启动 Ollama
     ollama serve
 
-    # 2) 初始化 RexOS（~/.rexos/config.toml + ~/.rexos/rexos.db）
+    # 2) 初始化 LoopForge（兼容命令：rexos）
     rexos init
 
     # 3) 在 workspace 里跑一次 session
@@ -63,7 +65,7 @@
     # 1) 启动 Ollama
     ollama serve
 
-    # 2) 初始化 RexOS（~/.rexos/config.toml + ~/.rexos/rexos.db）
+    # 2) 初始化 LoopForge（兼容命令：rexos）
     rexos init
 
     # 3) 在 workspace 里跑一次 session
@@ -75,7 +77,7 @@
 
 ```mermaid
 flowchart LR
-  U[你] -->|prompt| R[RexOS CLI]
+  U[你] -->|prompt| R[LoopForge CLI]
   R --> M[(SQLite 记忆)]
   R --> W[(Workspace 沙盒)]
   R --> G[(Git checkpoints)]
@@ -92,5 +94,6 @@ flowchart LR
 - 常见场景与配方：`how-to/use-cases.md`
 - 先看新手问题排查：`how-to/faq.md`
 - 直接复制 10 个任务模板：`examples/case-tasks/ten-copy-paste-tasks.md`
+- 先看品牌介绍：`blog/what-is-loopforge.md`
 - 看产品定位对比：`blog/rexos-vs-openfang-openclaw.md`
 - Provider 切换与原生 API（含 NVIDIA NIM）：`how-to/providers.md`

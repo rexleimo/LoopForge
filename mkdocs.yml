@@ -1,5 +1,5 @@
-site_name: RexOS
-site_description: Long-running agent operating system (harness + memory + tools + routing)
+site_name: LoopForge
+site_description: LoopForge is a local-first long-running agent OS (harness, memory, tools, and multi-provider routing)
 site_url: https://os.rexai.top/
 
 repo_name: rexleimo/rexos
@@ -107,7 +107,8 @@ plugins:
             Config: 配置
             Tools: 工具
             Blog: 博客
-            RexOS vs OpenFang/OpenClaw: RexOS 与 OpenFang/OpenClaw
+            "What Is LoopForge?": 什么是 LoopForge？
+            LoopForge vs OpenFang/OpenClaw: LoopForge 与 OpenFang/OpenClaw
             Editorial Calendar: 内容发布日历
   - search:
       lang:
@@ -194,7 +195,8 @@ nav:
           - Smoke Test (Source): how-to/browser-use-cases/smoke-test.md
   - Blog:
       - Index: blog/index.md
-      - RexOS vs OpenFang/OpenClaw: blog/rexos-vs-openfang-openclaw.md
+      - What Is LoopForge?: blog/what-is-loopforge.md
+      - LoopForge vs OpenFang/OpenClaw: blog/rexos-vs-openfang-openclaw.md
       - Editorial Calendar: blog/editorial-calendar.md
   - Reference:
       - CLI: reference/cli.md

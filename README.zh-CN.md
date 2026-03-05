@@ -1,8 +1,14 @@
-# RexOS
+# LoopForge
 
 [English](README.md) | 简体中文
 
-RexOS 是一个长任务的 Agent OS：持久化记忆、工具沙盒、模型路由，以及一个 Anthropic 风格的 Harness，用于跨多次会话持续推进任务。
+LoopForge（原 RexOS）是一个长任务的 Agent OS：持久化记忆、工具沙盒、模型路由，以及一个 Anthropic 风格的 Harness，用于跨多次会话持续推进任务。
+
+## 品牌更新
+
+- 对外产品名：**LoopForge**
+- 兼容名仍保留：`rexos`（CLI）、`~/.rexos`（配置/数据目录）、`rexleimo/rexos`（仓库路径）
+- 现有脚本和文档中的 `rexos` 命令可继续使用
 
 ## 文档
 
@@ -39,13 +45,13 @@ cargo build --release -p rexos-cli
 
 ## 使用 Ollama（OpenAI 兼容）
 
-默认配置会在 `~/.rexos/config.toml` 里把 `ollama` 指向 `http://127.0.0.1:11434/v1`。
+LoopForge 默认配置会在 `~/.rexos/config.toml` 里把 `ollama` 指向 `http://127.0.0.1:11434/v1`。
 
 ```bash
 # 1) 启动 Ollama
 ollama serve
 
-# 2) 初始化 RexOS（创建 ~/.rexos/config.toml + ~/.rexos/rexos.db）
+# 2) 初始化 LoopForge（兼容命令：rexos）
 rexos init
 
 # 3) 在某个 workspace 目录里运行一次 agent session
@@ -69,7 +75,7 @@ git push origin v0.1.0
 
 ## Providers 与路由
 
-RexOS 通过多种 driver 支持多个 LLM Provider：
+LoopForge 通过多种 driver 支持多个 LLM Provider：
 - `openai_compatible`（Ollama / DeepSeek / Kimi / Qwen / GLM / MiniMax / NVIDIA NIM / 其它 OpenAI-compatible 网关）
 - `dashscope_native`（阿里云 DashScope Generation API / Qwen 原生）
 - `zhipu_native`（智谱 GLM 原生：auth/token 处理）
@@ -97,7 +103,7 @@ provider = "ollama"
 model = "default" # uses providers.<name>.default_model
 ```
 
-切换 provider：配置对应 provider 的 `api_key_env`（如需），并把 `[router.*]` 指向你想用的 provider；如果 `model = "default"`，RexOS 会使用 `providers.<name>.default_model`。
+切换 provider：配置对应 provider 的 `api_key_env`（如需），并把 `[router.*]` 指向你想用的 provider；如果 `model = "default"`，LoopForge 会使用 `providers.<name>.default_model`。
 
 内置 presets 包含：
 - `deepseek`（OpenAI-compatible）

@@ -1,11 +1,11 @@
-# RexOS vs OpenFang/OpenClaw (Builder View)
+# LoopForge vs OpenFang/OpenClaw (Builder View)
 
 This comparison is based on local snapshots in this workspace on **March 4, 2026**.
 Goal: help builders choose the right tool faster.
 
 ## TL;DR
 
-- Choose **RexOS** if your core job is coding workflows with reproducible checkpoints and local-first model routing.
+- Choose **LoopForge** (formerly RexOS) if your core job is coding workflows with reproducible checkpoints and local-first model routing.
 - Choose **OpenFang** if your core job is multi-channel operations and autonomous "hands" at scale.
 - Choose **OpenClaw** if your core job is personal assistant experiences across many channels and devices.
 
@@ -13,7 +13,7 @@ Goal: help builders choose the right tool faster.
 
 | Project | Strongest fit | Why |
 |---|---|---|
-| RexOS | Dev workflows + long-running engineering tasks | Harness loop (`change -> verify -> checkpoint`), workspace sandbox, SQLite memory, CLI-first |
+| LoopForge | Dev workflows + long-running engineering tasks | Harness loop (`change -> verify -> checkpoint`), workspace sandbox, SQLite memory, CLI-first |
 | OpenFang | Multi-agent operations + channel adapters | Heavy emphasis on channels, templates, operational breadth |
 | OpenClaw | Personal assistant platform + device/channel surfaces | Massive docs and channel coverage, onboarding wizard, broad ecosystem integration |
 
@@ -21,7 +21,7 @@ Goal: help builders choose the right tool faster.
 
 ### 1) Reproducibility loop
 
-RexOS pushes a strict engineering loop:
+LoopForge pushes a strict engineering loop:
 
 ```bash
 rexos harness init my-repo
@@ -32,7 +32,7 @@ If your team measures progress by repeatable checkpoints and artifact trails, th
 
 ### 2) Local-first bring-up
 
-RexOS default path is optimized for local bring-up with Ollama:
+LoopForge default path is optimized for local bring-up with Ollama:
 
 ```bash
 ollama serve
@@ -48,7 +48,7 @@ What we learned from competitors:
 - OpenFang: clear install matrix + strong troubleshooting/FAQ structure.
 - OpenClaw: strong onboarding funnel + huge scenario inventory + broad links.
 
-What RexOS should do (and now starts doing):
+What LoopForge should do (and now starts doing):
 - add beginner FAQ
 - add more copy/paste task packs
 - add growth blog positioning pages
@@ -57,11 +57,11 @@ What RexOS should do (and now starts doing):
 
 Use this simple decision tree:
 
-1. Need coding workflow reliability first? -> **RexOS**
+1. Need coding workflow reliability first? -> **LoopForge**
 2. Need broad channel operations as first priority? -> **OpenFang**
 3. Need consumer-like personal assistant breadth? -> **OpenClaw**
 
-## Start with RexOS in 3 commands
+## Start with LoopForge in 3 commands
 
 ```bash
 ollama serve
