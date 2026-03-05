@@ -2,7 +2,7 @@
 
 English | [简体中文](README.zh-CN.md)
 
-LoopForge (formerly RexOS) is a long-running agent operating system: persistent memory, tool sandboxing, and model routing, plus an Anthropic-style harness for multi-session work.
+LoopForge (formerly RexOS) is a **personal AI engineer** for software delivery: long-running workflows, persistent memory, tool sandboxing, and model routing with harness checkpoints.
 
 ## Brand update
 
@@ -14,6 +14,8 @@ LoopForge (formerly RexOS) is a long-running agent operating system: persistent 
 
 - Docs site: https://os.rexai.top
 - (If the custom domain isn’t configured yet) GitHub Pages: https://rexleimo.github.io/rexos/
+- 5-minute outcomes: `docs-site/tutorials/five-minute-outcomes.md`
+- Positioning: `docs-site/explanation/why-loopforge.md`
 
 ## Status
 

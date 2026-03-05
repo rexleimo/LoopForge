@@ -1,5 +1,5 @@
 site_name: LoopForge
-site_description: LoopForge is a local-first long-running agent OS (harness, memory, tools, and multi-provider routing)
+site_description: LoopForge is a personal AI engineer for reproducible software delivery
 site_url: https://os.rexai.top/
 
 repo_name: rexleimo/rexos
@@ -70,6 +70,7 @@ plugins:
             Install & Update: 安装与更新
             Quickstart (Ollama): 快速开始（Ollama）
             New User Walkthrough: 新人复习
+            5-Minute Outcomes: 5 分钟可见结果
             Beginner FAQ: 新手 FAQ
             Workflows: 工作流
             Long Task With Harness: Harness 长任务
@@ -108,6 +109,7 @@ plugins:
             Run the Daemon: 运行 Daemon
             Explanation: 说明
             Concepts: 概念
+            Why LoopForge: 为什么是 LoopForge
             Security & Sandboxing: 安全与沙盒
             Reliability Baseline: 可靠性基线
             Reference: 参考
@@ -115,6 +117,7 @@ plugins:
             Tools: 工具
             Blog: 博客
             "What Is LoopForge?": 什么是 LoopForge？
+            Personal AI Engineer: 个人研发助理定位
             LoopForge vs OpenFang/OpenClaw: LoopForge 与 OpenFang/OpenClaw
   - search:
       lang:
@@ -164,6 +167,7 @@ nav:
           - Install & Update: how-to/install.md
           - Quickstart (Ollama): tutorials/quickstart-ollama.md
           - New User Walkthrough: tutorials/new-user-walkthrough.md
+          - 5-Minute Outcomes: tutorials/five-minute-outcomes.md
           - Beginner FAQ: how-to/faq.md
       - Workflows:
           - Long Task With Harness: tutorials/harness-long-task.md
@@ -176,6 +180,7 @@ nav:
           - Run the Daemon: how-to/daemon.md
       - Explanation:
           - Concepts: explanation/concepts.md
+          - Why LoopForge: explanation/why-loopforge.md
           - Security & Sandboxing: explanation/security.md
           - Reliability Baseline: explanation/reliability-baseline.md
   - Examples:
@@ -205,6 +210,7 @@ nav:
           - Wikipedia Summary: how-to/browser-use-cases/wikipedia-summary.md
   - Blog:
       - Index: blog/index.md
+      - Personal AI Engineer: blog/personal-ai-engineer.md
       - What Is LoopForge?: blog/what-is-loopforge.md
       - LoopForge vs OpenFang/OpenClaw: blog/rexos-vs-openfang-openclaw.md
   - Reference:
