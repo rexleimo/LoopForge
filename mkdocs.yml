@@ -88,6 +88,12 @@ plugins:
             Web Research Memo: 网页资料调研 Memo
             Browser Evidence Capture: 浏览器取证
             PDF Summary: PDF 总结
+            Config Health Check: 配置健康检查
+            Fix One Failing Test: 修复一个失败测试
+            Release Readiness Audit: 发布就绪审计
+            Commit Diff Risk Review: 最近提交风险评审
+            Provider Routing Plan: Provider 路由方案
+            Regression Test Gap Map: 回归测试缺口地图
             Browser Automation: 浏览器自动化
             Browser Use Cases: 浏览器案例
             GUI Smoke Check: 有界面 smoke check
@@ -186,6 +192,12 @@ nav:
           - Web Research Memo: examples/case-tasks/web-research-memo.md
           - Browser Evidence Capture: examples/case-tasks/browser-evidence.md
           - PDF Summary: examples/case-tasks/pdf-summarize.md
+          - Config Health Check: examples/case-tasks/config-health-check.md
+          - Fix One Failing Test: examples/case-tasks/fix-one-failing-test.md
+          - Release Readiness Audit: examples/case-tasks/release-readiness-audit.md
+          - Commit Diff Risk Review: examples/case-tasks/commit-diff-risk-review.md
+          - Provider Routing Plan: examples/case-tasks/provider-routing-plan.md
+          - Regression Test Gap Map: examples/case-tasks/regression-test-gap.md
           - 10 Copy/Paste Tasks: examples/case-tasks/ten-copy-paste-tasks.md
       - Browser Use Cases:
           - Index: how-to/browser-use-cases.md
