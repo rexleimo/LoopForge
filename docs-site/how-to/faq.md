@@ -137,5 +137,4 @@ loopforge doctor > doctor.txt
 
 - New User Walkthrough: `tutorials/new-user-walkthrough.md`
 - Case Tasks: `examples/case-tasks/index.md`
-- 10 Copy/Paste Tasks: `examples/case-tasks/ten-copy-paste-tasks.md`
 - Browser Use Cases: `how-to/browser-use-cases.md`

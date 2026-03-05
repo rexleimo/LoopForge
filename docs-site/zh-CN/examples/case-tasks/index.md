@@ -40,13 +40,9 @@
   产出本地/团队/CI 三套路由与成本-时延-质量权衡。  
   [打开](provider-routing-plan.md)
 
-- :material-radar: **回归测试缺口地图**  
-  找出高风险缺口并给出优先补测清单。  
+- :material-radar: **回归测试缺口地图**
+  找出高风险缺口并给出优先补测清单。
   [打开](regression-test-gap.md)
-
-- :material-rocket-launch: **10 个可复制任务**  
-  一套可直接运行的模板，覆盖上手、编码、评审、文档和发布准备。  
-  [打开](ten-copy-paste-tasks.md)
 
 </div>
 

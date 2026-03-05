@@ -10,8 +10,6 @@ Practical notes for builders choosing an Agent OS and scaling from local prototy
 
 ## Suggested reading order
 
-1. Brand + product fit: [What Is LoopForge? (Formerly LoopForge)](what-is-loopforge.md)
-2. First successful run: [New User Walkthrough](../tutorials/new-user-walkthrough.md)
-3. Practical templates: [10 Copy/Paste Tasks](../examples/case-tasks/ten-copy-paste-tasks.md)
-4. Positioning and alternatives: [LoopForge vs OpenFang/OpenClaw (Builder View)](rexos-vs-openfang-openclaw.md)
-5. Publishing rhythm: [Editorial Calendar](editorial-calendar.md)
+1. Brand + product fit: [What Is LoopForge?](what-is-loopforge.md)
+2. First successful run: [Quickstart](../tutorials/quickstart-ollama.md)
+3. Positioning and alternatives: [LoopForge vs OpenFang/OpenClaw](rexos-vs-openfang-openclaw.md)

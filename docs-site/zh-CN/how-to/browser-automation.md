@@ -27,7 +27,7 @@ export REXOS_BROWSER_CDP_HTTP="http://127.0.0.1:9222"
 export REXOS_BROWSER_CDP_ALLOW_REMOTE=1
 ```
 
-如果你想直接用 Docker 跑一个“带 GUI + noVNC 观察界面”的 Chromium 沙盒（CDP 暴露在 `127.0.0.1:9222`），见：[有界面 smoke check](browser-use-cases/gui-smoke-check.md)。
+如果你想直接用 Docker 跑一个”带 GUI + noVNC 观察界面”的 Chromium 沙盒（CDP 暴露在 `127.0.0.1:9222`），见：[百度天气](browser-use-cases/baidu-weather.md)。
 
 ## Headless / 有界面
 

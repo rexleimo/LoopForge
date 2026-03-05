@@ -221,7 +221,7 @@ Prompt：
 使用 browser_navigate 打开 https://example.com（headless=false）。然后保存截图到 .rexos/browser/example.png，最后 browser_close 关闭浏览器。
 ```
 
-另见：[有界面 smoke check](../how-to/browser-use-cases/gui-smoke-check.md)，[百度今天天气（Ollama）](../how-to/browser-use-cases/baidu-weather.md)。
+另见：[百度今天天气（Ollama）](../how-to/browser-use-cases/baidu-weather.md)。
 
 ### `browser_back`
 

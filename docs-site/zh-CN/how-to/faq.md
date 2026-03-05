@@ -137,5 +137,4 @@ loopforge doctor > doctor.txt
 
 - 新人复习：`tutorials/new-user-walkthrough.md`
 - 案例任务：`examples/case-tasks/index.md`
-- 10 个可复制任务：`examples/case-tasks/ten-copy-paste-tasks.md`
 - 浏览器案例：`how-to/browser-use-cases.md`

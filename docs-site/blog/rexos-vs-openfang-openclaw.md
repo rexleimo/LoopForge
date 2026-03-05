@@ -73,4 +73,3 @@ loopforge agent run --workspace rexos-demo --prompt "Create notes/plan.md with a
 
 - [Beginner FAQ](../how-to/faq.md)
 - [New User Walkthrough](../tutorials/new-user-walkthrough.md)
-- [10 Copy/Paste Tasks](../examples/case-tasks/ten-copy-paste-tasks.md)

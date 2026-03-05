@@ -1,52 +1,35 @@
-# What Is LoopForge? (Formerly LoopForge)
+# 什么是 LoopForge？
 
-LoopForge is the new public brand of the product previously known as LoopForge.
-We renamed to make the product easier to remember and easier to spread in builder communities.
+LoopForge（前身 RexOS）是一个本地优先的长任务 Agent OS。
 
-## One-line positioning
+## 一句话定位
 
-LoopForge is a **local-first long-running Agent OS** for engineering workflows:
-`change -> verify -> checkpoint`.
+LoopForge = **本地先跑通 + 跑通了再切强模型**。
 
-## Who it is for
+不是「咔咔一顿输出最后全错了」，而是「改一下 → 跑一下 → 对了再继续」。
 
-- Developers who want reproducible coding loops, not one-shot chat outputs.
-- Teams that need durable checkpoints, artifact trails, and workspace-safe tool execution.
-- Builders who start local with Ollama and later route to stronger cloud models.
+## 给谁用的
 
-## What changed vs what stayed the same
+- 想要可复现的编程循环，而不是一次性的聊天输出
+- 需要持久化 checkpoint 和产物记录
+- 本地用 Ollama 跑通后，想切到更强的云模型
 
-Changed:
-- Product/public name: **LoopForge**
-- CLI command: `loopforge`
+## 改了啥
 
-Kept for continuity:
-- Config and data dir: `~/.rexos`
+- 名称：LoopForge
+- CLI：`loopforge`
+- 配置目录：还是 `~/.rexos`（不变）
 
-## Why the name "LoopForge"
-
-- `Loop`: long-running iterative workflows
-- `Forge`: build, shape, and harden software artifacts
-- Together: a toolchain identity that explains both process and outcome
-
-## 3-command first run
+## 3 行跑起来
 
 ```bash
 ollama serve
 loopforge init
-loopforge agent run --workspace loopforge-demo --prompt "Create notes/hello.md with a short intro to LoopForge."
+loopforge agent run --workspace demo --prompt "Create hello.txt with hi"
 ```
 
-## Brand keywords (for docs/search/community)
+## 相关链接
 
-- LoopForge
-- long-running agent OS
-- local-first coding agent
-- harness workflow
-- reproducible AI engineering loop
-
-## Next reading
-
-- [LoopForge vs OpenFang/OpenClaw (Builder View)](rexos-vs-openfang-openclaw.md)
-- [New User Walkthrough](../tutorials/new-user-walkthrough.md)
-- [10 Copy/Paste Tasks](../examples/case-tasks/ten-copy-paste-tasks.md)
+- [快速开始](../tutorials/quickstart-ollama.md)
+- [Provider 配置](../how-to/providers.md)
+- [Harness 教程](../tutorials/harness-long-task.md)

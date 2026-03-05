@@ -33,7 +33,7 @@ For a copy/paste Docker GUI sandbox (Chromium + noVNC) that exposes CDP on `127.
 scripts/browser_sandbox_up.sh up --build
 ```
 
-Then follow: [GUI Smoke Check](browser-use-cases/gui-smoke-check.md).
+Then follow: [Baidu Weather](browser-use-cases/baidu-weather.md).
 
 ## Headless vs GUI
 

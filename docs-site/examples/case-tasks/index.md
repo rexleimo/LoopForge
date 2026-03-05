@@ -40,13 +40,9 @@ Pick a scenario and run it locally. Each page is designed to be **copy‑paste f
   Draft local/team/CI routing profiles with cost-latency-quality tradeoffs.  
   [Open](provider-routing-plan.md)
 
-- :material-radar: **Regression test gap map**  
-  Identify risky areas lacking regression coverage and propose top tests.  
+- :material-radar: **Regression test gap map**
+  Identify risky areas lacking regression coverage and propose top tests.
   [Open](regression-test-gap.md)
-
-- :material-rocket-launch: **10 copy/paste tasks**  
-  A ready-to-run set for onboarding, coding, review, docs, and release prep.  
-  [Open](ten-copy-paste-tasks.md)
 
 </div>
 

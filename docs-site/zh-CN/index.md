@@ -2,50 +2,41 @@
 
 # LoopForge
 
-简体中文 | [English](../index.md)
+**长任务 Agent OS**：harness + SQLite 记忆 + 工具沙盒 + 多 Provider 路由。
 
-**Rex 体系下的长任务 Agent OS**：durable harness + SQLite 记忆 + 工具沙盒 + 多 Provider 路由。
-
-[快速开始（Ollama）](tutorials/quickstart-ollama.md){ .md-button .md-button--primary }
-[Harness 长任务](tutorials/harness-long-task.md){ .md-button }
-[新手 FAQ](how-to/faq.md){ .md-button }
-[Providers 与路由](how-to/providers.md){ .md-button }
-[常见场景](how-to/use-cases.md){ .md-button }
-[案例任务](examples/case-tasks/index.md){ .md-button }
-[增长博客](blog/index.md){ .md-button }
-[浏览器案例](how-to/browser-use-cases.md){ .md-button }
+[快速开始](tutorials/quickstart-ollama.md){ .md-button .md-button--primary }
+[简单介绍](blog/what-is-loopforge.md){ .md-button }
+[Provider 配置](how-to/providers.md){ .md-button }
 
 <p class="rexos-muted">
-研发调试阶段用 Ollama 小模型先跑通逻辑；需要更强能力时，把路由切到 GLM / MiniMax / DeepSeek / Kimi / Qwen / NVIDIA NIM。
+本地用 Ollama 先跑通；需要更强能力时，切到 GLM / MiniMax / DeepSeek / Kimi / Qwen / NVIDIA NIM。
 </p>
 
 </div>
 
-> 品牌更新：对外名称已升级为 LoopForge（原 RexOS）。CLI 命令已切换为 `loopforge`，配置/数据目录仍是 `~/.rexos`。
+> 品牌升级：LoopForge（原 RexOS）。CLI 命令是 `loopforge`，配置目录还是 `~/.rexos`。
 
 <div class="grid cards" markdown>
 
-- :material-checklist: **Harness 驱动的长任务**  
-  固化循环：修改 → 验证 → checkpoint，多次运行持续推进。  
+- :material-checklist: **Harness 长任务**
+  跑「改一下 → 跑一下 → 对了继续」的循环。
   [了解 Harness](tutorials/harness-long-task.md)
 
-- :material-database: **SQLite 持久化记忆**  
-  sessions/messages/KV 等写入 `~/.rexos/rexos.db`，便于续跑。  
+- :material-database: **SQLite 记忆**
+  session 和 message 存在 `~/.rexos/rexos.db`。
   [概念](explanation/concepts.md)
 
-- :material-shield-lock: **工具沙盒**  
-  文件读写与 shell 仅在 workspace 内执行，`web_fetch` 默认 SSRF 防护。  
-  [安全模型](explanation/security.md)
+- :material-shield-lock: **工具沙盒**
+  文件和 shell 只能在 workspace 里跑，`web_fetch` 带 SSRF 防护。
+  [安全说明](explanation/security.md)
 
-- :material-router: **多 Provider 路由**  
-  将 planning/coding/summary 路由到不同 provider/model。  
-  [配置 Providers](how-to/providers.md)
+- :material-router: **多 Provider 路由**
+  把 planning/coding/summary 路由到不同的模型。
+  [配置 Provider](how-to/providers.md)
 
 </div>
 
-## 快速开始（本地 Ollama）
-
-请确保 Ollama 里至少有一个 **对话模型**（不要只有 embedding 模型）。如果默认的 `llama3.2` 没有拉取，可以先 `ollama pull llama3.2`，或在 `~/.rexos/config.toml` 里修改 `providers.ollama.default_model`（详见“快速开始（Ollama）”教程）。
+## 快速开始
 
 === "macOS/Linux"
     ```bash
@@ -55,9 +46,9 @@
     # 2) 初始化 LoopForge
     loopforge init
 
-    # 3) 在 workspace 里跑一次 session
-    mkdir -p rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    # 3) 跑一个 session
+    mkdir -p my-work
+    loopforge agent run --workspace my-work --prompt "Create hello.txt with: Hello LoopForge"
     ```
 
 === "Windows (PowerShell)"
@@ -68,32 +59,28 @@
     # 2) 初始化 LoopForge
     loopforge init
 
-    # 3) 在 workspace 里跑一次 session
-    mkdir rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+    # 3) 跑一个 session
+    mkdir my-work
+    loopforge agent run --workspace my-work --prompt "Create hello.txt with: Hello LoopForge"
     ```
 
-## 工作方式
+## 工作原理
 
 ```mermaid
 flowchart LR
   U[你] -->|prompt| R[LoopForge CLI]
-  R --> M[(SQLite 记忆)]
-  R --> W[(Workspace 沙盒)]
-  R --> G[(Git checkpoints)]
-  R --> T[工具: fs_read/fs_write/shell/web_fetch]
+  R --> M[(SQLite)]
+  R --> W[(Workspace)]
+  R --> G[(Git checkpoint)]
+  R --> T[工具]
   R --> X{路由器}
-  X -->|planning| P[本地/小模型]
-  X -->|coding| C[更强云端模型]
-  X -->|summary| S[便宜总结模型]
+  X -->|planning| P[小模型]
+  X -->|coding| C[强模型]
+  X -->|summary| S[便宜模型]
 ```
 
 ## 下一步
 
-- Harness 长任务教程：`tutorials/harness-long-task.md`
-- 常见场景与配方：`how-to/use-cases.md`
-- 先看新手问题排查：`how-to/faq.md`
-- 直接复制 10 个任务模板：`examples/case-tasks/ten-copy-paste-tasks.md`
-- 先看品牌介绍：`blog/what-is-loopforge.md`
-- 看产品定位对比：`blog/rexos-vs-openfang-openclaw.md`
-- Provider 切换与原生 API（含 NVIDIA NIM）：`how-to/providers.md`
+- [Harness 教程](tutorials/harness-long-task.md)
+- [Provider 配置](how-to/providers.md)
+- [常见问题](how-to/faq.md)

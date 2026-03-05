@@ -221,7 +221,7 @@ Prompt:
 Use browser_navigate to open https://example.com (headless=false). Then save a screenshot to .rexos/browser/example.png and close the browser.
 ```
 
-See also: [GUI Smoke Check](../how-to/browser-use-cases/gui-smoke-check.md), [Baidu Weather](../how-to/browser-use-cases/baidu-weather.md).
+See also: [Baidu Weather](../how-to/browser-use-cases/baidu-weather.md).
 
 ### `browser_back`
 

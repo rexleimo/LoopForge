@@ -13,10 +13,8 @@
 
 ## 配方列表
 
-- [有界面 smoke check（example.com）](browser-use-cases/gui-smoke-check.md)
-- [更接近真实场景：百度“今天天气”（Browser + Ollama）](browser-use-cases/baidu-weather.md)
+- [更接近真实场景：百度”今天天气”（Browser + Ollama）](browser-use-cases/baidu-weather.md)
 - [Wikipedia：打开 → 总结 → 截图](browser-use-cases/wikipedia-summary.md)
-- [（从源码）运行浏览器 + Ollama smoke test](browser-use-cases/smoke-test.md)
 
 ## 小技巧
 

@@ -1,60 +1,60 @@
-# Concepts
+# 概念
 
-LoopForge is designed for long-running work where “one prompt” isn’t enough.
+LoopForge 是给「不是跑一次就完事」的场景用的。
 
 ## Workspace
 
-Most LoopForge commands operate on a **workspace directory**:
+Workspace 就是你的工作目录：
 
-- tools are sandboxed to it (filesystem + shell working directory)
-- the harness stores durable artifacts there
+- 工具（文件读写、shell）只能在这个目录里操作
+- harness 的产物也放在这里
 
-## Memory (SQLite)
+## 记忆 (SQLite)
 
-LoopForge persists:
+LoopForge 会记住：
 
-- sessions
-- chat messages
-- small key/value state
+- 之前的 session
+- 聊天记录
+- 小的配置状态
 
-in `~/.rexos/rexos.db`, so later runs can resume with context.
+存在 `~/.rexos/rexos.db`，下次跑的时候能接上。
 
-## Tools (sandboxed)
+## 工具（沙盒里）
 
-The agent can call tools such as:
+Agent 能用的工具：
 
-- `fs_read` / `fs_write` (workspace-only, blocks `..` traversal)
-- `shell` (workspace-only)
-- `web_fetch` (SSRF-protected by default)
-- `browser_*` (headless browser automation via CDP; Playwright is optional)
+- `fs_read` / `fs_write` — 读写文件（只能在 workspace 内，不能 `..` 往上翻）
+- `shell` — 执行命令（也只能在 workspace 内）
+- `web_fetch` — 抓网页（默认防 SSRF）
+- `browser_*` — 无头浏览器（通过 CDP）
 
-!!! note "Browser tools prerequisites"
-    By default, `browser_*` uses a local Chromium-based browser (Chrome/Chromium/Edge) via **CDP**.
+!!! note "浏览器依赖"
+    默认用本地 Chrome/Chromium/Edge（通过 CDP）。
 
-    If LoopForge can’t find a browser executable, set `REXOS_BROWSER_CHROME_PATH`.
+    找不到浏览器的话，设 `REXOS_BROWSER_CHROME_PATH`。
 
-    Optional legacy backend: set `REXOS_BROWSER_BACKEND=playwright` and install Python + Playwright:
+    旧方案：设 `REXOS_BROWSER_BACKEND=playwright` 并安装 Python + Playwright：
 
     ```bash
     python3 -m pip install playwright
     python3 -m playwright install chromium
     ```
 
-## Model routing
+## 模型路由
 
-LoopForge classifies runs into a task kind:
+LoopForge 会把任务分类：
 
-- planning
-- coding
-- summary
+- planning — 规划
+- coding — 写代码
+- summary — 总结
 
-Each kind can route to a different provider/model pair.
+每种可以走不同的 provider/model。
 
-## Harness (durable long tasks)
+## Harness（持久化长任务）
 
-The harness adds a workflow on top:
+Harness 是在上面的工作流：
 
-1. initialize a workspace with durable artifacts
-2. run incremental sessions
-3. verify via `init.sh` / `init.ps1`
-4. checkpoint via git commits
+1. 用 artifacts 初始化 workspace
+2. 增量跑 session
+3. 用 `init.sh` / `init.ps1` 验证
+4. 用 git 提交 checkpoint

@@ -70,4 +70,3 @@ loopforge agent run --workspace rexos-demo --prompt "Create notes/plan.md with a
 
 - [新手 FAQ](../how-to/faq.md)
 - [新人复习](../tutorials/new-user-walkthrough.md)
-- [10 个可复制任务](../examples/case-tasks/ten-copy-paste-tasks.md)

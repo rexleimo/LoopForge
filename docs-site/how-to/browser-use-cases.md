@@ -13,10 +13,8 @@ Optional: use the Playwright backend (legacy) by setting `REXOS_BROWSER_BACKEND=
 
 ## Recipes
 
-- [GUI smoke check (example.com)](browser-use-cases/gui-smoke-check.md)
 - [Real-world flow: Baidu “today’s weather” (Browser + Ollama)](browser-use-cases/baidu-weather.md)
 - [Wikipedia: open → summarize → screenshot](browser-use-cases/wikipedia-summary.md)
-- [(From source) Run the browser + Ollama smoke test](browser-use-cases/smoke-test.md)
 
 ## Tips
 
