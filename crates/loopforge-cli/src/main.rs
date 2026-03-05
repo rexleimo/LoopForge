@@ -14,6 +14,7 @@ use rexos::{
 };
 
 mod doctor;
+mod skills;
 
 #[derive(Debug, Clone, serde::Serialize)]
 struct ConfigValidationReport {
@@ -119,6 +120,11 @@ enum Command {
         #[command(subcommand)]
         command: ConfigCommand,
     },
+    /// Skills discovery, doctor and execution helpers
+    Skills {
+        #[command(subcommand)]
+        command: SkillsCommand,
+    },
     /// Long-running harness helpers (initializer + sessions)
     Harness {
         #[command(subcommand)]
@@ -143,6 +149,59 @@ enum ConfigCommand {
         /// Print JSON output (machine-readable)
         #[arg(long)]
         json: bool,
+    },
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum SkillsCommand {
+    /// List discovered skills (workspace + ~/.codex/skills)
+    List {
+        /// Workspace root directory
+        #[arg(long, default_value = ".")]
+        workspace: PathBuf,
+        /// Print JSON output (machine-readable)
+        #[arg(long)]
+        json: bool,
+    },
+    /// Show one skill's resolved metadata
+    Show {
+        /// Skill name
+        name: String,
+        /// Workspace root directory
+        #[arg(long, default_value = ".")]
+        workspace: PathBuf,
+        /// Print JSON output (machine-readable)
+        #[arg(long)]
+        json: bool,
+    },
+    /// Diagnose skill manifest and entry issues
+    Doctor {
+        /// Workspace root directory
+        #[arg(long, default_value = ".")]
+        workspace: PathBuf,
+        /// Print JSON output (machine-readable)
+        #[arg(long)]
+        json: bool,
+        /// Exit non-zero on warnings too
+        #[arg(long)]
+        strict: bool,
+    },
+    /// Execute one skill with real runtime tools and model routing
+    Run {
+        /// Skill name
+        name: String,
+        /// Workspace root directory
+        #[arg(long, default_value = ".")]
+        workspace: PathBuf,
+        /// Input payload passed to the skill
+        #[arg(long)]
+        input: String,
+        /// Optional session id (generated per-workspace if omitted)
+        #[arg(long)]
+        session: Option<String>,
+        /// Task kind for model routing
+        #[arg(long, value_enum, default_value_t = AgentKind::Coding)]
+        kind: AgentKind,
     },
 }
 
@@ -618,6 +677,190 @@ async fn main() -> anyhow::Result<()> {
                 if !report.valid {
                     std::process::exit(1);
                 }
+            }
+        },
+        Command::Skills { command } => match command {
+            SkillsCommand::List { workspace, json } => {
+                let list = skills::list_skills(&workspace)?;
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&list)?);
+                } else if list.is_empty() {
+                    println!("no skills discovered");
+                } else {
+                    for item in list {
+                        println!(
+                            "{}  v{}  source={}  entry={}",
+                            item.name, item.version, item.source, item.entry_path
+                        );
+                    }
+                }
+            }
+            SkillsCommand::Show {
+                name,
+                workspace,
+                json,
+            } => {
+                let skill = skills::find_skill(&workspace, &name)?;
+                let item = serde_json::json!({
+                    "name": skill.name,
+                    "version": skill.manifest.version.to_string(),
+                    "source": skills::source_name(skill.source),
+                    "root_dir": skill.root_dir,
+                    "manifest_path": skill.manifest_path,
+                    "entry": skill.manifest.entry,
+                    "permissions": skill.manifest.permissions,
+                    "dependencies": skill
+                        .manifest
+                        .dependencies
+                        .iter()
+                        .map(|d| serde_json::json!({
+                            "name": d.name,
+                            "version_req": d.version_req.to_string(),
+                        }))
+                        .collect::<Vec<_>>(),
+                });
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&item)?);
+                } else {
+                    println!("{}", serde_json::to_string_pretty(&item)?);
+                }
+            }
+            SkillsCommand::Doctor {
+                workspace,
+                json,
+                strict,
+            } => {
+                let report = skills::doctor(&workspace)?;
+                if json {
+                    println!("{}", serde_json::to_string_pretty(&report)?);
+                } else {
+                    println!("discovered_skills: {}", report.discovered_count);
+                    if report.issues.is_empty() {
+                        println!("doctor: ok");
+                    } else {
+                        for issue in &report.issues {
+                            let level = match issue.level {
+                                skills::SkillsDoctorLevel::Warn => "warn",
+                                skills::SkillsDoctorLevel::Error => "error",
+                            };
+                            if let Some(path) = &issue.path {
+                                println!("[{level}] {}: {} ({path})", issue.id, issue.message);
+                            } else {
+                                println!("[{level}] {}: {}", issue.id, issue.message);
+                            }
+                        }
+                    }
+                }
+
+                let has_error = report
+                    .issues
+                    .iter()
+                    .any(|i| matches!(i.level, skills::SkillsDoctorLevel::Error));
+                let has_warn = report
+                    .issues
+                    .iter()
+                    .any(|i| matches!(i.level, skills::SkillsDoctorLevel::Warn));
+                if has_error || (strict && has_warn) {
+                    std::process::exit(1);
+                }
+            }
+            SkillsCommand::Run {
+                name,
+                workspace,
+                input,
+                session,
+                kind,
+            } => {
+                let paths = RexosPaths::discover()?;
+                paths.ensure_dirs()?;
+                RexosConfig::ensure_default(&paths)?;
+                let cfg = RexosConfig::load(&paths)?;
+                let skills_cfg = RexosConfig::load_skills_config(&paths).unwrap_or_default();
+
+                std::fs::create_dir_all(&workspace)
+                    .with_context(|| format!("create workspace: {}", workspace.display()))?;
+
+                let skill = skills::find_skill(&workspace, &name)?;
+                let skill_entry = skills::read_skill_entry(&skill)?;
+
+                let memory = MemoryStore::open_or_create(&paths)?;
+                let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg)?;
+                let router = rexos::router::ModelRouter::new(cfg.router);
+                let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
+
+                let session_id = match session {
+                    Some(id) => id,
+                    None => rexos::harness::resolve_session_id(&workspace)?,
+                };
+                let experimental_mode = skills_cfg.experimental;
+                agent.set_session_skill_policy(
+                    &session_id,
+                    rexos::agent::SessionSkillPolicy {
+                        allowlist: skills_cfg.allowlist,
+                        require_approval: skills_cfg.require_approval,
+                        auto_approve_readonly: skills_cfg.auto_approve_readonly,
+                    },
+                )?;
+                if experimental_mode {
+                    eprintln!("skills: experimental mode is enabled in config");
+                }
+
+                agent.record_skill_discovered(
+                    &session_id,
+                    &skill.name,
+                    skills::source_name(skill.source),
+                    &skill.manifest.version.to_string(),
+                )?;
+                agent.authorize_skill(&session_id, &skill.name, &skill.manifest.permissions)?;
+
+                let allowed_tools = skills::permission_tools(&skill.manifest.permissions);
+                if !allowed_tools.is_empty() {
+                    agent.set_session_allowed_tools(&session_id, allowed_tools)?;
+                }
+
+                let system = format!(
+                    "You are executing skill `{}` version {}.\\n\
+Follow the skill instructions exactly.\\n\
+If tool permissions are restricted, do not call tools outside the granted scope.\\n\\n\
+--- SKILL INSTRUCTIONS START ---\\n{}\\n--- SKILL INSTRUCTIONS END ---",
+                    skill.name, skill.manifest.version, skill_entry
+                );
+
+                let out = match agent
+                    .run_session(
+                        workspace,
+                        &session_id,
+                        Some(&system),
+                        &input,
+                        kind.into(),
+                    )
+                    .await
+                {
+                    Ok(out) => {
+                        agent.record_skill_execution(
+                            &session_id,
+                            &skill.name,
+                            &skill.manifest.permissions,
+                            true,
+                            None,
+                        )?;
+                        out
+                    }
+                    Err(e) => {
+                        let err_text = e.to_string();
+                        let _ = agent.record_skill_execution(
+                            &session_id,
+                            &skill.name,
+                            &skill.manifest.permissions,
+                            false,
+                            Some(&err_text),
+                        );
+                        return Err(e);
+                    }
+                };
+
+                println!("{out}");
+                eprintln!("[loopforge] session_id={session_id}");
             }
         },
         Command::Harness { command } => match command {
@@ -1256,6 +1499,33 @@ mod tests {
         assert!(
             parsed.is_ok(),
             "expected agent run with --allowed-tools to parse, got: {parsed:?}"
+        );
+    }
+
+    #[test]
+    fn cli_parses_skills_list_subcommand() {
+        let parsed = Cli::try_parse_from(["loopforge", "skills", "list", "--workspace", "."]);
+        assert!(
+            parsed.is_ok(),
+            "expected `loopforge skills list` to parse, got: {parsed:?}"
+        );
+    }
+
+    #[test]
+    fn cli_parses_skills_run_subcommand() {
+        let parsed = Cli::try_parse_from([
+            "loopforge",
+            "skills",
+            "run",
+            "hello-skill",
+            "--workspace",
+            ".",
+            "--input",
+            "do x",
+        ]);
+        assert!(
+            parsed.is_ok(),
+            "expected `loopforge skills run` to parse, got: {parsed:?}"
         );
     }
 

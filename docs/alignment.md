@@ -131,6 +131,33 @@
 未实现（后续子系统）：
 - session repair / compaction / 审计链（Merkle/hash chain）
 
+### 2.6 Skills system（MVP 基线）
+
+已实现（MVP）：
+- Skill manifest/schema 校验（`skill.toml`）
+- Skills 目录发现与优先级覆盖（`workspace > workspace_legacy > home`）
+- 依赖图解析（拓扑排序、循环依赖检测、semver 约束校验）
+- Runtime skill policy：
+  - session allowlist
+  - policy allowlist
+  - `require_approval` + `auto_approve_readonly`
+- Runtime 可观测性：
+  - ACP events：`skill.discovered / skill.loaded / skill.blocked / skill.executed / skill.failed`
+  - skill audit：`rexos.audit.skill_runs`
+- CLI 命令面：
+  - `loopforge skills list|show|doctor|run`
+
+对应实现：
+- `crates/rexos-skills/src/*`
+- `crates/rexos-runtime/src/lib.rs`
+- `crates/loopforge-cli/src/main.rs`
+- `crates/loopforge-cli/src/skills.rs`
+
+仍在后续阶段：
+- 远端/市场分发（marketplace）
+- 技能签名与来源信任链
+- 可插拔执行沙盒（WASM/Fuel 等）
+
 ---
 
 ## 3) 后续子系统（明确列出）
@@ -139,7 +166,7 @@
 - Kernel 组装器（真正的 subsystem registry / scheduler / supervisor / event bus）
 - API server（丰富的 REST/WS/SSE；OpenAI-compatible endpoints；A2A endpoints）
 - Channels system（多平台适配）
-- Skills system（skill registry + marketplace）
+- Skills system（marketplace 分发、签名信任、生态治理）
 - Wire protocol（p2p + auth）
 - Web search（多 provider 搜索聚合；当前仅实现 DuckDuckGo HTML best-effort）
 - Metering/quotas/cost catalog

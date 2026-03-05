@@ -19,6 +19,7 @@ tokio.workspace = true
 uuid.workspace = true
 toml.workspace = true
 rexos = { path = "../rexos" }
+rexos-skills = { path = "../rexos-skills" }
 
 [dev-dependencies]
 axum.workspace = true

@@ -1019,6 +1019,7 @@ dependencies = [
  "clap",
  "reqwest",
  "rexos",
+ "rexos-skills",
  "serde",
  "serde_json",
  "tempfile",

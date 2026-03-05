@@ -12,6 +12,7 @@ LoopForge 的二进制命令是 `loopforge`。
 - `loopforge channel worker` — 运行轮询 outbox 的 dispatcher
 - `loopforge harness init` — 初始化 harness workspace（持久化产物 + git）
 - `loopforge harness run` — 运行一次增量 harness session
+- `loopforge skills list|show|doctor|run` — 发现、查看、诊断并执行本地 skills
 - `loopforge daemon start` — 启动 HTTP daemon
 
 ## 示例

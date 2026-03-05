@@ -45,3 +45,20 @@ LoopForge includes common provider presets (names may evolve):
 
 - OpenAI-compatible: `deepseek`, `kimi`, `qwen`, `glm`, `minimax`
 - Provider-native: `glm_native`, `minimax_native`, `qwen_native`
+
+## Skills
+
+```toml
+[skills]
+allowlist = ["hello-skill", "qa-helper"]
+require_approval = false
+auto_approve_readonly = true
+experimental = false
+```
+
+Fields:
+
+- `allowlist`: optional global skill allowlist
+- `require_approval`: force approval for non-readonly skills
+- `auto_approve_readonly`: when true, readonly skills skip manual approval
+- `experimental`: optional flag for rollout messaging

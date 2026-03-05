@@ -66,6 +66,15 @@ pub struct RouteConfig {
     pub model: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SkillsConfig {
+    pub allowlist: Vec<String>,
+    pub require_approval: bool,
+    pub auto_approve_readonly: bool,
+    pub experimental: bool,
+}
+
 impl Default for RexosConfig {
     fn default() -> Self {
         let mut providers = BTreeMap::new();
@@ -298,6 +307,31 @@ impl Default for RouteConfig {
     }
 }
 
+impl Default for SkillsConfig {
+    fn default() -> Self {
+        Self {
+            allowlist: Vec::new(),
+            require_approval: false,
+            auto_approve_readonly: true,
+            experimental: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+struct SkillsConfigWrapper {
+    skills: SkillsConfig,
+}
+
+impl Default for SkillsConfigWrapper {
+    fn default() -> Self {
+        Self {
+            skills: SkillsConfig::default(),
+        }
+    }
+}
+
 impl RexosConfig {
     pub fn ensure_default(paths: &RexosPaths) -> anyhow::Result<()> {
         let config_path = paths.config_path();
@@ -306,7 +340,15 @@ impl RexosConfig {
         }
 
         let default_config = RexosConfig::default();
-        let toml_str = toml::to_string_pretty(&default_config).context("serialize config")?;
+        let mut toml_str = toml::to_string_pretty(&default_config).context("serialize config")?;
+        if !toml_str.contains("[skills]") {
+            let skills_toml = toml::to_string_pretty(&SkillsConfigWrapper {
+                skills: SkillsConfig::default(),
+            })
+            .context("serialize skills config")?;
+            toml_str.push('\n');
+            toml_str.push_str(&skills_toml);
+        }
 
         fs::write(&config_path, toml_str)
             .with_context(|| format!("write config: {}", config_path.display()))?;
@@ -337,6 +379,15 @@ impl RexosConfig {
             return None;
         }
         std::env::var(env).ok()
+    }
+
+    pub fn load_skills_config(paths: &RexosPaths) -> anyhow::Result<SkillsConfig> {
+        let config_path = paths.config_path();
+        let raw = fs::read_to_string(&config_path)
+            .with_context(|| format!("read config: {}", config_path.display()))?;
+        let wrapper: SkillsConfigWrapper =
+            toml::from_str(&raw).context("parse skills config TOML")?;
+        Ok(wrapper.skills)
     }
 }
 
@@ -391,5 +442,45 @@ mod tests {
 
         let nvidia = cfg.providers.get("nvidia").unwrap();
         assert_eq!(nvidia.base_url, "https://integrate.api.nvidia.com/v1");
+    }
+
+    #[test]
+    fn skills_config_defaults_when_table_missing() {
+        let parsed: SkillsConfigWrapper = toml::from_str("[llm]\nmodel = \"x\"").unwrap();
+        assert!(parsed.skills.allowlist.is_empty());
+        assert!(!parsed.skills.require_approval);
+        assert!(parsed.skills.auto_approve_readonly);
+    }
+
+    #[test]
+    fn skills_config_parses_table_values() {
+        let parsed: SkillsConfigWrapper = toml::from_str(
+            r#"
+[skills]
+allowlist = ["safe-skill", "qa-helper"]
+require_approval = true
+auto_approve_readonly = false
+experimental = true
+"#,
+        )
+        .unwrap();
+        assert_eq!(parsed.skills.allowlist, vec!["safe-skill", "qa-helper"]);
+        assert!(parsed.skills.require_approval);
+        assert!(!parsed.skills.auto_approve_readonly);
+        assert!(parsed.skills.experimental);
+    }
+
+    #[test]
+    fn ensure_default_writes_skills_table() {
+        let tmp = tempfile::tempdir().unwrap();
+        let paths = crate::paths::RexosPaths {
+            base_dir: tmp.path().join(".rexos"),
+        };
+        paths.ensure_dirs().unwrap();
+
+        RexosConfig::ensure_default(&paths).unwrap();
+        let raw = std::fs::read_to_string(paths.config_path()).unwrap();
+        assert!(raw.contains("[skills]"));
+        assert!(raw.contains("require_approval = false"));
     }
 }

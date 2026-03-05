@@ -1867,9 +1867,6 @@ impl BridgeResponse {
         )
     }
 
-    fn into_tool_output(self) -> anyhow::Result<String> {
-        Ok(self.into_data()?.to_string())
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

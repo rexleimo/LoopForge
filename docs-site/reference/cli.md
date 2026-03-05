@@ -12,6 +12,7 @@ LoopForge ships a single binary: `loopforge`.
 - `loopforge channel worker` — run a polling outbox dispatcher
 - `loopforge acp events` — list recent ACP events (optional session filter)
 - `loopforge acp checkpoints` — show delivery checkpoints for a session
+- `loopforge skills list|show|doctor|run` — discover, inspect, diagnose, and execute local skills
 - `loopforge harness init` — initialize a harness workspace (durable artifacts + git)
 - `loopforge harness run` — run an incremental harness session
 - `loopforge daemon start` — start the HTTP daemon

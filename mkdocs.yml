@@ -69,6 +69,7 @@ plugins:
             Get Started: 入门
             Install & Update: 安装与更新
             Quickstart (Ollama): 快速开始（Ollama）
+            Skills Quickstart: Skills 快速上手
             New User Walkthrough: 新人复习
             5-Minute Outcomes: 5 分钟可见结果
             Beginner FAQ: 新手 FAQ
@@ -115,6 +116,7 @@ plugins:
             Reference: 参考
             Config: 配置
             Tools: 工具
+            Skills: Skills
             Blog: 博客
             "What Is LoopForge?": 什么是 LoopForge？
             Personal AI Engineer: 个人研发助理定位
@@ -166,6 +168,7 @@ nav:
       - Get Started:
           - Install & Update: how-to/install.md
           - Quickstart (Ollama): tutorials/quickstart-ollama.md
+          - Skills Quickstart: tutorials/skills-quickstart.md
           - New User Walkthrough: tutorials/new-user-walkthrough.md
           - 5-Minute Outcomes: tutorials/five-minute-outcomes.md
           - Beginner FAQ: how-to/faq.md
@@ -217,3 +220,4 @@ nav:
       - CLI: reference/cli.md
       - Config: reference/config.md
       - Tools: reference/tools.md
+      - Skills: reference/skills.md

@@ -18,7 +18,11 @@ const MAX_AGENT_CALL_DEPTH: usize = 4;
 const MAX_TOOL_RESULT_CHARS: usize = 15_000;
 const TOOL_AUDIT_KEY: &str = "rexos.audit.tool_calls";
 const TOOL_AUDIT_MAX_RECORDS: usize = 2_000;
+const SKILL_AUDIT_KEY: &str = "rexos.audit.skill_runs";
+const SKILL_AUDIT_MAX_RECORDS: usize = 2_000;
 const SESSION_ALLOWED_TOOLS_KEY_PREFIX: &str = "rexos.sessions.allowed_tools.";
+const SESSION_ALLOWED_SKILLS_KEY_PREFIX: &str = "rexos.sessions.allowed_skills.";
+const SESSION_SKILL_POLICY_KEY_PREFIX: &str = "rexos.sessions.skill_policy.";
 const ACP_EVENTS_KEY: &str = "rexos.acp.events";
 const ACP_EVENTS_MAX_RECORDS: usize = 5_000;
 const ACP_CHECKPOINTS_KEY_PREFIX: &str = "rexos.acp.checkpoints.";
@@ -664,6 +668,14 @@ impl AgentRuntime {
         format!("{SESSION_ALLOWED_TOOLS_KEY_PREFIX}{session_id}")
     }
 
+    fn session_allowed_skills_key(session_id: &str) -> String {
+        format!("{SESSION_ALLOWED_SKILLS_KEY_PREFIX}{session_id}")
+    }
+
+    fn session_skill_policy_key(session_id: &str) -> String {
+        format!("{SESSION_SKILL_POLICY_KEY_PREFIX}{session_id}")
+    }
+
     pub fn set_session_allowed_tools(
         &self,
         session_id: &str,
@@ -713,6 +725,221 @@ impl AgentRuntime {
         Ok(Some(cleaned))
     }
 
+    pub fn set_session_allowed_skills(
+        &self,
+        session_id: &str,
+        skills: Vec<String>,
+    ) -> anyhow::Result<()> {
+        let mut deduped = Vec::new();
+        let mut seen = HashSet::new();
+        for skill in skills {
+            let skill = skill.trim().to_string();
+            if skill.is_empty() {
+                continue;
+            }
+            if seen.insert(skill.clone()) {
+                deduped.push(skill);
+            }
+        }
+        let raw = serde_json::to_string(&deduped).context("serialize session allowed skills")?;
+        self.memory
+            .kv_set(&Self::session_allowed_skills_key(session_id), &raw)
+            .context("kv_set session allowed skills")?;
+        Ok(())
+    }
+
+    fn load_session_allowed_skills(
+        &self,
+        session_id: &str,
+    ) -> anyhow::Result<Option<Vec<String>>> {
+        let raw = self
+            .memory
+            .kv_get(&Self::session_allowed_skills_key(session_id))
+            .context("kv_get session allowed skills")?;
+        let Some(raw) = raw else {
+            return Ok(None);
+        };
+        let parsed: Vec<String> = serde_json::from_str(&raw).unwrap_or_default();
+        let mut cleaned = Vec::new();
+        let mut seen = HashSet::new();
+        for skill in parsed {
+            let skill = skill.trim().to_string();
+            if skill.is_empty() {
+                continue;
+            }
+            if seen.insert(skill.clone()) {
+                cleaned.push(skill);
+            }
+        }
+        if cleaned.is_empty() {
+            return Ok(None);
+        }
+        Ok(Some(cleaned))
+    }
+
+    pub fn set_session_skill_policy(
+        &self,
+        session_id: &str,
+        policy: SessionSkillPolicy,
+    ) -> anyhow::Result<()> {
+        let raw = serde_json::to_string(&policy).context("serialize session skill policy")?;
+        self.memory
+            .kv_set(&Self::session_skill_policy_key(session_id), &raw)
+            .context("kv_set session skill policy")?;
+        Ok(())
+    }
+
+    fn load_session_skill_policy(&self, session_id: &str) -> anyhow::Result<SessionSkillPolicy> {
+        let raw = self
+            .memory
+            .kv_get(&Self::session_skill_policy_key(session_id))
+            .context("kv_get session skill policy")?;
+        let Some(raw) = raw else {
+            return Ok(SessionSkillPolicy::default());
+        };
+        let policy: SessionSkillPolicy = serde_json::from_str(&raw).unwrap_or_default();
+        Ok(policy)
+    }
+
+    pub fn record_skill_discovered(
+        &self,
+        session_id: &str,
+        skill_name: &str,
+        source: &str,
+        version: &str,
+    ) -> anyhow::Result<()> {
+        self.append_acp_event(AcpEventRecord {
+            id: uuid::Uuid::new_v4().to_string(),
+            session_id: Some(session_id.to_string()),
+            event_type: "skill.discovered".to_string(),
+            payload: serde_json::json!({
+                "skill": skill_name,
+                "source": source,
+                "version": version,
+            }),
+            created_at: Self::now_epoch_seconds(),
+        })
+    }
+
+    pub fn authorize_skill(
+        &self,
+        session_id: &str,
+        skill_name: &str,
+        requested_permissions: &[String],
+    ) -> anyhow::Result<()> {
+        if let Some(allowed_skills) = self.load_session_allowed_skills(session_id)? {
+            if !allowed_skills
+                .iter()
+                .any(|s| s.eq_ignore_ascii_case(skill_name.trim()))
+            {
+                let msg = format!("skill not allowed for this session: {skill_name}");
+                let _ = self.append_acp_event(AcpEventRecord {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    session_id: Some(session_id.to_string()),
+                    event_type: "skill.blocked".to_string(),
+                    payload: serde_json::json!({
+                        "skill": skill_name,
+                        "reason": "session_whitelist",
+                        "message": msg,
+                    }),
+                    created_at: Self::now_epoch_seconds(),
+                });
+                bail!("{msg}");
+            }
+        }
+
+        let policy = self.load_session_skill_policy(session_id)?;
+        if !policy.allowlist.is_empty()
+            && !policy
+                .allowlist
+                .iter()
+                .any(|s| s.eq_ignore_ascii_case(skill_name.trim()))
+        {
+            let msg = format!("skill blocked by policy allowlist: {skill_name}");
+            let _ = self.append_acp_event(AcpEventRecord {
+                id: uuid::Uuid::new_v4().to_string(),
+                session_id: Some(session_id.to_string()),
+                event_type: "skill.blocked".to_string(),
+                payload: serde_json::json!({
+                    "skill": skill_name,
+                    "reason": "policy_allowlist",
+                    "message": msg,
+                }),
+                created_at: Self::now_epoch_seconds(),
+            });
+            bail!("{msg}");
+        }
+
+        if policy.require_approval
+            && !(policy.auto_approve_readonly
+                && skill_permissions_are_readonly(requested_permissions))
+            && !skill_approval_is_granted(skill_name)
+        {
+            let msg = format!(
+                "approval required for skill `{skill_name}` (set REXOS_SKILL_APPROVAL_ALLOW={skill_name} or all)"
+            );
+            let _ = self.append_acp_event(AcpEventRecord {
+                id: uuid::Uuid::new_v4().to_string(),
+                session_id: Some(session_id.to_string()),
+                event_type: "skill.blocked".to_string(),
+                payload: serde_json::json!({
+                    "skill": skill_name,
+                    "reason": "approval_required",
+                    "message": msg,
+                }),
+                created_at: Self::now_epoch_seconds(),
+            });
+            bail!("{msg}");
+        }
+
+        self.append_acp_event(AcpEventRecord {
+            id: uuid::Uuid::new_v4().to_string(),
+            session_id: Some(session_id.to_string()),
+            event_type: "skill.loaded".to_string(),
+            payload: serde_json::json!({
+                "skill": skill_name,
+                "permissions": requested_permissions,
+            }),
+            created_at: Self::now_epoch_seconds(),
+        })?;
+        Ok(())
+    }
+
+    pub fn record_skill_execution(
+        &self,
+        session_id: &str,
+        skill_name: &str,
+        requested_permissions: &[String],
+        success: bool,
+        error: Option<&str>,
+    ) -> anyhow::Result<()> {
+        let event_type = if success {
+            "skill.executed"
+        } else {
+            "skill.failed"
+        };
+        self.append_acp_event(AcpEventRecord {
+            id: uuid::Uuid::new_v4().to_string(),
+            session_id: Some(session_id.to_string()),
+            event_type: event_type.to_string(),
+            payload: serde_json::json!({
+                "skill": skill_name,
+                "permissions": requested_permissions,
+                "error": error,
+            }),
+            created_at: Self::now_epoch_seconds(),
+        })?;
+
+        self.append_skill_audit(SkillAuditRecord {
+            session_id: session_id.to_string(),
+            skill_name: skill_name.to_string(),
+            success,
+            permissions: requested_permissions.to_vec(),
+            error: error.map(|e| e.to_string()),
+            created_at: Self::now_epoch_seconds(),
+        })
+    }
+
     fn append_tool_audit(&self, record: ToolAuditRecord) -> anyhow::Result<()> {
         let raw = self
             .memory
@@ -728,6 +955,24 @@ impl AgentRuntime {
         self.memory
             .kv_set(TOOL_AUDIT_KEY, &serialized)
             .context("kv_set tool audit")?;
+        Ok(())
+    }
+
+    fn append_skill_audit(&self, record: SkillAuditRecord) -> anyhow::Result<()> {
+        let raw = self
+            .memory
+            .kv_get(SKILL_AUDIT_KEY)
+            .context("kv_get skill audit")?
+            .unwrap_or_else(|| "[]".to_string());
+        let mut records: Vec<SkillAuditRecord> = serde_json::from_str(&raw).unwrap_or_default();
+        records.push(record);
+        if records.len() > SKILL_AUDIT_MAX_RECORDS {
+            records.drain(0..(records.len() - SKILL_AUDIT_MAX_RECORDS));
+        }
+        let serialized = serde_json::to_string(&records).context("serialize skill audit")?;
+        self.memory
+            .kv_set(SKILL_AUDIT_KEY, &serialized)
+            .context("kv_set skill audit")?;
         Ok(())
     }
 
@@ -2158,6 +2403,28 @@ struct ToolAuditRecord {
     created_at: i64,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
+pub struct SessionSkillPolicy {
+    #[serde(default)]
+    pub allowlist: Vec<String>,
+    #[serde(default)]
+    pub require_approval: bool,
+    #[serde(default = "default_true")]
+    pub auto_approve_readonly: bool,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct SkillAuditRecord {
+    session_id: String,
+    skill_name: String,
+    success: bool,
+    #[serde(default)]
+    permissions: Vec<String>,
+    #[serde(default)]
+    error: Option<String>,
+    created_at: i64,
+}
+
 #[derive(Debug, serde::Deserialize)]
 struct ChannelSendToolArgs {
     channel: String,
@@ -2540,6 +2807,67 @@ fn tool_approval_is_granted(tool_name: &str) -> bool {
         return true;
     }
     items.contains(&tool_name.to_lowercase())
+}
+
+fn skill_approval_is_granted(skill_name: &str) -> bool {
+    let raw = std::env::var("REXOS_SKILL_APPROVAL_ALLOW").unwrap_or_default();
+    let items: HashSet<String> = raw
+        .split(',')
+        .map(|s| s.trim().to_lowercase())
+        .filter(|s| !s.is_empty())
+        .collect();
+    if items.contains("all") {
+        return true;
+    }
+    items.contains(&skill_name.to_lowercase())
+}
+
+fn skill_permissions_are_readonly(permissions: &[String]) -> bool {
+    if permissions.is_empty() {
+        return true;
+    }
+
+    for raw in permissions {
+        let p = raw.trim().to_ascii_lowercase();
+        if p.is_empty() {
+            continue;
+        }
+        if p == "readonly" {
+            continue;
+        }
+        if p.starts_with("tool:") {
+            let tool = p.trim_start_matches("tool:");
+            let dangerous = [
+                "shell",
+                "docker_exec",
+                "fs_write",
+                "apply_patch",
+                "process_start",
+                "browser_navigate",
+                "web_fetch",
+            ];
+            if dangerous.contains(&tool) {
+                return false;
+            }
+            continue;
+        }
+        if p.contains("write")
+            || p.contains("patch")
+            || p.contains("delete")
+            || p.contains("shell")
+            || p.contains("docker")
+            || p.contains("network")
+            || p.contains("process")
+        {
+            return false;
+        }
+    }
+
+    true
+}
+
+fn default_true() -> bool {
+    true
 }
 
 fn acp_checkpoints_key(session_id: &str) -> String {
