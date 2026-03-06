@@ -15,6 +15,7 @@
 /memory/
 /.contextdb-enable
 /.venv-docs/
+/tasks/
 **/__pycache__/
 
 # OS files
