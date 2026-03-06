@@ -235,7 +235,7 @@ def safe_shell_exec(cmd: str, cwd: str) -> str:
 ### 具体实现
 
 ```rust
-// RexOS 工具沙盒实现
+// LoopForge 工具沙盒实现
 pub fn execute_shell(cmd: &str, workspace: &Path) -> Result<ExecutionResult> {
     // 1. 权限检查
     if is_dangerous_command(cmd) {

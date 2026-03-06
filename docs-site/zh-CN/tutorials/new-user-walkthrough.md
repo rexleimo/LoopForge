@@ -23,7 +23,7 @@ ollama list
 ollama pull llama3.2
 ```
 
-或者编辑 `~/.rexos/config.toml`，把默认模型切到你已有的模型，例如：
+或者编辑 `~/.loopforge/config.toml`，把默认模型切到你已有的模型，例如：
 
 ```toml
 [providers.ollama]
@@ -35,14 +35,14 @@ default_model = "qwen3:4b" # 示例：换成你本机已有的模型
 如果你想一次性跑完 `init + 配置校验 + doctor + 首个任务`：
 
 ```bash
-loopforge onboard --workspace rexos-onboard-demo
+loopforge onboard --workspace loopforge-onboard-demo
 ```
 
 可选：
 
 ```bash
 # 只做环境与配置检查，不跑首个 agent 任务
-loopforge onboard --workspace rexos-onboard-demo --skip-agent
+loopforge onboard --workspace loopforge-onboard-demo --skip-agent
 ```
 
 预期：
@@ -59,73 +59,73 @@ loopforge init
 
 预期产物：
 
-- `~/.rexos/config.toml`
-- `~/.rexos/rexos.db`
+- `~/.loopforge/config.toml`
+- `~/.loopforge/loopforge.db`
 
 ## 2) 跑一次 one-shot session（workspace 沙盒）
 
 === "macOS/Linux"
     ```bash
-    mkdir -p rexos-demo
-    loopforge agent run --workspace rexos-demo --prompt "Create hello.txt with the word hi"
-    cat rexos-demo/hello.txt
+    mkdir -p loopforge-demo
+    loopforge agent run --workspace loopforge-demo --prompt "Create hello.txt with the word hi"
+    cat loopforge-demo/hello.txt
     ```
 
 === "Windows (PowerShell)"
     ```powershell
-    mkdir rexos-demo
-    loopforge agent run --workspace rexos-demo --prompt "Create hello.txt with the word hi"
-    Get-Content .\rexos-demo\hello.txt
+    mkdir loopforge-demo
+    loopforge agent run --workspace loopforge-demo --prompt "Create hello.txt with the word hi"
+    Get-Content .\loopforge-demo\hello.txt
     ```
 
 预期：
 
 - workspace 里生成 `hello.txt`，内容为 `hi`
-- stderr 会打印 `session_id`，并且会持久化到 `rexos-demo/.rexos/session_id`
+- stderr 会打印 `session_id`，并且会持久化到 `loopforge-demo/.loopforge/session_id`
 
 ## 3) 在同一个 workspace 里续跑（记忆）
 
 ```bash
-loopforge agent run --workspace rexos-demo --prompt "Append a newline + bye to hello.txt"
+loopforge agent run --workspace loopforge-demo --prompt "Append a newline + bye to hello.txt"
 ```
 
 验证文件已更新：
 
 === "macOS/Linux"
     ```bash
-    cat rexos-demo/hello.txt
+    cat loopforge-demo/hello.txt
     ```
 
 === "Windows (PowerShell)"
     ```powershell
-    Get-Content .\rexos-demo\hello.txt
+    Get-Content .\loopforge-demo\hello.txt
     ```
 
 ## 4) 创建 harness workspace（持久化产物 + git）
 
 === "macOS/Linux"
     ```bash
-    mkdir -p rexos-harness-demo
-    loopforge harness init rexos-harness-demo
+    mkdir -p loopforge-harness-demo
+    loopforge harness init loopforge-harness-demo
     ```
 
 === "Windows (PowerShell)"
     ```powershell
-    mkdir rexos-harness-demo
-    loopforge harness init rexos-harness-demo
+    mkdir loopforge-harness-demo
+    loopforge harness init loopforge-harness-demo
     ```
 
-在 `rexos-harness-demo/` 里你应该能看到：
+在 `loopforge-harness-demo/` 里你应该能看到：
 
 - `features.json`
-- `rexos-progress.md`
+- `loopforge-progress.md`
 - `init.sh` 和 `init.ps1`
 - `.git/`（且已经有一条初始化 commit）
 
 运行一次 preflight（不带 prompt）：
 
 ```bash
-loopforge harness run rexos-harness-demo
+loopforge harness run loopforge-harness-demo
 ```
 
 ## 5) 文档按钮（可复现性）

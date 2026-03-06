@@ -37,7 +37,7 @@ loopforge harness run . --prompt "Continue. Focus on the next failing verifier o
 
 - Harness creates/uses durable artifacts in the workspace:
   - `features.json` (checklist)
-  - `rexos-progress.md` (append-only progress log)
+  - `loopforge-progress.md` (append-only progress log)
   - `init.sh` + `init.ps1` (your verifier scripts)
 - When your verifier passes, LoopForge makes a **checkpoint git commit**.
 
@@ -58,4 +58,4 @@ This keeps diffs reviewable and failures easy to diagnose.
 
 ## 3) Share reproducible “agent tasks”
 
-If you commit the harness artifacts (`features.json`, `rexos-progress.md`, init scripts), others can reproduce the same long-task loop (and extend it) without re-inventing the harness.
+If you commit the harness artifacts (`features.json`, `loopforge-progress.md`, init scripts), others can reproduce the same long-task loop (and extend it) without re-inventing the harness.

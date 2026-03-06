@@ -8,19 +8,19 @@
 
 === "Bash (macOS/Linux)"
     ```bash
-    export REXOS_BROWSER_HEADLESS=0
+    export LOOPFORGE_BROWSER_HEADLESS=0
 
-    loopforge agent run --workspace . --prompt "使用 browser 工具打开 https://en.wikipedia.org/wiki/Rust_(programming_language) 。读取页面内容，把简短总结写到 notes/wiki_rust.md，并把截图保存到 .rexos/browser/wiki_rust.png，最后关闭浏览器。"
+    loopforge agent run --workspace . --prompt "使用 browser 工具打开 https://en.wikipedia.org/wiki/Rust_(programming_language) 。读取页面内容，把简短总结写到 notes/wiki_rust.md，并把截图保存到 .loopforge/browser/wiki_rust.png，最后关闭浏览器。"
     ```
 
 === "PowerShell (Windows)"
     ```powershell
-    $env:REXOS_BROWSER_HEADLESS = "0"
+    $env:LOOPFORGE_BROWSER_HEADLESS = "0"
 
-    loopforge agent run --workspace . --prompt "使用 browser 工具打开 https://en.wikipedia.org/wiki/Rust_(programming_language) 。读取页面内容，把简短总结写到 notes/wiki_rust.md，并把截图保存到 .rexos/browser/wiki_rust.png，最后关闭浏览器。"
+    loopforge agent run --workspace . --prompt "使用 browser 工具打开 https://en.wikipedia.org/wiki/Rust_(programming_language) 。读取页面内容，把简短总结写到 notes/wiki_rust.md，并把截图保存到 .loopforge/browser/wiki_rust.png，最后关闭浏览器。"
     ```
 
 ## 预期结果
 
 - `notes/wiki_rust.md`
-- `.rexos/browser/wiki_rust.png`
+- `.loopforge/browser/wiki_rust.png`

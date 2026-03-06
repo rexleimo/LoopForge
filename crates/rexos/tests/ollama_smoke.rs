@@ -1,7 +1,7 @@
 #[tokio::test]
 #[ignore]
 async fn ollama_openai_compat_smoke() {
-    let model = std::env::var("REXOS_OLLAMA_MODEL").unwrap_or_else(|_| "llama3.2".to_string());
+    let model = std::env::var("LOOPFORGE_OLLAMA_MODEL").unwrap_or_else(|_| "llama3.2".to_string());
     let client = rexos::llm::openai_compat::OpenAiCompatibleClient::new(
         "http://127.0.0.1:11434/v1".to_string(),
         None,

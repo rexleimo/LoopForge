@@ -1,10 +1,10 @@
 # Providers & Routing
 
-LoopForge loads provider config from `~/.rexos/config.toml` and routes each task kind (planning/coding/summary) to a `(provider, model)` pair.
+LoopForge loads provider config from `~/.loopforge/config.toml` and routes each task kind (planning/coding/summary) to a `(provider, model)` pair.
 
 ## Built-in presets (out of the box)
 
-After `loopforge init`, your `~/.rexos/config.toml` already includes common providers and sensible defaults:
+After `loopforge init`, your `~/.loopforge/config.toml` already includes common providers and sensible defaults:
 
 - Local: `ollama`
 - OpenAI-compatible: `deepseek`, `kimi` / `kimi_cn`, `qwen` / `qwen_cn` / `qwen_sg`, `glm`, `minimax`, `nvidia`
@@ -114,16 +114,16 @@ These tests hit real provider endpoints and are `#[ignore]` by default:
 
 ```bash
 # Ollama (OpenAI-compatible)
-REXOS_OLLAMA_MODEL=<your-model> cargo test -p rexos --test ollama_smoke -- --ignored
+LOOPFORGE_OLLAMA_MODEL=<your-model> cargo test -p rexos --test ollama_smoke -- --ignored
 
 # GLM (Zhipu native)
-ZHIPUAI_API_KEY=<id.secret> REXOS_GLM_MODEL=<model> cargo test -p rexos --test zhipu_smoke -- --ignored
+ZHIPUAI_API_KEY=<id.secret> LOOPFORGE_GLM_MODEL=<model> cargo test -p rexos --test zhipu_smoke -- --ignored
 
 # MiniMax (native)
-MINIMAX_API_KEY=<key> REXOS_MINIMAX_MODEL=<model> cargo test -p rexos --test minimax_smoke -- --ignored
+MINIMAX_API_KEY=<key> LOOPFORGE_MINIMAX_MODEL=<model> cargo test -p rexos --test minimax_smoke -- --ignored
 
 # NVIDIA NIM (OpenAI-compatible)
-NVIDIA_API_KEY=<key> REXOS_NVIDIA_MODEL=<model> cargo test -p rexos --test nvidia_nim_smoke -- --ignored
+NVIDIA_API_KEY=<key> LOOPFORGE_NVIDIA_MODEL=<model> cargo test -p rexos --test nvidia_nim_smoke -- --ignored
 ```
 
 ## Provider health report (nightly-friendly)
@@ -147,7 +147,7 @@ Tips:
 - For CI environments without local Ollama, set:
 
 ```bash
-export REXOS_SKIP_OLLAMA_SMOKE=1
+export LOOPFORGE_SKIP_OLLAMA_SMOKE=1
 ```
 
 === "Bash (macOS/Linux)"

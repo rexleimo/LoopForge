@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task.
 
-**Goal:** Improve RexOS “new user” experience and runtime reliability by adding a `rexos doctor` command, adding safe HTTP retry/backoff for LLM calls, and hardening remote CDP attachment defaults.
+**Goal:** Improve LoopForge “new user” experience and runtime reliability by adding a `rexos doctor` command, adding safe HTTP retry/backoff for LLM calls, and hardening remote CDP attachment defaults.
 
-**Architecture:** Keep the public tool/CLI surface stable. Add `doctor` as a CLI subcommand that runs non-destructive checks (paths/config/db/providers/browser/git/docker) and prints actionable guidance. Add bounded retries for transient HTTP errors (429/5xx) in LLM clients. For `REXOS_BROWSER_CDP_HTTP`, default to loopback-only and require an explicit opt-in env var to attach to non-loopback CDP endpoints.
+**Architecture:** Keep the public tool/CLI surface stable. Add `doctor` as a CLI subcommand that runs non-destructive checks (paths/config/db/providers/browser/git/docker) and prints actionable guidance. Add bounded retries for transient HTTP errors (429/5xx) in LLM clients. For `LOOPFORGE_BROWSER_CDP_HTTP`, default to loopback-only and require an explicit opt-in env var to attach to non-loopback CDP endpoints.
 
 **Tech Stack:** Rust (clap, reqwest, tokio), MkDocs Material + mkdocs-static-i18n.
 
@@ -26,7 +26,7 @@
 
 **Step 2: Implement checks (non-destructive)**
 - Paths:
-  - Print `~/.rexos` base dir, config path, db path.
+  - Print `~/.loopforge` base dir, config path, db path.
   - Warn if config/db missing (suggest `rexos init`).
 - Providers:
   - Parse `config.toml`.
@@ -34,7 +34,7 @@
   - For providers with `api_key_env`, warn if env var not set.
   - For local `ollama` (openai-compatible, no key), probe `GET {base_url}/models`.
 - Browser:
-  - If `REXOS_BROWSER_CDP_HTTP` is set, probe `GET {cdp}/json/version`.
+  - If `LOOPFORGE_BROWSER_CDP_HTTP` is set, probe `GET {cdp}/json/version`.
   - Otherwise, try a best-effort Chromium discovery (PATH + common locations) and warn if missing.
 - Tools:
   - `git --version` (warn if missing; required for harness).
@@ -62,7 +62,7 @@
 - Assert `OpenAiCompatibleClient::chat_completions` succeeds.
 
 **Step 2: Implement bounded retry**
-- Retry on 429/500/502/503/504 up to `REXOS_LLM_RETRY_MAX` (default 2).
+- Retry on 429/500/502/503/504 up to `LOOPFORGE_LLM_RETRY_MAX` (default 2).
 - Add exponential backoff with jitter:
   - base 250ms, cap 2s.
 
@@ -79,8 +79,8 @@
 - Docs: `docs-site/how-to/browser-automation.md` + `docs-site/zh-CN/how-to/browser-automation.md`
 
 **Step 1: Add guardrails**
-- If `REXOS_BROWSER_CDP_HTTP` host is NOT loopback (`127.0.0.1`/`localhost`/`::1`):
-  - Fail with a clear message unless `REXOS_BROWSER_CDP_ALLOW_REMOTE=1`.
+- If `LOOPFORGE_BROWSER_CDP_HTTP` host is NOT loopback (`127.0.0.1`/`localhost`/`::1`):
+  - Fail with a clear message unless `LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE=1`.
 
 **Step 2: Tests**
 - Unit test the host validation (no actual browser required).

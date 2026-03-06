@@ -4,10 +4,10 @@ use std::process::Command;
 use anyhow::{bail, Context};
 
 const FEATURES_JSON: &str = "features.json";
-const PROGRESS_MD: &str = "rexos-progress.md";
+const PROGRESS_MD: &str = "loopforge-progress.md";
 const INIT_SH: &str = "init.sh";
 const INIT_PS1: &str = "init.ps1";
-const REXOS_DIR: &str = ".rexos";
+const LOOPFORGE_DIR: &str = ".loopforge";
 const SESSION_ID_FILE: &str = "session_id";
 
 pub fn init_workspace(workspace_dir: &Path) -> anyhow::Result<()> {
@@ -85,7 +85,7 @@ Write-Output "[loopforge] init.ps1: customize this script for your project"
         [
             "commit",
             "-m",
-            "chore: initialize rexos harness",
+            "chore: initialize loopforge harness",
             "--no-gpg-sign",
         ],
     )?;
@@ -94,13 +94,13 @@ Write-Output "[loopforge] init.ps1: customize this script for your project"
 }
 
 pub fn resolve_session_id(workspace_dir: &Path) -> anyhow::Result<String> {
-    let rexos_dir = workspace_dir.join(REXOS_DIR);
-    std::fs::create_dir_all(&rexos_dir)
-        .with_context(|| format!("create {}", rexos_dir.display()))?;
+    let loopforge_dir = workspace_dir.join(LOOPFORGE_DIR);
+    std::fs::create_dir_all(&loopforge_dir)
+        .with_context(|| format!("create {}", loopforge_dir.display()))?;
 
-    ensure_gitignore_has_rexos_dir(workspace_dir)?;
+    ensure_gitignore_has_loopforge_dir(workspace_dir)?;
 
-    let path = rexos_dir.join(SESSION_ID_FILE);
+    let path = loopforge_dir.join(SESSION_ID_FILE);
     if path.exists() {
         let raw =
             std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?;
@@ -144,7 +144,7 @@ pub async fn bootstrap_with_prompt(
     ensure_features_populated(workspace_dir)?;
 
     run_init_script(workspace_dir)?;
-    commit_checkpoint_if_dirty(workspace_dir, "chore: rexos harness bootstrap")?;
+    commit_checkpoint_if_dirty(workspace_dir, "chore: loopforge harness bootstrap")?;
     Ok(())
 }
 
@@ -173,7 +173,7 @@ pub async fn run_harness(
 
         match run_init_script_capture(workspace_dir) {
             Ok(_) => {
-                commit_checkpoint_if_dirty(workspace_dir, "chore: rexos harness checkpoint")?;
+                commit_checkpoint_if_dirty(workspace_dir, "chore: loopforge harness checkpoint")?;
                 return Ok(out);
             }
             Err(e) => {
@@ -202,12 +202,12 @@ pub fn preflight(workspace_dir: &Path) -> anyhow::Result<()> {
         || (!init_sh_path.exists() && !init_ps1_path.exists())
     {
         bail!(
-            "workspace not initialized; run `rexos harness init {}`",
+            "workspace not initialized; run `loopforge harness init {}`",
             workspace_dir.display()
         );
     }
 
-    println!("[rexos] workspace: {}", workspace_dir.display());
+    println!("[loopforge] workspace: {}", workspace_dir.display());
 
     let git_log = Command::new("git")
         .args(["--no-pager", "log", "-5", "--oneline"])
@@ -216,16 +216,16 @@ pub fn preflight(workspace_dir: &Path) -> anyhow::Result<()> {
         .with_context(|| format!("run git log in {}", workspace_dir.display()))?;
     if git_log.status.success() {
         let s = String::from_utf8_lossy(&git_log.stdout);
-        println!("[rexos] recent commits:\n{s}");
+        println!("[loopforge] recent commits:\n{s}");
     } else {
         let e = String::from_utf8_lossy(&git_log.stderr);
-        println!("[rexos] git log failed (continuing):\n{e}");
+        println!("[loopforge] git log failed (continuing):\n{e}");
     }
 
     let progress = std::fs::read_to_string(&progress_path)
         .with_context(|| format!("read {}", progress_path.display()))?;
     println!(
-        "[rexos] progress (tail):\n{}",
+        "[loopforge] progress (tail):\n{}",
         tail_lines(&progress, 20).join("\n")
     );
 
@@ -233,12 +233,12 @@ pub fn preflight(workspace_dir: &Path) -> anyhow::Result<()> {
         .with_context(|| format!("read {}", features_path.display()))?;
     if let Ok(v) = serde_json::from_str::<serde_json::Value>(&features_raw) {
         if let Some(first) = first_failing_feature(&v) {
-            println!("[rexos] next feature: {first}");
+            println!("[loopforge] next feature: {first}");
         } else {
-            println!("[rexos] next feature: (none pending)");
+            println!("[loopforge] next feature: (none pending)");
         }
     } else {
-        println!("[rexos] features.json: could not parse (continuing)");
+        println!("[loopforge] features.json: could not parse (continuing)");
     }
 
     run_init_script(workspace_dir)?;
@@ -281,9 +281,9 @@ fn git<const N: usize>(workspace_dir: &Path, args: [&str; N]) -> anyhow::Result<
 fn git_with_identity<const N: usize>(workspace_dir: &Path, args: [&str; N]) -> anyhow::Result<()> {
     let output = Command::new("git")
         .arg("-c")
-        .arg("user.name=RexOS")
+        .arg("user.name=LoopForge")
         .arg("-c")
-        .arg("user.email=rexos@localhost")
+        .arg("user.email=loopforge@localhost")
         .args(args)
         .current_dir(workspace_dir)
         .output()
@@ -314,13 +314,13 @@ fn is_initialized(workspace_dir: &Path) -> bool {
         && (workspace_dir.join(INIT_SH).exists() || workspace_dir.join(INIT_PS1).exists())
 }
 
-fn ensure_gitignore_has_rexos_dir(workspace_dir: &Path) -> anyhow::Result<()> {
+fn ensure_gitignore_has_loopforge_dir(workspace_dir: &Path) -> anyhow::Result<()> {
     if !workspace_dir.join(".git").exists() {
         return Ok(());
     }
 
     let path = workspace_dir.join(".gitignore");
-    let line = ".rexos/";
+    let line = ".loopforge/";
 
     let mut content = if path.exists() {
         std::fs::read_to_string(&path).with_context(|| format!("read {}", path.display()))?
@@ -350,7 +350,7 @@ Your job:
 - Keep `features.json` as a stable checklist. Do NOT delete or reorder items after creation.
 - Each feature must include: id, description, steps, passes=false, and optional notes.
 - Update the workspace init script(s) (`init.sh`, and `init.ps1` on Windows) to run the minimal smoke checks/tests required to verify features.
-- Append a short entry to `rexos-progress.md` describing what you initialized.
+- Append a short entry to `loopforge-progress.md` describing what you initialized.
 
 Rules:
 - Work only inside the workspace directory.
@@ -371,7 +371,7 @@ Rules:
 - Do NOT just describe tool calls; actually call tools when you need to edit files.
 - If you change code, run the workspace init script (smoke checks) and fix any failures.
 - If both `init.sh` and `init.ps1` exist, keep them functionally equivalent.
-- Append a short summary to `rexos-progress.md`.
+- Append a short summary to `loopforge-progress.md`.
 - Commit meaningful progress to git with a descriptive message.
 "#
 }

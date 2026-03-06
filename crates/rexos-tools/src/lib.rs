@@ -630,19 +630,19 @@ impl Toolset {
     }
 
     async fn docker_exec(&self, command: &str) -> anyhow::Result<String> {
-        let enabled = std::env::var("REXOS_DOCKER_EXEC_ENABLED")
+        let enabled = std::env::var("LOOPFORGE_DOCKER_EXEC_ENABLED")
             .ok()
             .map(|v| v.trim() == "1")
             .unwrap_or(false);
         if !enabled {
-            bail!("docker_exec is disabled (set REXOS_DOCKER_EXEC_ENABLED=1 to enable)");
+            bail!("docker_exec is disabled (set LOOPFORGE_DOCKER_EXEC_ENABLED=1 to enable)");
         }
 
         if command.trim().is_empty() {
             bail!("command is empty");
         }
 
-        let image = std::env::var("REXOS_DOCKER_EXEC_IMAGE")
+        let image = std::env::var("LOOPFORGE_DOCKER_EXEC_IMAGE")
             .ok()
             .filter(|v| !v.trim().is_empty())
             .unwrap_or_else(|| "alpine:3.20".to_string());
@@ -968,7 +968,7 @@ impl Toolset {
             .http
             .get("https://html.duckduckgo.com/html/")
             .query(&[("q", query)])
-            .header("User-Agent", "Mozilla/5.0 (compatible; RexOS/0.1)")
+            .header("User-Agent", "Mozilla/5.0 (compatible; LoopForge/0.1)")
             .send()
             .await
             .context("send web_search request")?
@@ -1022,7 +1022,7 @@ impl Toolset {
         let resp = self
             .http
             .get(url.clone())
-            .header("User-Agent", "RexOS/0.1 A2A")
+            .header("User-Agent", "LoopForge/0.1 A2A")
             .send()
             .await
             .context("send a2a_discover request")?;
@@ -1091,7 +1091,7 @@ impl Toolset {
         let resp = self
             .http
             .post(url.clone())
-            .header("User-Agent", "RexOS/0.1 A2A")
+            .header("User-Agent", "LoopForge/0.1 A2A")
             .json(&request)
             .send()
             .await
@@ -1346,7 +1346,7 @@ impl Toolset {
             "lang": lang,
             "lc_all": lc_all,
             "geolocation": null,
-            "note": "Exact geolocation is not available; RexOS only reports environment metadata.",
+            "note": "Exact geolocation is not available; LoopForge only reports environment metadata.",
         })
         .to_string())
     }
@@ -1434,7 +1434,7 @@ impl Toolset {
             bail!("text is empty");
         }
 
-        let rel = path.unwrap_or(".rexos/audio/tts.wav");
+        let rel = path.unwrap_or(".loopforge/audio/tts.wav");
         let out_path = self.resolve_workspace_path_for_write(rel)?;
         if out_path.extension().and_then(|x| x.to_str()).unwrap_or("") != "wav" {
             bail!("text_to_speech currently only supports .wav output paths");
@@ -1788,7 +1788,7 @@ impl Toolset {
             .decode(b64)
             .context("decode screenshot base64")?;
 
-        let rel = path.unwrap_or(".rexos/browser/screenshot.png");
+        let rel = path.unwrap_or(".loopforge/browser/screenshot.png");
         let out_path = self.resolve_workspace_path_for_write(rel)?;
         if let Some(parent) = out_path.parent() {
             std::fs::create_dir_all(parent)
@@ -1876,7 +1876,7 @@ enum BrowserBackend {
 }
 
 fn browser_backend_default() -> BrowserBackend {
-    if let Ok(v) = std::env::var("REXOS_BROWSER_BACKEND") {
+    if let Ok(v) = std::env::var("LOOPFORGE_BROWSER_BACKEND") {
         match v.trim().to_ascii_lowercase().as_str() {
             "cdp" | "native" | "chromium" => return BrowserBackend::Cdp,
             "playwright" | "bridge" | "python" => return BrowserBackend::Playwright,
@@ -2213,7 +2213,7 @@ impl BrowserSession {
 }
 
 fn browser_headless_default() -> bool {
-    if let Ok(v) = std::env::var("REXOS_BROWSER_HEADLESS") {
+    if let Ok(v) = std::env::var("LOOPFORGE_BROWSER_HEADLESS") {
         match v.trim().to_ascii_lowercase().as_str() {
             "0" | "false" | "no" | "off" => return false,
             "1" | "true" | "yes" | "on" => return true,
@@ -2224,7 +2224,7 @@ fn browser_headless_default() -> bool {
 }
 
 fn browser_python_exe() -> String {
-    if let Ok(v) = std::env::var("REXOS_BROWSER_PYTHON") {
+    if let Ok(v) = std::env::var("LOOPFORGE_BROWSER_PYTHON") {
         if !v.trim().is_empty() {
             return v;
         }
@@ -2237,12 +2237,12 @@ fn browser_python_exe() -> String {
 }
 
 fn browser_bridge_script_path() -> anyhow::Result<PathBuf> {
-    if let Ok(v) = std::env::var("REXOS_BROWSER_BRIDGE_PATH") {
+    if let Ok(v) = std::env::var("LOOPFORGE_BROWSER_BRIDGE_PATH") {
         let p = PathBuf::from(v);
         if p.exists() {
             return Ok(p);
         }
-        bail!("REXOS_BROWSER_BRIDGE_PATH does not exist: {}", p.display());
+        bail!("LOOPFORGE_BROWSER_BRIDGE_PATH does not exist: {}", p.display());
     }
 
     if let Some(p) = BROWSER_BRIDGE_PATH.get() {
@@ -3045,7 +3045,7 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
 
     let mut defs = Vec::new();
 
-    // Compatibility aliases that map to RexOS primitives.
+    // Compatibility aliases that map to LoopForge primitives.
     defs.push(ToolDefinition {
         kind: "function".to_string(),
         function: ToolFunctionDefinition {
@@ -3185,10 +3185,10 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
             parameters: json!({
                 "type": "object",
                 "properties": {
-                    "agent_id": { "type": "string", "description": "Optional stable agent id. If omitted, RexOS generates one." },
+                    "agent_id": { "type": "string", "description": "Optional stable agent id. If omitted, LoopForge generates one." },
                     "name": { "type": "string", "description": "Optional human-friendly name." },
                     "system_prompt": { "type": "string", "description": "Optional system prompt for the agent session." },
-                    "manifest_toml": { "type": "string", "description": "Optional agent manifest (TOML). RexOS will best-effort extract name + system prompt." }
+                    "manifest_toml": { "type": "string", "description": "Optional agent manifest (TOML). LoopForge will best-effort extract name + system prompt." }
                 },
                 "additionalProperties": false
             }),
@@ -3261,7 +3261,7 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
             parameters: json!({
                 "type": "object",
                 "properties": {
-                    "task_id": { "type": "string", "description": "Optional stable task id. If omitted, RexOS generates one." },
+                    "task_id": { "type": "string", "description": "Optional stable task id. If omitted, LoopForge generates one." },
                     "title": { "type": "string", "description": "Short title." },
                     "description": { "type": "string", "description": "Task description." },
                     "assigned_to": { "type": "string", "description": "Optional assignee agent id." }
@@ -3341,7 +3341,7 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
             parameters: json!({
                 "type": "object",
                 "properties": {
-                    "id": { "type": "string", "description": "Optional stable schedule id. If omitted, RexOS generates one." },
+                    "id": { "type": "string", "description": "Optional stable schedule id. If omitted, LoopForge generates one." },
                     "description": { "type": "string", "description": "Human-readable description." },
                     "schedule": { "type": "string", "description": "Schedule expression (stored as-is)." },
                     "agent_id": { "type": "string", "description": "Optional agent id to associate with this schedule." },
@@ -3389,7 +3389,7 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
             parameters: json!({
                 "type": "object",
                 "properties": {
-                    "id": { "type": "string", "description": "Optional stable entity id. If omitted, RexOS generates one." },
+                    "id": { "type": "string", "description": "Optional stable entity id. If omitted, LoopForge generates one." },
                     "name": { "type": "string", "description": "Entity name." },
                     "entity_type": { "type": "string", "description": "Entity type (free-form string)." },
                     "properties": { "type": "object", "description": "Optional properties map.", "additionalProperties": true }
@@ -3407,7 +3407,7 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
             parameters: json!({
                 "type": "object",
                 "properties": {
-                    "id": { "type": "string", "description": "Optional stable relation id. If omitted, RexOS generates one." },
+                    "id": { "type": "string", "description": "Optional stable relation id. If omitted, LoopForge generates one." },
                     "source": { "type": "string", "description": "Source entity id." },
                     "relation": { "type": "string", "description": "Relation type/name." },
                     "target": { "type": "string", "description": "Target entity id." },
@@ -3519,7 +3519,7 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
             parameters: json!({
                 "type": "object",
                 "properties": {
-                    "job_id": { "type": "string", "description": "Optional stable job id. If omitted, RexOS generates one." },
+                    "job_id": { "type": "string", "description": "Optional stable job id. If omitted, LoopForge generates one." },
                     "name": { "type": "string", "description": "Job name." },
                     "schedule": { "type": "object", "description": "Schedule payload (stored as-is)." },
                     "action": { "type": "object", "description": "Action payload (stored as-is)." },
@@ -3586,12 +3586,12 @@ fn compat_tool_defs() -> Vec<ToolDefinition> {
         function: ToolFunctionDefinition {
             name: "workflow_run".to_string(),
             description:
-                "Run a persisted multi-step workflow and save execution state under .rexos/workflows/."
+                "Run a persisted multi-step workflow and save execution state under .loopforge/workflows/."
                     .to_string(),
             parameters: json!({
                 "type": "object",
                 "properties": {
-                    "workflow_id": { "type": "string", "description": "Optional stable workflow id. If omitted, RexOS generates one." },
+                    "workflow_id": { "type": "string", "description": "Optional stable workflow id. If omitted, LoopForge generates one." },
                     "name": { "type": "string", "description": "Optional workflow display name." },
                     "continue_on_error": { "type": "boolean", "description": "Whether to continue executing remaining steps after a failed step (default false)." },
                     "steps": {
@@ -4165,7 +4165,7 @@ fn browser_screenshot_def() -> ToolDefinition {
             parameters: serde_json::json!({
                 "type": "object",
                 "properties": {
-                    "path": { "type": "string", "description": "Relative output path (default .rexos/browser/screenshot.png)." }
+                    "path": { "type": "string", "description": "Relative output path (default .loopforge/browser/screenshot.png)." }
                 },
                 "required": [],
                 "additionalProperties": false
@@ -4447,7 +4447,7 @@ mod tests {
             .unwrap();
         let v: serde_json::Value = serde_json::from_str(&out).unwrap();
         let text = v.get("text").and_then(|v| v.as_str()).unwrap_or("");
-        assert!(text.contains("Hello RexOS PDF"), "{text}");
+        assert!(text.contains("Hello LoopForge PDF"), "{text}");
         assert_eq!(v.get("path").and_then(|v| v.as_str()), Some("fixture.pdf"));
     }
 
@@ -4811,8 +4811,8 @@ mod tests {
     async fn docker_exec_is_disabled_by_default() {
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
 
-        let previous = std::env::var_os("REXOS_DOCKER_EXEC_ENABLED");
-        std::env::remove_var("REXOS_DOCKER_EXEC_ENABLED");
+        let previous = std::env::var_os("LOOPFORGE_DOCKER_EXEC_ENABLED");
+        std::env::remove_var("LOOPFORGE_DOCKER_EXEC_ENABLED");
 
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
@@ -4822,13 +4822,13 @@ mod tests {
             .unwrap_err();
         let msg = err.to_string();
         assert!(
-            msg.contains("REXOS_DOCKER_EXEC_ENABLED") || msg.contains("disabled"),
+            msg.contains("LOOPFORGE_DOCKER_EXEC_ENABLED") || msg.contains("disabled"),
             "{msg}"
         );
 
         match previous {
-            Some(v) => std::env::set_var("REXOS_DOCKER_EXEC_ENABLED", v),
-            None => std::env::remove_var("REXOS_DOCKER_EXEC_ENABLED"),
+            Some(v) => std::env::set_var("LOOPFORGE_DOCKER_EXEC_ENABLED", v),
+            None => std::env::remove_var("LOOPFORGE_DOCKER_EXEC_ENABLED"),
         }
     }
 
@@ -5352,9 +5352,9 @@ mod tests {
         std::fs::write(&bridge_path, stub_bridge_script()).unwrap();
 
         let python = if cfg!(windows) { "python" } else { "python3" };
-        let _backend_guard = EnvVarGuard::set("REXOS_BROWSER_BACKEND", "playwright");
-        let _python_guard = EnvVarGuard::set("REXOS_BROWSER_PYTHON", python);
-        let _bridge_guard = EnvVarGuard::set("REXOS_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
+        let _backend_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_BACKEND", "playwright");
+        let _python_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_PYTHON", python);
+        let _bridge_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
 
         let tools = Toolset::new(workspace.clone()).unwrap();
 
@@ -5484,9 +5484,9 @@ mod tests {
         std::fs::write(&bridge_path, stub_bridge_script()).unwrap();
 
         let python = if cfg!(windows) { "python" } else { "python3" };
-        let _backend_guard = EnvVarGuard::set("REXOS_BROWSER_BACKEND", "playwright");
-        let _python_guard = EnvVarGuard::set("REXOS_BROWSER_PYTHON", python);
-        let _bridge_guard = EnvVarGuard::set("REXOS_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
+        let _backend_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_BACKEND", "playwright");
+        let _python_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_PYTHON", python);
+        let _bridge_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
 
         let tools = Toolset::new(workspace).unwrap();
 

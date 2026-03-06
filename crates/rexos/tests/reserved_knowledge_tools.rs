@@ -35,9 +35,9 @@ async fn reserved_knowledge_tools_add_entity_relation_and_query() {
                                     "name": "knowledge_add_entity",
                                     "arguments": serde_json::to_string(&json!({
                                         "id": "e1",
-                                        "name": "RexOS",
+                                        "name": "LoopForge",
                                         "entity_type": "project",
-                                        "properties": { "repo": "rexleimo/rexos" }
+                                        "properties": { "repo": "rexleimo/LoopForge" }
                                     })).unwrap()
                                 }
                             },
@@ -109,7 +109,7 @@ async fn reserved_knowledge_tools_add_entity_relation_and_query() {
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

@@ -2,10 +2,10 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task.
 
-**Goal:** Implement the remaining “reserved stub” tools in RexOS so they no longer return `tool not implemented yet: <name>`: `hand_*`, `a2a_*`, `speech_to_text`, `text_to_speech`, `docker_exec`, `process_*`, `canvas_present`.
+**Goal:** Implement the remaining “reserved stub” tools in LoopForge so they no longer return `tool not implemented yet: <name>`: `hand_*`, `a2a_*`, `speech_to_text`, `text_to_speech`, `docker_exec`, `process_*`, `canvas_present`.
 
 **Architecture:**
-- `hand_*` are **runtime tools** (like `agent_*`) because they spawn/track specialized agents and should persist in `~/.rexos/rexos.db`.
+- `hand_*` are **runtime tools** (like `agent_*`) because they spawn/track specialized agents and should persist in `~/.loopforge/rexos.db`.
 - Everything else is implemented in `rexos-tools` (`Toolset`) with the existing sandbox rules (workspace-relative paths, SSRF guards, timeouts).
 - Keep compatibility-oriented parameter schemas close to the de-facto conventions used by other agent frameworks.
 
@@ -83,7 +83,7 @@
 - Modify: `crates/rexos-tools/src/lib.rs`
 
 **Behavior (MVP):**
-- Write a small valid `.wav` file to a workspace-relative `path` (default `.rexos/audio/tts.wav`).
+- Write a small valid `.wav` file to a workspace-relative `path` (default `.loopforge/audio/tts.wav`).
 - Return JSON `{path, format, bytes, note}`.
 
 **Run:** `cargo test -p rexos-tools text_to_speech`
@@ -97,7 +97,7 @@
 - Modify: `docs-site/reference/tools.md` + `docs-site/zh/reference/tools.md`
 
 **Behavior (MVP, safe-by-default):**
-- Disabled unless `REXOS_DOCKER_EXEC_ENABLED=1`.
+- Disabled unless `LOOPFORGE_DOCKER_EXEC_ENABLED=1`.
 - When enabled, requires `docker` in PATH; runs a one-shot container command (best-effort) with workspace mounted.
 
 **Run:** `cargo test -p rexos-tools docker_exec`

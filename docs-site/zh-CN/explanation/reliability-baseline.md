@@ -8,7 +8,7 @@
 
 ## 核心 onboarding 指标
 
-LoopForge 会把首任务结果写入 `~/.rexos/onboard-metrics.json`：
+LoopForge 会把首任务结果写入 `~/.loopforge/onboard-metrics.json`：
 
 - `attempted_first_task`：实际尝试首个 agent 任务的次数
 - `first_task_success`：首任务成功次数
@@ -23,7 +23,7 @@ LoopForge 会把首任务结果写入 `~/.rexos/onboard-metrics.json`：
 
 每次 onboarding 结果还会追加到：
 
-- `~/.rexos/onboard-events.jsonl`
+- `~/.loopforge/onboard-events.jsonl`
 
 每行包含时间戳、workspace、session id、结果状态，以及失败时的分类与错误摘要。
 
@@ -31,14 +31,14 @@ LoopForge 会把首任务结果写入 `~/.rexos/onboard-metrics.json`：
 
 === "macOS/Linux"
     ```bash
-    cat ~/.rexos/onboard-metrics.json
-    tail -n 20 ~/.rexos/onboard-events.jsonl
+    cat ~/.loopforge/onboard-metrics.json
+    tail -n 20 ~/.loopforge/onboard-events.jsonl
     ```
 
 === "Windows (PowerShell)"
     ```powershell
-    Get-Content $HOME/.rexos/onboard-metrics.json
-    Get-Content $HOME/.rexos/onboard-events.jsonl -Tail 20
+    Get-Content $HOME/.loopforge/onboard-metrics.json
+    Get-Content $HOME/.loopforge/onboard-events.jsonl -Tail 20
     ```
 
 ## 日报汇总脚本
@@ -52,7 +52,7 @@ LoopForge 内置了一个 onboarding 指标日报脚本：
 === "macOS/Linux"
     ```bash
     python3 scripts/onboard_metrics_report.py \
-      --base-dir ~/.rexos \
+      --base-dir ~/.loopforge \
       --out-dir .tmp/onboard-report \
       --days 7 \
       --window-hours 24
@@ -63,7 +63,7 @@ LoopForge 内置了一个 onboarding 指标日报脚本：
 === "Windows (PowerShell)"
     ```powershell
     python scripts/onboard_metrics_report.py `
-      --base-dir $HOME/.rexos `
+      --base-dir $HOME/.loopforge `
       --out-dir .tmp/onboard-report `
       --days 7 `
       --window-hours 24

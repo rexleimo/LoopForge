@@ -13,23 +13,23 @@
 
 === "Bash (macOS/Linux)"
     ```bash
-    export REXOS_BROWSER_HEADLESS=0
+    export LOOPFORGE_BROWSER_HEADLESS=0
 
-    loopforge agent run --workspace . --prompt "使用浏览器工具打开 https://en.wikipedia.org/wiki/Large_language_model 。等待 #firstHeading 出现（browser_wait）。用 browser_run_js 抽取 document.title 与 heading 文本。向下滚动 800px（browser_scroll）。读取页面并写 notes/browser_evidence.md：包含 URL、title、heading，以及基于页面文本的 5 条要点总结。保存截图到 .rexos/browser/wikipedia_llm.png。最后 browser_close。"
+    loopforge agent run --workspace . --prompt "使用浏览器工具打开 https://en.wikipedia.org/wiki/Large_language_model 。等待 #firstHeading 出现（browser_wait）。用 browser_run_js 抽取 document.title 与 heading 文本。向下滚动 800px（browser_scroll）。读取页面并写 notes/browser_evidence.md：包含 URL、title、heading，以及基于页面文本的 5 条要点总结。保存截图到 .loopforge/browser/wikipedia_llm.png。最后 browser_close。"
     ```
 
 === "PowerShell (Windows)"
     ```powershell
-    $env:REXOS_BROWSER_HEADLESS = "0"
+    $env:LOOPFORGE_BROWSER_HEADLESS = "0"
 
-    loopforge agent run --workspace . --prompt "使用浏览器工具打开 https://en.wikipedia.org/wiki/Large_language_model 。等待 #firstHeading 出现（browser_wait）。用 browser_run_js 抽取 document.title 与 heading 文本。向下滚动 800px（browser_scroll）。读取页面并写 notes/browser_evidence.md：包含 URL、title、heading，以及基于页面文本的 5 条要点总结。保存截图到 .rexos/browser/wikipedia_llm.png。最后 browser_close。"
+    loopforge agent run --workspace . --prompt "使用浏览器工具打开 https://en.wikipedia.org/wiki/Large_language_model 。等待 #firstHeading 出现（browser_wait）。用 browser_run_js 抽取 document.title 与 heading 文本。向下滚动 800px（browser_scroll）。读取页面并写 notes/browser_evidence.md：包含 URL、title、heading，以及基于页面文本的 5 条要点总结。保存截图到 .loopforge/browser/wikipedia_llm.png。最后 browser_close。"
     ```
 
 ## 预期产物
 
 - `notes/browser_evidence.md`
-- `.rexos/browser/wikipedia_llm.png`
+- `.loopforge/browser/wikipedia_llm.png`
 
 !!! note "看不到浏览器窗口？"
-    浏览器默认是 headless。请确认 `REXOS_BROWSER_HEADLESS=0`（或第一次 `browser_navigate` 传 `headless=false`）。
+    浏览器默认是 headless。请确认 `LOOPFORGE_BROWSER_HEADLESS=0`（或第一次 `browser_navigate` 传 `headless=false`）。
 

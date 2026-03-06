@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Align RexOS with Anthropic’s “Effective harnesses for long-running agents” harness patterns (initializer + long-running coding harness) and with an Agent OS “core subsystems” baseline (tools, stability, extensibility), while keeping Ollama as the primary local smoke/E2E driver.
+**Goal:** Align LoopForge with Anthropic’s “Effective harnesses for long-running agents” harness patterns (initializer + long-running coding harness) and with an Agent OS “core subsystems” baseline (tools, stability, extensibility), while keeping Ollama as the primary local smoke/E2E driver.
 
-**Architecture:** Keep RexOS as a Cargo workspace. Expand `rexos-harness` from “scaffold + preflight” into a real harness runner:
+**Architecture:** Keep LoopForge as a Cargo workspace. Expand `rexos-harness` from “scaffold + preflight” into a real harness runner:
 - **Initializer**: generate a comprehensive `features.json` from a user prompt and initialize/verify workspace artifacts.
 - **Runner**: run the coding agent with injected workspace context, then verify via `init.sh`, checkpoint via git commit, and retry with failure output when needed.
 Add two runtime hardening pieces:
@@ -17,7 +17,7 @@ Add two runtime hardening pieces:
 
 ### Task 1: Add initializer harness (feature list generation)
 
-**Goal:** Provide an initializer flow that creates the durable artifacts (`features.json`, `rexos-progress.md`, `init.sh`) and populates a **comprehensive** `features.json` from a user prompt (per Anthropic harness article).
+**Goal:** Provide an initializer flow that creates the durable artifacts (`features.json`, `loopforge-progress.md`, `init.sh`) and populates a **comprehensive** `features.json` from a user prompt (per Anthropic harness article).
 
 **Files:**
 - Modify: `crates/rexos-harness/src/lib.rs`
@@ -43,7 +43,7 @@ Behavior:
 - Run `preflight()`
 - Run `agent.run_session()` with an “initializer system prompt” that instructs generating `features.json`
 - Run `init.sh` again (post-run verification)
-- If git tree is dirty: commit a checkpoint (identity `RexOS <rexos@localhost>`)
+- If git tree is dirty: commit a checkpoint (identity `LoopForge <rexos@localhost>`)
 
 **Step 3: Re-run test**
 
@@ -104,11 +104,11 @@ Add flags to `rexos harness run`:
 
 **Step 1: Write failing test**
 
-Initialize a workspace and call “resolve session id” twice; assert the second call returns the same id and that it is stored inside the workspace (e.g., `.rexos/session_id`).
+Initialize a workspace and call “resolve session id” twice; assert the second call returns the same id and that it is stored inside the workspace (e.g., `.loopforge/session_id`).
 
 **Step 2: Implement**
 
-Store session id in `workspace/.rexos/session_id` (workspace-local, durable, git-ignored by default). Create directory if missing.
+Store session id in `workspace/.loopforge/session_id` (workspace-local, durable, git-ignored by default). Create directory if missing.
 
 ---
 
@@ -170,7 +170,7 @@ Expected: PASS
 
 ### Task 6: Add an explicit alignment checklist doc
 
-**Goal:** Make “对齐” auditable: one file that maps Anthropic harness requirements + RexOS core subsystems to modules, with “Implemented / Partial / Planned” and pointers.
+**Goal:** Make “对齐” auditable: one file that maps Anthropic harness requirements + LoopForge core subsystems to modules, with “Implemented / Partial / Planned” and pointers.
 
 **Files:**
 - Create: `docs/alignment.md`
@@ -179,7 +179,7 @@ Expected: PASS
 
 Include:
 - Anthropic harness checklist mapping to `rexos-harness` + CLI
-- RexOS core subsystems mapping to crates + what’s intentionally out of scope (channels/skills/wire)
+- LoopForge core subsystems mapping to crates + what’s intentionally out of scope (channels/skills/wire)
 
 **Step 2: Commit**
 

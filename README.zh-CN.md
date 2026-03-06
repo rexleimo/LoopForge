@@ -2,24 +2,24 @@
 
 [English](README.md) | 简体中文
 
-LoopForge（原 RexOS）是一个面向软件交付的 **个人研发助理（Personal AI Engineer）**：长任务流程、持久化记忆、工具沙盒、模型路由与 Harness checkpoint。
+LoopForge是一个面向软件交付的 **个人研发助理（Personal AI Engineer）**：长任务流程、持久化记忆、工具沙盒、模型路由与 Harness checkpoint。
 
 ## 品牌更新
 
 - 对外产品名：**LoopForge**
 - 主 CLI 命令：`loopforge`
-- 运行时数据目录暂保持为 `~/.rexos`。
+- 运行时数据目录暂保持为 `~/.loopforge`。
 
 ## 文档
 
 - 文档站点：https://os.rexai.top
-- （如自定义域名未配置）GitHub Pages：https://rexleimo.github.io/rexos/
+- （如自定义域名未配置）GitHub Pages：https://rexleimo.github.io/LoopForge/
 - 5 分钟可见结果：`docs-site/tutorials/five-minute-outcomes.md`
 - 产品定位说明：`docs-site/explanation/why-loopforge.md`
 
 ## 状态
 
-本仓库已用长任务 harness 引导初始化（`features.json`、`init.sh`、`rexos-progress.md`）。推进方式是把每个 feature 的 `passes` 从 `false` 置为 `true`，并保持 checklist 稳定。
+本仓库已用长任务 harness 引导初始化（`features.json`、`init.sh`、`loopforge-progress.md`）。推进方式是把每个 feature 的 `passes` 从 `false` 置为 `true`，并保持 checklist 稳定。
 
 ## 安装
 
@@ -47,7 +47,7 @@ cargo build --release -p loopforge-cli
 
 ## 使用 Ollama（OpenAI 兼容）
 
-LoopForge 默认配置会在 `~/.rexos/config.toml` 里把 `ollama` 指向 `http://127.0.0.1:11434/v1`。
+LoopForge 默认配置会在 `~/.loopforge/config.toml` 里把 `ollama` 指向 `http://127.0.0.1:11434/v1`。
 
 ```bash
 # 1) 启动 Ollama
@@ -57,12 +57,12 @@ ollama serve
 loopforge init
 
 # 3) 在某个 workspace 目录里运行一次 agent session
-mkdir -p /tmp/rexos-work
-loopforge agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the word hi"
+mkdir -p /tmp/loopforge-work
+loopforge agent run --workspace /tmp/loopforge-work --prompt "Create hello.txt with the word hi"
 ```
 
-可选的 Ollama smoke test：`REXOS_OLLAMA_MODEL=<your-model> cargo test -p rexos -- --ignored`。
-可选的 NVIDIA NIM smoke test：`NVIDIA_API_KEY=<key> cargo test -p rexos --test nvidia_nim_smoke -- --ignored`。
+可选的 Ollama smoke test：`LOOPFORGE_OLLAMA_MODEL=<your-model> cargo test --workspace --test ollama_smoke -- --ignored`。
+可选的 NVIDIA NIM smoke test：`NVIDIA_API_KEY=<key> cargo test --workspace --test nvidia_nim_smoke -- --ignored`。
 
 ## 发版（维护者）
 
@@ -71,8 +71,8 @@ loopforge agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with 
 如果本次迭代被标记为“需要升级版本号”，则同一批改动必须同时包含版本号更新和 `CHANGELOG.md` 更新。
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 ## Providers 与路由
@@ -85,7 +85,7 @@ LoopForge 通过多种 driver 支持多个 LLM Provider：
 - `anthropic`（Claude API + Anthropic-compatible 网关）
 - `gemini`（Google Gemini API）
 
-在 `~/.rexos/config.toml` 中配置 providers，并把不同任务类型路由到 `(provider, model)`：
+在 `~/.loopforge/config.toml` 中配置 providers，并把不同任务类型路由到 `(provider, model)`：
 
 ```toml
 [providers.ollama]

@@ -231,7 +231,7 @@ Change local smoke:
 
 **Step 3: Add optional compatibility notice hook (non-blocking)**
 
-Add a guarded env-based message (`LOOPFORGE_SHOW_REXOS_COMPAT_NOTICE=1`) when invoked as `rexos`, to prepare future deprecation communication without noisy defaults.
+Add a guarded env-based message (`LOOPFORGE_SHOW_LOOPFORGE_COMPAT_NOTICE=1`) when invoked as `rexos`, to prepare future deprecation communication without noisy defaults.
 
 **Step 4: Run targeted tests and script smoke**
 

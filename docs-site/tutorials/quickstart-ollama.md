@@ -13,7 +13,7 @@ Check your local models:
 ollama list
 ```
 
-LoopForge defaults to `providers.ollama.default_model = "llama3.2"` in `~/.rexos/config.toml`.
+LoopForge defaults to `providers.ollama.default_model = "llama3.2"` in `~/.loopforge/config.toml`.
 
 If you don’t have `llama3.2` installed, pick one of these:
 
@@ -39,8 +39,8 @@ ollama serve
 ## 2) Initialize LoopForge
 
 This creates:
-- `~/.rexos/config.toml` (provider config + routing)
-- `~/.rexos/rexos.db` (SQLite memory)
+- `~/.loopforge/config.toml` (provider config + routing)
+- `~/.loopforge/loopforge.db` (SQLite memory)
 
 ```bash
 loopforge init
@@ -52,24 +52,24 @@ Pick a workspace directory (tools are sandboxed to this root):
 
 === "macOS/Linux"
     ```bash
-    mkdir -p rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
-    cat rexos-work/hello.txt
+    mkdir -p loopforge-work
+    loopforge agent run --workspace loopforge-work --prompt "Create hello.txt with the word hi"
+    cat loopforge-work/hello.txt
     ```
 
 === "Windows (PowerShell)"
     ```powershell
-    mkdir rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
-    Get-Content .\rexos-work\hello.txt
+    mkdir loopforge-work
+    loopforge agent run --workspace loopforge-work --prompt "Create hello.txt with the word hi"
+    Get-Content .\loopforge-work\hello.txt
     ```
 
-LoopForge prints the final assistant output, and persists a stable `session_id` under `rexos-work/.rexos/session_id`.
+LoopForge prints the final assistant output, and persists a stable `session_id` under `loopforge-work/.loopforge/session_id`.
 
 ## 4) Re-run in the same workspace (optional)
 
 ```bash
-loopforge agent run --workspace rexos-work --prompt "Now append a newline + bye to hello.txt"
+loopforge agent run --workspace loopforge-work --prompt "Now append a newline + bye to hello.txt"
 ```
 
 ## Next steps

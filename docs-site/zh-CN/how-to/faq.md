@@ -8,9 +8,9 @@
 ```bash
 ollama serve
 loopforge init
-mkdir -p rexos-demo
-loopforge agent run --workspace rexos-demo --prompt "Create hello.txt with the word hi"
-cat rexos-demo/hello.txt
+mkdir -p loopforge-demo
+loopforge agent run --workspace loopforge-demo --prompt "Create hello.txt with the word hi"
+cat loopforge-demo/hello.txt
 ```
 
 预期：`hello.txt` 存在，内容是 `hi`。
@@ -29,7 +29,7 @@ ollama list
 ollama pull qwen3:4b
 ```
 
-然后在 `~/.rexos/config.toml` 设置：
+然后在 `~/.loopforge/config.toml` 设置：
 
 ```toml
 [providers.ollama]
@@ -63,7 +63,7 @@ loopforge doctor
 示例：
 
 ```bash
-loopforge agent run --workspace rexos-demo --prompt "Read README.md and write notes/summary.md with 5 bullets."
+loopforge agent run --workspace loopforge-demo --prompt "Read README.md and write notes/summary.md with 5 bullets."
 ```
 
 ## 5）为什么会报“tool arguments/JSON 参数错误”？
@@ -80,8 +80,8 @@ loopforge agent run --workspace rexos-demo --prompt "Read README.md and write no
 建议先用独立 workspace：
 
 ```bash
-mkdir -p /tmp/rexos-work
-loopforge agent run --workspace /tmp/rexos-work --prompt "..."
+mkdir -p /tmp/loopforge-work
+loopforge agent run --workspace /tmp/loopforge-work --prompt "..."
 ```
 
 仓库改动建议走 harness：
@@ -115,7 +115,7 @@ Verification command:
 示例：
 
 ```bash
-loopforge agent run --workspace rexos-demo --prompt "Goal: summarize Cargo.toml dependencies. Output file: notes/deps.md. Constraints: 8 bullets max. Verification: file must exist."
+loopforge agent run --workspace loopforge-demo --prompt "Goal: summarize Cargo.toml dependencies. Output file: notes/deps.md. Constraints: 8 bullets max. Verification: file must exist."
 ```
 
 ## 9）提 bug 时需要哪些信息？

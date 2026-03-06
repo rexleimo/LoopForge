@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""RexOS Browser Bridge — Playwright automation over JSON-lines stdio.
+"""LoopForge Browser Bridge — Playwright automation over JSON-lines stdio.
 
-This is a small helper used by RexOS `browser_*` tools. Rust launches this
+This is a small helper used by LoopForge `browser_*` tools. Rust launches this
 script as a subprocess, then sends commands as JSON (1 per line) to stdin.
 The bridge replies with JSON (1 per line) on stdout.
 """
@@ -13,7 +13,7 @@ import sys
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="RexOS Browser Bridge")
+    parser = argparse.ArgumentParser(description="LoopForge Browser Bridge")
     parser.add_argument("--headless", action="store_true", default=True)
     parser.add_argument("--no-headless", dest="headless", action="store_false")
     parser.add_argument("--width", type=int, default=1280)

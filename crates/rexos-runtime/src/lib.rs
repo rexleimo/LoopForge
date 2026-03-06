@@ -55,7 +55,7 @@ enum ApprovalMode {
 
 impl ApprovalMode {
     fn from_env() -> Self {
-        let raw = std::env::var("REXOS_APPROVAL_MODE")
+        let raw = std::env::var("LOOPFORGE_APPROVAL_MODE")
             .unwrap_or_else(|_| "off".to_string())
             .to_lowercase();
         match raw.as_str() {
@@ -209,10 +209,10 @@ impl OutboxDispatcher {
     }
 
     async fn deliver_webhook(&self, msg: &OutboxMessageRecord) -> anyhow::Result<()> {
-        let url = std::env::var("REXOS_WEBHOOK_URL")
+        let url = std::env::var("LOOPFORGE_WEBHOOK_URL")
             .ok()
             .filter(|v| !v.trim().is_empty())
-            .ok_or_else(|| anyhow::anyhow!("REXOS_WEBHOOK_URL is not set"))?;
+            .ok_or_else(|| anyhow::anyhow!("LOOPFORGE_WEBHOOK_URL is not set"))?;
 
         let payload = serde_json::json!({
             "message_id": msg.message_id,
@@ -876,7 +876,7 @@ impl AgentRuntime {
             && !skill_approval_is_granted(skill_name)
         {
             let msg = format!(
-                "approval required for skill `{skill_name}` (set REXOS_SKILL_APPROVAL_ALLOW={skill_name} or all)"
+                "approval required for skill `{skill_name}` (set LOOPFORGE_SKILL_APPROVAL_ALLOW={skill_name} or all)"
             );
             let _ = self.append_acp_event(AcpEventRecord {
                 id: uuid::Uuid::new_v4().to_string(),
@@ -1025,7 +1025,7 @@ impl AgentRuntime {
         }
 
         let msg = format!(
-            "approval required for dangerous tool `{tool_name}` (set REXOS_APPROVAL_ALLOW={tool_name} or all)"
+            "approval required for dangerous tool `{tool_name}` (set LOOPFORGE_APPROVAL_ALLOW={tool_name} or all)"
         );
         match mode {
             ApprovalMode::Warn => Ok(Some(msg)),
@@ -2739,7 +2739,7 @@ fn find_balanced_json_object_end(s: &str, start: usize) -> Option<usize> {
 
 fn workflow_state_path(workspace_root: &Path, workflow_id: &str) -> PathBuf {
     workspace_root
-        .join(".rexos")
+        .join(".loopforge")
         .join("workflows")
         .join(format!("{workflow_id}.json"))
 }
@@ -2797,7 +2797,7 @@ fn json_bool_field(arguments_json: &str, field: &str) -> bool {
 }
 
 fn tool_approval_is_granted(tool_name: &str) -> bool {
-    let raw = std::env::var("REXOS_APPROVAL_ALLOW").unwrap_or_default();
+    let raw = std::env::var("LOOPFORGE_APPROVAL_ALLOW").unwrap_or_default();
     let items: HashSet<String> = raw
         .split(',')
         .map(|s| s.trim().to_lowercase())
@@ -2810,7 +2810,7 @@ fn tool_approval_is_granted(tool_name: &str) -> bool {
 }
 
 fn skill_approval_is_granted(skill_name: &str) -> bool {
-    let raw = std::env::var("REXOS_SKILL_APPROVAL_ALLOW").unwrap_or_default();
+    let raw = std::env::var("LOOPFORGE_SKILL_APPROVAL_ALLOW").unwrap_or_default();
     let items: HashSet<String> = raw
         .split(',')
         .map(|s| s.trim().to_lowercase())

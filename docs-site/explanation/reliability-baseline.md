@@ -8,7 +8,7 @@ The goal is simple: reduce time-to-first-success and make onboarding failures di
 
 ## Core onboarding metrics
 
-LoopForge tracks first-task onboarding outcomes in `~/.rexos/onboard-metrics.json`:
+LoopForge tracks first-task onboarding outcomes in `~/.loopforge/onboard-metrics.json`:
 
 - `attempted_first_task`: how many onboarding runs actually attempted the first agent task
 - `first_task_success`: successful first-task runs
@@ -23,7 +23,7 @@ From these values:
 
 Each onboarding result is also appended to:
 
-- `~/.rexos/onboard-events.jsonl`
+- `~/.loopforge/onboard-events.jsonl`
 
 Each line records timestamp, workspace, session id, outcome, and (for failures) category + error summary.
 
@@ -31,14 +31,14 @@ Each line records timestamp, workspace, session id, outcome, and (for failures) 
 
 === "macOS/Linux"
     ```bash
-    cat ~/.rexos/onboard-metrics.json
-    tail -n 20 ~/.rexos/onboard-events.jsonl
+    cat ~/.loopforge/onboard-metrics.json
+    tail -n 20 ~/.loopforge/onboard-events.jsonl
     ```
 
 === "Windows (PowerShell)"
     ```powershell
-    Get-Content $HOME/.rexos/onboard-metrics.json
-    Get-Content $HOME/.rexos/onboard-events.jsonl -Tail 20
+    Get-Content $HOME/.loopforge/onboard-metrics.json
+    Get-Content $HOME/.loopforge/onboard-events.jsonl -Tail 20
     ```
 
 ## Daily report script
@@ -52,7 +52,7 @@ Run it from repository root:
 === "macOS/Linux"
     ```bash
     python3 scripts/onboard_metrics_report.py \
-      --base-dir ~/.rexos \
+      --base-dir ~/.loopforge \
       --out-dir .tmp/onboard-report \
       --days 7 \
       --window-hours 24
@@ -63,7 +63,7 @@ Run it from repository root:
 === "Windows (PowerShell)"
     ```powershell
     python scripts/onboard_metrics_report.py `
-      --base-dir $HOME/.rexos `
+      --base-dir $HOME/.loopforge `
       --out-dir .tmp/onboard-report `
       --days 7 `
       --window-hours 24

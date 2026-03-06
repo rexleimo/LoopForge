@@ -78,7 +78,7 @@ async fn harness_bootstrap_with_prompt_populates_features_and_checkpoints() {
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 
@@ -169,7 +169,7 @@ async fn harness_bootstrap_with_prompt_errors_if_initializer_does_not_write_feat
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 
@@ -285,7 +285,7 @@ async fn harness_bootstrap_with_prompt_normalizes_minimal_features_json() {
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

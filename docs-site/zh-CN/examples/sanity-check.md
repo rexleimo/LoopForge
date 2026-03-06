@@ -19,8 +19,8 @@ loopforge init
 3) 创建一个临时 workspace：
 
 ```bash
-mkdir -p rexos-demo
-cd rexos-demo
+mkdir -p loopforge-demo
+cd loopforge-demo
 ```
 
 4) 跑一个最小任务：写文件 + 运行 shell 命令：

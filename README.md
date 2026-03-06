@@ -2,24 +2,24 @@
 
 English | [简体中文](README.zh-CN.md)
 
-LoopForge (formerly RexOS) is a **personal AI engineer** for software delivery: long-running workflows, persistent memory, tool sandboxing, and model routing with harness checkpoints.
+LoopForge  is a **personal AI engineer** for software delivery: long-running workflows, persistent memory, tool sandboxing, and model routing with harness checkpoints.
 
 ## Brand update
 
 - Public product name: **LoopForge**
 - Primary CLI command: `loopforge`
-- Runtime data path remains `~/.rexos` for now.
+- Runtime data path remains `~/.loopforge` for now.
 
 ## Documentation
 
 - Docs site: https://os.rexai.top
-- (If the custom domain isn’t configured yet) GitHub Pages: https://rexleimo.github.io/rexos/
+- (If the custom domain isn’t configured yet) GitHub Pages: https://rexleimo.github.io/LoopForge/
 - 5-minute outcomes: `docs-site/tutorials/five-minute-outcomes.md`
 - Positioning: `docs-site/explanation/why-loopforge.md`
 
 ## Status
 
-This repository is bootstrapped with a long-running harness (`features.json`, `init.sh`, `rexos-progress.md`). Work is tracked by flipping feature `passes` from `false` → `true`.
+This repository is bootstrapped with a long-running harness (`features.json`, `init.sh`, `loopforge-progress.md`). Work is tracked by flipping feature `passes` from `false` → `true`.
 
 ## Install
 
@@ -47,7 +47,7 @@ cargo build --release -p loopforge-cli
 
 ## Run with Ollama (OpenAI-compatible)
 
-LoopForge defaults to `ollama` at `http://127.0.0.1:11434/v1` in `~/.rexos/config.toml`.
+LoopForge defaults to `ollama` at `http://127.0.0.1:11434/v1` in `~/.loopforge/config.toml`.
 
 ```bash
 # 1) Start Ollama
@@ -57,12 +57,12 @@ ollama serve
 loopforge init
 
 # 3) Run an agent session in a workspace directory
-mkdir -p /tmp/rexos-work
-loopforge agent run --workspace /tmp/rexos-work --prompt "Create hello.txt with the word hi"
+mkdir -p /tmp/loopforge-work
+loopforge agent run --workspace /tmp/loopforge-work --prompt "Create hello.txt with the word hi"
 ```
 
-To run the optional Ollama smoke test: `REXOS_OLLAMA_MODEL=<your-model> cargo test -p rexos -- --ignored`.
-To run the optional NVIDIA NIM smoke test: `NVIDIA_API_KEY=<key> cargo test -p rexos --test nvidia_nim_smoke -- --ignored`.
+To run the optional Ollama smoke test: `LOOPFORGE_OLLAMA_MODEL=<your-model> cargo test --workspace --test ollama_smoke -- --ignored`.
+To run the optional NVIDIA NIM smoke test: `NVIDIA_API_KEY=<key> cargo test --workspace --test nvidia_nim_smoke -- --ignored`.
 
 ## Releasing (maintainers)
 
@@ -71,8 +71,8 @@ Before every release, follow the versioning/changelog policy in `docs/versioning
 If an iteration is marked as "needs version bump", the same change set must include both version number updates and changelog updates (`CHANGELOG.md`).
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 ## Providers & routing
@@ -85,7 +85,7 @@ LoopForge supports multiple LLM providers via drivers:
 - `anthropic` (Claude API + Anthropic-compatible gateways)
 - `gemini` (Google Gemini API)
 
-`~/.rexos/config.toml` defines providers and routes each task kind to a `(provider, model)` pair:
+`~/.loopforge/config.toml` defines providers and routes each task kind to a `(provider, model)` pair:
 
 ```toml
 [providers.ollama]

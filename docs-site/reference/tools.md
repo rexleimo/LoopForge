@@ -188,13 +188,13 @@ Browser tools enable headless browser automation via **Chrome DevTools Protocol 
 Notes:
 
 - `browser_navigate` is SSRF-protected by default (denies loopback/private targets unless `allow_private=true`).
-- Headless by default. To show a GUI window, pass `headless=false` to `browser_navigate` (or set `REXOS_BROWSER_HEADLESS=0` as a default).
+- Headless by default. To show a GUI window, pass `headless=false` to `browser_navigate` (or set `LOOPFORGE_BROWSER_HEADLESS=0` as a default).
 - `browser_screenshot` writes a PNG to a workspace-relative path (no absolute paths, no `..`, no symlink escapes).
-- Default backend is CDP and requires a local Chromium-based browser (Chrome/Chromium/Edge). If LoopForge can’t find it, set `REXOS_BROWSER_CHROME_PATH`.
-- Optional remote CDP: set `REXOS_BROWSER_CDP_HTTP` (example: `http://127.0.0.1:9222`).
-- Optional remote tab mode: set `REXOS_BROWSER_CDP_TAB_MODE=reuse` to skip `/json/new` and reuse an existing page target (default: `new`).
+- Default backend is CDP and requires a local Chromium-based browser (Chrome/Chromium/Edge). If LoopForge can’t find it, set `LOOPFORGE_BROWSER_CHROME_PATH`.
+- Optional remote CDP: set `LOOPFORGE_BROWSER_CDP_HTTP` (example: `http://127.0.0.1:9222`).
+- Optional remote tab mode: set `LOOPFORGE_BROWSER_CDP_TAB_MODE=reuse` to skip `/json/new` and reuse an existing page target (default: `new`).
 - Loopback CDP HTTP (`127.0.0.1` / `localhost`) bypasses proxy settings to avoid corporate proxy misconfig breaking local automation.
-- Optional legacy backend (Playwright bridge): set `REXOS_BROWSER_BACKEND=playwright` and install Python + Playwright:
+- Optional legacy backend (Playwright bridge): set `LOOPFORGE_BROWSER_BACKEND=playwright` and install Python + Playwright:
 
   ```bash
   python3 -m pip install playwright
@@ -218,7 +218,7 @@ Tool call:
 Prompt:
 
 ```text
-Use browser_navigate to open https://example.com (headless=false). Then save a screenshot to .rexos/browser/example.png and close the browser.
+Use browser_navigate to open https://example.com (headless=false). Then save a screenshot to .loopforge/browser/example.png and close the browser.
 ```
 
 See also: [Baidu Weather](../how-to/browser-use-cases/baidu-weather.md).
@@ -252,7 +252,7 @@ Tool call:
 Prompt:
 
 ```text
-Use browser_navigate to open https://example.com, then call browser_scroll down by 800, take a screenshot to .rexos/browser/scroll.png, then close the browser.
+Use browser_navigate to open https://example.com, then call browser_scroll down by 800, take a screenshot to .loopforge/browser/scroll.png, then close the browser.
 ```
 
 ### `browser_click`
@@ -268,7 +268,7 @@ Tool call:
 Prompt:
 
 ```text
-Use browser_navigate to open https://example.com, then browser_click \"More information\". Save a screenshot to .rexos/browser/click.png and close the browser.
+Use browser_navigate to open https://example.com, then browser_click \"More information\". Save a screenshot to .loopforge/browser/click.png and close the browser.
 ```
 
 ### `browser_type`
@@ -371,18 +371,18 @@ Use browser_run_js to return document.title, then write it to notes/title.txt.
 
 ### `browser_screenshot`
 
-Save a PNG screenshot to the workspace (default: `.rexos/browser/screenshot.png`).
+Save a PNG screenshot to the workspace (default: `.loopforge/browser/screenshot.png`).
 
 Tool call:
 
 ```json
-{ "path": ".rexos/browser/page.png" }
+{ "path": ".loopforge/browser/page.png" }
 ```
 
 Prompt:
 
 ```text
-After navigating, use browser_screenshot to save evidence to .rexos/browser/page.png.
+After navigating, use browser_screenshot to save evidence to .loopforge/browser/page.png.
 ```
 
 ### `browser_close`
@@ -411,7 +411,7 @@ These tool names exist for compatibility and map to LoopForge built-ins:
 - `shell_exec` → `shell`
 - `apply_patch` → apply `*** Begin Patch` / `*** End Patch` patches (add/update/delete)
 - `web_search` → DuckDuckGo HTML search (best-effort; returns a short text list)
-- `memory_store` / `memory_recall` → shared KV store persisted in `~/.rexos/rexos.db`
+- `memory_store` / `memory_recall` → shared KV store persisted in `~/.loopforge/loopforge.db`
 
 ### `file_read`
 
@@ -538,13 +538,13 @@ Supported formats: PNG, JPEG, GIF.
 Tool call:
 
 ```json
-{ "path": ".rexos/browser/page.png" }
+{ "path": ".loopforge/browser/page.png" }
 ```
 
 Prompt:
 
 ```text
-Use image_analyze on .rexos/browser/page.png and write notes/image_meta.json with the returned JSON.
+Use image_analyze on .loopforge/browser/page.png and write notes/image_meta.json with the returned JSON.
 ```
 
 ## `location_get`
@@ -627,7 +627,7 @@ Use image_generate to create assets/rexos_badge.svg. Then fs_read the file and w
 
 ## Runtime collaboration and scheduling tools
 
-These tools are implemented by the agent runtime (not by the standalone `Toolset`) and persist state in `~/.rexos/rexos.db`:
+These tools are implemented by the agent runtime (not by the standalone `Toolset`) and persist state in `~/.loopforge/loopforge.db`:
 
 - `agent_spawn` / `agent_list` / `agent_find` / `agent_send` / `agent_kill`
 - `hand_list` / `hand_activate` / `hand_status` / `hand_deactivate`
@@ -885,7 +885,7 @@ Add an entity record to the knowledge store.
 Tool call:
 
 ```json
-{ "name": "LoopForge", "entity_type": "project", "properties": { "repo": "rexleimo/rexos" } }
+{ "name": "LoopForge", "entity_type": "project", "properties": { "repo": "rexleimo/LoopForge" } }
 ```
 
 Prompt:
@@ -941,7 +941,7 @@ Enqueue an outbound message into the outbox. Delivery happens out-of-band via th
 Supported channels:
 
 - `console`: prints the message on drain
-- `webhook`: posts JSON to `REXOS_WEBHOOK_URL`
+- `webhook`: posts JSON to `LOOPFORGE_WEBHOOK_URL`
 
 Arguments (tool call JSON):
 
@@ -966,7 +966,7 @@ Use channel_send to enqueue a console message (recipient=stdout) saying \"Hello 
 
 ## `workflow_run`
 
-Run a multi-step workflow and persist execution state to `.rexos/workflows/<workflow_id>.json`.
+Run a multi-step workflow and persist execution state to `.loopforge/workflows/<workflow_id>.json`.
 
 Arguments (tool call JSON):
 
@@ -1142,21 +1142,21 @@ MVP behavior: writes a short `.wav` file to the workspace (placeholder for real 
 Tool call:
 
 ```json
-{ "text": "Hello from LoopForge", "path": ".rexos/audio/tts.wav" }
+{ "text": "Hello from LoopForge", "path": ".loopforge/audio/tts.wav" }
 ```
 
 Prompt:
 
 ```text
-Use text_to_speech to write .rexos/audio/tts.wav saying \"Hello from LoopForge\". Then use media_describe on that file and write notes/tts_meta.json.
+Use text_to_speech to write .loopforge/audio/tts.wav saying \"Hello from LoopForge\". Then use media_describe on that file and write notes/tts_meta.json.
 ```
 
 ## `docker_exec`
 
 Run a command inside a one-shot Docker container with the workspace mounted.
 
-- Disabled by default: set `REXOS_DOCKER_EXEC_ENABLED=1`
-- Optional image override: `REXOS_DOCKER_EXEC_IMAGE` (default `alpine:3.20`)
+- Disabled by default: set `LOOPFORGE_DOCKER_EXEC_ENABLED=1`
+- Optional image override: `LOOPFORGE_DOCKER_EXEC_IMAGE` (default `alpine:3.20`)
 
 ### Example
 

@@ -92,7 +92,7 @@ async fn reserved_schedule_tools_create_list_and_delete() {
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

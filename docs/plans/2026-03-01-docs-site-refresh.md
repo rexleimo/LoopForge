@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Make `os.rexai.top` a polished, practical RexOS documentation site (better UI + deeper docs + real use cases), with English/中文 parity.
+**Goal:** Make `os.rexai.top` a polished, practical LoopForge documentation site (better UI + deeper docs + real use cases), with English/中文 parity.
 
 **Architecture:** Keep MkDocs Material. Improve `mkdocs.yml` theme/features, add small CSS/JS overrides, rewrite the landing pages, and expand “use cases / providers / troubleshooting” into concrete, copy-pastable workflows.
 

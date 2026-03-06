@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add browser automation tools to RexOS (`browser_navigate/click/type/read_page/screenshot/close`) and document installation + usage. Keep SSRF protections similar to `web_fetch`. Use Ollama for local smoke testing.
+**Goal:** Add browser automation tools to LoopForge (`browser_navigate/click/type/read_page/screenshot/close`) and document installation + usage. Keep SSRF protections similar to `web_fetch`. Use Ollama for local smoke testing.
 
 **Architecture:** Implement browser tools inside `rexos-tools` as a Python Playwright bridge (JSON-lines over stdin/stdout), lazily spawned and reused per `Toolset` instance (one session per agent run). Enforce URL scheme + DNS resolution + IP allow/deny checks in Rust before navigation. Keep the feature optional: if Playwright isn’t installed, return a clear error with install steps.
 
@@ -127,7 +127,7 @@ Expected: PASS.
 
 **Implementation notes:**
 - `browser_read_page` returns JSON with `{title,url,content}` (truncate content)
-- `browser_screenshot` decodes base64 PNG and writes to a workspace path (default `.rexos/browser/screenshot.png`)
+- `browser_screenshot` decodes base64 PNG and writes to a workspace path (default `.loopforge/browser/screenshot.png`)
 - `browser_click` / `browser_type` take selectors and return small JSON status
 
 ---
@@ -168,6 +168,6 @@ python3 -m mkdocs build --strict
 Run:
 
 ```bash
-REXOS_OLLAMA_MODEL=llama3.2 cargo test -p rexos -- --ignored ollama_openai_compat_smoke
+LOOPFORGE_OLLAMA_MODEL=llama3.2 cargo test -p rexos -- --ignored ollama_openai_compat_smoke
 ```
 

@@ -4,7 +4,7 @@
 
 **Goal:** Add an out-of-the-box NVIDIA NIM provider preset (OpenAI-compatible) and document how to use it.
 
-**Architecture:** Treat NVIDIA NIM as `openai_compatible` (Chat Completions). Add a `providers.nvidia` preset in the default `~/.rexos/config.toml` generation, plus docs examples and env var setup.
+**Architecture:** Treat NVIDIA NIM as `openai_compatible` (Chat Completions). Add a `providers.nvidia` preset in the default `~/.loopforge/config.toml` generation, plus docs examples and env var setup.
 
 **Tech Stack:** Rust (Cargo workspace), `reqwest` (OpenAI-compatible client), MkDocs Material + `mkdocs-static-i18n` docs site.
 

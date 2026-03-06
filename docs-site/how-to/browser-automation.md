@@ -11,20 +11,20 @@ LoopForge launches a local Chromium-based browser (Chrome / Chromium / Edge) and
 ### Prerequisites
 
 - Install a Chromium-based browser (Chrome/Chromium/Edge).
-- If LoopForge can’t find it, set `REXOS_BROWSER_CHROME_PATH` to the browser executable path.
+- If LoopForge can’t find it, set `LOOPFORGE_BROWSER_CHROME_PATH` to the browser executable path.
 
 ### Remote CDP (optional)
 
 If you already have a browser running with a remote debugging port (or you run one in Docker), point LoopForge at it:
 
 ```bash
-export REXOS_BROWSER_CDP_HTTP="http://127.0.0.1:9222"
+export LOOPFORGE_BROWSER_CDP_HTTP="http://127.0.0.1:9222"
 ```
 
 By default, LoopForge only allows **loopback** CDP endpoints. To attach to a non-loopback CDP URL, you must explicitly opt in:
 
 ```bash
-export REXOS_BROWSER_CDP_ALLOW_REMOTE=1
+export LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE=1
 ```
 
 For a copy/paste Docker GUI sandbox (Chromium + noVNC) that exposes CDP on `127.0.0.1:9222`, run:
@@ -45,14 +45,14 @@ To show the browser window (local debugging / demos), set `headless=false` on th
 { "url": "https://www.baidu.com", "headless": false }
 ```
 
-You can also set `REXOS_BROWSER_HEADLESS=0` to make GUI mode the default when `headless` is not provided.
+You can also set `LOOPFORGE_BROWSER_HEADLESS=0` to make GUI mode the default when `headless` is not provided.
 
 ## Optional backend: Playwright bridge (legacy)
 
 If you prefer Playwright (or you’re in an environment where CDP is hard), switch the backend:
 
 ```bash
-export REXOS_BROWSER_BACKEND=playwright
+export LOOPFORGE_BROWSER_BACKEND=playwright
 ```
 
 Then install Playwright (Python):
@@ -62,7 +62,7 @@ python3 -m pip install playwright
 python3 -m playwright install chromium
 ```
 
-If your Python executable isn't `python3`, set `REXOS_BROWSER_PYTHON` (example: `python`).
+If your Python executable isn't `python3`, set `LOOPFORGE_BROWSER_PYTHON` (example: `python`).
 
 ## Tool set
 
@@ -111,14 +111,14 @@ Rules:
 - Always call browser_read_page after navigate/click/type/press_key to verify page state before the next step.
 - If the page updates async, use browser_wait_for (selector/text) before browser_read_page.
 - Keep actions minimal and reversible. If selectors fail, read the page and adjust selectors.
-- Save a screenshot at the end to .rexos/browser/<topic>.png.
+- Save a screenshot at the end to .loopforge/browser/<topic>.png.
 - Do NOT enter credentials or complete purchases without explicit user confirmation.
 ```
 
 Example run:
 
 ```bash
-loopforge agent run --workspace . --prompt "Use browser tools to open https://example.com, read the page, write a short summary to notes/example.md, and save a screenshot to .rexos/browser/example.png."
+loopforge agent run --workspace . --prompt "Use browser tools to open https://example.com, read the page, write a short summary to notes/example.md, and save a screenshot to .loopforge/browser/example.png."
 ```
 
 ## Security notes
@@ -130,9 +130,9 @@ loopforge agent run --workspace . --prompt "Use browser tools to open https://ex
 
 ## Troubleshooting
 
-- Error mentions Chrome/Chromium not found: install a browser or set `REXOS_BROWSER_CHROME_PATH`.
-- Error mentions CDP sandbox issues in Docker: set `REXOS_BROWSER_NO_SANDBOX=1` (only in trusted sandbox envs).
-- Error mentions Playwright missing: set `REXOS_BROWSER_BACKEND=playwright` and install Playwright.
-- Error mentions `python3` missing (Playwright backend): set `REXOS_BROWSER_PYTHON=python`.
-- No browser window appears: it's headless by default; use `headless=false` (or set `REXOS_BROWSER_HEADLESS=0`).
+- Error mentions Chrome/Chromium not found: install a browser or set `LOOPFORGE_BROWSER_CHROME_PATH`.
+- Error mentions CDP sandbox issues in Docker: set `LOOPFORGE_BROWSER_NO_SANDBOX=1` (only in trusted sandbox envs).
+- Error mentions Playwright missing: set `LOOPFORGE_BROWSER_BACKEND=playwright` and install Playwright.
+- Error mentions `python3` missing (Playwright backend): set `LOOPFORGE_BROWSER_PYTHON=python`.
+- No browser window appears: it's headless by default; use `headless=false` (or set `LOOPFORGE_BROWSER_HEADLESS=0`).
 - Error mentions session not started: call `browser_navigate` first.

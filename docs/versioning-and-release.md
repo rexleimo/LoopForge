@@ -2,7 +2,7 @@
 
 ## Goals
 
-- Define the first release (`v0.1.0`) with a clear scope.
+- Define the first release (`v1.0.0`) with a clear scope.
 - Keep future version bumps planned and predictable.
 - Enforce one rule: if this iteration must bump version, the same commit/PR must include both version number changes and changelog updates.
 
@@ -14,22 +14,22 @@ This repo uses SemVer with a `v` tag prefix (`vMAJOR.MINOR.PATCH`):
 - `MINOR`: planned feature iteration (preferred during `0.x` stage).
 - `PATCH`: bugfixes, documentation, or small safe improvements.
 
-Current workspace version is `0.1.0` (from root `Cargo.toml` `[workspace.package].version`).
+Current workspace version is `1.0.0` (from root `Cargo.toml` `[workspace.package].version`).
 
-## First Release Plan (`v0.1.0`)
+## First Release Plan (`v1.0.0`)
 
 Release target:
-- Core CLI path is runnable (`rexos init`, `rexos agent run`).
+- Core CLI path is runnable (`loopforge init`, `loopforge agent run`).
 - Existing multi-provider routing and harness flow are stable enough for first external users.
 - GitHub Release binary workflow is available (tag-triggered).
 
 Release checklist:
 1. Run full test suite: `cargo test`.
 2. Confirm release packaging script works locally:
-   `python3 scripts/package_release.py --version v0.1.0 --target local --bin target/release/rexos --out-dir dist`
-3. Ensure `CHANGELOG.md` contains a `0.1.0` section.
+   `python3 scripts/package_release.py --version v1.0.0 --target local --bin target/release/loopforge --out-dir dist`
+3. Ensure `CHANGELOG.md` contains a `1.0.0` section.
 4. Create and push tag:
-   `git tag v0.1.0 && git push origin v0.1.0`
+   `git tag v1.0.0 && git push origin v1.0.0`
 
 ## Mandatory Rule for Version-Bump Iterations
 

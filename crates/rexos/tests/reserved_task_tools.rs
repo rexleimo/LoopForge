@@ -109,7 +109,7 @@ async fn reserved_task_tools_post_claim_complete_and_publish_event() {
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

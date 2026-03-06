@@ -78,7 +78,7 @@ class OnboardMetricsReportTests(unittest.TestCase):
 
     def test_build_report_aggregates_recent_window_and_daily(self):
         with tempfile.TemporaryDirectory() as tmp:
-            base = Path(tmp) / ".rexos"
+            base = Path(tmp) / ".loopforge"
             self._write_fixture(base)
 
             now_ms = int(
@@ -108,7 +108,7 @@ class OnboardMetricsReportTests(unittest.TestCase):
     def test_render_markdown_contains_core_sections(self):
         report = {
             "generated_at": "2026-03-06T00:00:00+00:00",
-            "base_dir": "/tmp/.rexos",
+            "base_dir": "/tmp/.loopforge",
             "metrics_snapshot": {
                 "attempted_first_task": 10,
                 "first_task_success": 7,
@@ -142,7 +142,7 @@ class OnboardMetricsReportTests(unittest.TestCase):
 
     def test_main_writes_json_and_markdown(self):
         with tempfile.TemporaryDirectory() as tmp:
-            base = Path(tmp) / ".rexos"
+            base = Path(tmp) / ".loopforge"
             out = Path(tmp) / "out"
             self._write_fixture(base)
 

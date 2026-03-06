@@ -31,11 +31,11 @@ pub struct DaemonConfig {
 
 impl Default for DaemonConfig {
     fn default() -> Self {
-        let auth_bearer_token = std::env::var("REXOS_DAEMON_AUTH_TOKEN")
+        let auth_bearer_token = std::env::var("LOOPFORGE_DAEMON_AUTH_TOKEN")
             .ok()
             .map(|v| v.trim().to_string())
             .filter(|v| !v.is_empty());
-        let rate_limit_per_minute = std::env::var("REXOS_DAEMON_RATE_LIMIT_PER_MINUTE")
+        let rate_limit_per_minute = std::env::var("LOOPFORGE_DAEMON_RATE_LIMIT_PER_MINUTE")
             .ok()
             .and_then(|v| v.parse::<u32>().ok())
             .filter(|v| *v > 0)

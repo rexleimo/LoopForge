@@ -8,19 +8,19 @@ See also: [Browser Automation (CDP)](../browser-automation.md).
 
 === "Bash (macOS/Linux)"
     ```bash
-    export REXOS_BROWSER_HEADLESS=0
+    export LOOPFORGE_BROWSER_HEADLESS=0
 
-    loopforge agent run --workspace . --prompt "Use browser tools to open https://en.wikipedia.org/wiki/Rust_(programming_language) . Read the page. Write a short summary to notes/wiki_rust.md. Save a screenshot to .rexos/browser/wiki_rust.png. Close the browser."
+    loopforge agent run --workspace . --prompt "Use browser tools to open https://en.wikipedia.org/wiki/Rust_(programming_language) . Read the page. Write a short summary to notes/wiki_rust.md. Save a screenshot to .loopforge/browser/wiki_rust.png. Close the browser."
     ```
 
 === "PowerShell (Windows)"
     ```powershell
-    $env:REXOS_BROWSER_HEADLESS = "0"
+    $env:LOOPFORGE_BROWSER_HEADLESS = "0"
 
-    loopforge agent run --workspace . --prompt "Use browser tools to open https://en.wikipedia.org/wiki/Rust_(programming_language) . Read the page. Write a short summary to notes/wiki_rust.md. Save a screenshot to .rexos/browser/wiki_rust.png. Close the browser."
+    loopforge agent run --workspace . --prompt "Use browser tools to open https://en.wikipedia.org/wiki/Rust_(programming_language) . Read the page. Write a short summary to notes/wiki_rust.md. Save a screenshot to .loopforge/browser/wiki_rust.png. Close the browser."
     ```
 
 ## What to expect
 
 - `notes/wiki_rust.md`
-- `.rexos/browser/wiki_rust.png`
+- `.loopforge/browser/wiki_rust.png`

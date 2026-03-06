@@ -9,7 +9,7 @@ Practical notes for builders choosing an Agent OS and scaling from local prototy
 - [让 AI 放心执行代码：隔离执行环境的最佳实践](safe-code-execution.md)
 - [LoopForge: Personal AI Engineer, Not Just Another Assistant](personal-ai-engineer.md)
 - [What Is LoopForge?](what-is-loopforge.md)
-- [LoopForge vs OpenFang/OpenClaw](rexos-vs-openfang-openclaw.md)
+- [LoopForge vs OpenFang/OpenClaw](loopforge-vs-openfang-openclaw.md)
 
 ## Suggested reading order
 

@@ -1,6 +1,6 @@
 # 什么是 LoopForge？
 
-LoopForge（前身 RexOS）是一个本地优先的长任务 Agent OS。
+LoopForge是一个本地优先的长任务 Agent OS。
 
 ## 一句话定位
 
@@ -18,7 +18,7 @@ LoopForge = **本地先跑通 + 跑通了再切强模型**。
 
 - 名称：LoopForge
 - CLI：`loopforge`
-- 配置目录：还是 `~/.rexos`（不变）
+- 配置目录：还是 `~/.loopforge`（不变）
 
 ## 3 行跑起来
 

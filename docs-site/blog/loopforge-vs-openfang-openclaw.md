@@ -5,7 +5,7 @@ Goal: help builders choose the right tool faster.
 
 ## TL;DR
 
-- Choose **LoopForge** (formerly RexOS) if your core job is coding workflows with reproducible checkpoints and local-first model routing.
+- Choose **LoopForge**  if your core job is coding workflows with reproducible checkpoints and local-first model routing.
 - Choose **OpenFang** if your core job is multi-channel operations and autonomous "hands" at scale.
 - Choose **OpenClaw** if your core job is personal assistant experiences across many channels and devices.
 
@@ -37,7 +37,7 @@ LoopForge default path is optimized for local bring-up with Ollama:
 ```bash
 ollama serve
 loopforge init
-loopforge agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+loopforge agent run --workspace loopforge-work --prompt "Create hello.txt with the word hi"
 ```
 
 This keeps first-run friction low for engineering teams.
@@ -66,7 +66,7 @@ Use this simple decision tree:
 ```bash
 ollama serve
 loopforge init
-loopforge agent run --workspace rexos-demo --prompt "Create notes/plan.md with a 7-day migration checklist"
+loopforge agent run --workspace loopforge-demo --prompt "Create notes/plan.md with a 7-day migration checklist"
 ```
 
 ## Next reading

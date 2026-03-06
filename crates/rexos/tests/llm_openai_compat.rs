@@ -111,7 +111,7 @@ async fn openai_compat_client_posts_and_parses_tool_calls() {
 #[tokio::test]
 async fn openai_compat_client_retries_transient_http_errors() {
     let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let _guard = EnvVarGuard::set("REXOS_LLM_RETRY_MAX", "1");
+    let _guard = EnvVarGuard::set("LOOPFORGE_LLM_RETRY_MAX", "1");
 
     async fn handler(
         State(state): State<TestState>,
@@ -245,8 +245,8 @@ async fn openai_compat_client_parses_legacy_function_call_into_tool_call() {
 #[tokio::test]
 async fn openai_compat_client_timeout_can_be_overridden_via_env() {
     let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let _guard = EnvVarGuard::set("REXOS_OPENAI_COMPAT_TIMEOUT_SECS", "1");
-    let _retry_guard = EnvVarGuard::set("REXOS_LLM_RETRY_MAX", "0");
+    let _guard = EnvVarGuard::set("LOOPFORGE_OPENAI_COMPAT_TIMEOUT_SECS", "1");
+    let _retry_guard = EnvVarGuard::set("LOOPFORGE_LLM_RETRY_MAX", "0");
 
     async fn handler() -> Json<serde_json::Value> {
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;

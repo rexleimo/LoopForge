@@ -2,7 +2,7 @@
 
 **Goal:** Add a provider-native LLM driver for Alibaba DashScope (Qwen) using the Generation API (not OpenAI-compatible), including tool calling support.
 
-**Architecture:** RexOS keeps an internal OpenAI-style chat schema (`ChatCompletionRequest` / `ChatMessage` / `ToolDefinition` / `ToolCall`). The DashScope driver adapts that schema to DashScope’s native request/response envelope:
+**Architecture:** LoopForge keeps an internal OpenAI-style chat schema (`ChatCompletionRequest` / `ChatMessage` / `ToolDefinition` / `ToolCall`). The DashScope driver adapts that schema to DashScope’s native request/response envelope:
 - Request: `POST {base_url}/services/aigc/text-generation/generation`
 - Payload: `{ model, input: { messages }, parameters: { result_format="message", temperature?, tools? } }`
 - Response: `{ output: { choices: [ { message, finish_reason? } ] } }`

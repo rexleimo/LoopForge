@@ -19,8 +19,8 @@ loopforge init
 3) Create a scratch workspace:
 
 ```bash
-mkdir -p rexos-demo
-cd rexos-demo
+mkdir -p loopforge-demo
+cd loopforge-demo
 ```
 
 4) Run a tiny task that writes files + runs a shell command:

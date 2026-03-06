@@ -1,6 +1,6 @@
-# RexOS 对齐清单（Anthropic Harness + RexOS 核心架构）
+# LoopForge 对齐清单（Anthropic Harness + LoopForge 核心架构）
 
-本文档用于“可审计地”回答：RexOS 是否已按 Anthropic 的
+本文档用于“可审计地”回答：LoopForge 是否已按 Anthropic 的
 *Effective harnesses for long-running agents* 落地可用的 long-running harness，
 并覆盖一个 Agent OS 的核心能力（工具沙盒、记忆、LLM 路由、稳定性保护等）。
 
@@ -13,7 +13,7 @@
 - `features.json`：存在（workspace 内），作为可持续 checklist  
   - 创建：`rexos harness init <dir>`（无 `--prompt`）或 `rexos harness init <dir> --prompt ...`（初始化并生成内容）
   - 规则：在 system prompt 中强化；文件内仍保留规则字段（后续可进一步增强 schema 校验）
-- `rexos-progress.md`：存在（workspace 内），append-only 日志
+- `loopforge-progress.md`：存在（workspace 内），append-only 日志
 - `init.sh`：存在（workspace 内），作为 smoke/test 入口
 - Git commit checkpoint：存在（workspace 内的 git repo），harness 会在需要时自动 checkpoint
 
@@ -52,7 +52,7 @@
 目标：同一 workspace 默认复用同一个 session id（避免每次 run 都是新 session）。
 
 对应实现：
-- `crates/rexos-harness/src/lib.rs`：`resolve_session_id()` → `workspace/.rexos/session_id`
+- `crates/rexos-harness/src/lib.rs`：`resolve_session_id()` → `workspace/.loopforge/session_id`
 - CLI 默认行为：`rexos harness run` / `rexos harness init --prompt` 在未显式传 `--session` 时使用 `resolve_session_id()`
 
 测试覆盖：
@@ -60,7 +60,7 @@
 
 ---
 
-## 2) RexOS 核心系统（MVP）对齐
+## 2) LoopForge 核心系统（MVP）对齐
 
 ### 2.1 Workspace crate 分层
 
@@ -135,7 +135,7 @@
 
 已实现（MVP）：
 - Skill manifest/schema 校验（`skill.toml`）
-- Skills 目录发现与优先级覆盖（`workspace > workspace_legacy > home`）
+- Skills 目录发现与优先级覆盖（`workspace > home`）
 - 依赖图解析（拓扑排序、循环依赖检测、semver 约束校验）
 - Runtime skill policy：
   - session allowlist
@@ -162,7 +162,7 @@
 
 ## 3) 后续子系统（明确列出）
 
-以下属于后续阶段（RexOS 需要做“骨架 + 渐进实现”）：
+以下属于后续阶段（LoopForge 需要做“骨架 + 渐进实现”）：
 - Kernel 组装器（真正的 subsystem registry / scheduler / supervisor / event bus）
 - API server（丰富的 REST/WS/SSE；OpenAI-compatible endpoints；A2A endpoints）
 - Channels system（多平台适配）

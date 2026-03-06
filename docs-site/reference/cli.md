@@ -4,7 +4,7 @@ LoopForge ships a single binary: `loopforge`.
 
 ## Top-level commands
 
-- `loopforge init` — initialize `~/.rexos` (config + database)
+- `loopforge init` — initialize `~/.loopforge` (config + database)
 - `loopforge onboard` — one-command onboarding (`init` + config validate + `doctor` + optional first task)
 - `loopforge doctor` — diagnose common setup issues (config, providers, browser, tooling)
 - `loopforge agent run` — run a single agent session in a workspace
@@ -22,14 +22,14 @@ LoopForge ships a single binary: `loopforge`.
 === "macOS/Linux"
     ```bash
     loopforge init
-    loopforge onboard --workspace rexos-onboard-demo
+    loopforge onboard --workspace loopforge-onboard-demo
 
-    mkdir -p rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt"
+    mkdir -p loopforge-work
+    loopforge agent run --workspace loopforge-work --prompt "Create hello.txt"
 
-    mkdir -p rexos-task
-    loopforge harness init rexos-task --prompt "Initialize a features checklist for refactoring this repo"
-    loopforge harness run rexos-task --prompt "Continue"
+    mkdir -p loopforge-task
+    loopforge harness init loopforge-task --prompt "Initialize a features checklist for refactoring this repo"
+    loopforge harness run loopforge-task --prompt "Continue"
 
     loopforge channel drain
     loopforge acp events --limit 20
@@ -40,14 +40,14 @@ LoopForge ships a single binary: `loopforge`.
 === "Windows (PowerShell)"
     ```powershell
     loopforge init
-    loopforge onboard --workspace rexos-onboard-demo
+    loopforge onboard --workspace loopforge-onboard-demo
 
-    mkdir rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt"
+    mkdir loopforge-work
+    loopforge agent run --workspace loopforge-work --prompt "Create hello.txt"
 
-    mkdir rexos-task
-    loopforge harness init rexos-task --prompt "Initialize a features checklist for refactoring this repo"
-    loopforge harness run rexos-task --prompt "Continue"
+    mkdir loopforge-task
+    loopforge harness init loopforge-task --prompt "Initialize a features checklist for refactoring this repo"
+    loopforge harness run loopforge-task --prompt "Continue"
 
     loopforge channel drain
     loopforge acp events --limit 20

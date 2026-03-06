@@ -7,8 +7,7 @@ LoopForge supports a local Skills framework for reusable workflows.
 LoopForge discovers skills in this precedence order (later wins on name conflict):
 
 1. `~/.codex/skills` (`home`)
-2. `<workspace>/.rexos/skills` (`workspace_legacy`)
-3. `<workspace>/.loopforge/skills` (`workspace`)
+2. `<workspace>/.loopforge/skills` (`workspace`)
 
 ## Skill Manifest (`skill.toml`)
 
@@ -63,7 +62,7 @@ loopforge skills run hello-skill --workspace . --input "Summarize README"
 
 ## Policy and Approval
 
-`~/.rexos/config.toml` supports a `[skills]` table:
+`~/.loopforge/config.toml` supports a `[skills]` table:
 
 ```toml
 [skills]
@@ -76,9 +75,9 @@ experimental = true
 Approval env var for non-readonly skills:
 
 ```bash
-export REXOS_SKILL_APPROVAL_ALLOW=hello-skill
+export LOOPFORGE_SKILL_APPROVAL_ALLOW=hello-skill
 # or
-export REXOS_SKILL_APPROVAL_ALLOW=all
+export LOOPFORGE_SKILL_APPROVAL_ALLOW=all
 ```
 
 ## Events and Audit

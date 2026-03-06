@@ -8,10 +8,10 @@ fn harness_session_id_is_persisted_per_workspace() {
     let s2 = rexos::harness::resolve_session_id(&workspace).unwrap();
     assert_eq!(s1, s2);
 
-    let on_disk = std::fs::read_to_string(workspace.join(".rexos/session_id")).unwrap();
+    let on_disk = std::fs::read_to_string(workspace.join(".loopforge/session_id")).unwrap();
     assert_eq!(on_disk.trim(), s1);
 
     let ignore = std::fs::read_to_string(workspace.join(".gitignore")).unwrap();
-    assert!(ignore.lines().any(|l| l.trim() == ".rexos/"));
+    assert!(ignore.lines().any(|l| l.trim() == ".loopforge/"));
 }
 

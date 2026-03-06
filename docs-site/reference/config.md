@@ -1,6 +1,6 @@
-# Config Reference (`~/.rexos/config.toml`)
+# Config Reference (`~/.loopforge/config.toml`)
 
-LoopForge stores configuration in `~/.rexos/config.toml` (path kept for compatibility).
+LoopForge stores configuration in `~/.loopforge/config.toml` (path kept for compatibility).
 
 ## Providers
 

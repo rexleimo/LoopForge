@@ -22,7 +22,7 @@ loopforge channel drain
 ## Example: send to a webhook
 
 ```bash
-export REXOS_WEBHOOK_URL="https://example.com/my-webhook"
+export LOOPFORGE_WEBHOOK_URL="https://example.com/my-webhook"
 loopforge agent run --workspace . --prompt "Use channel_send to enqueue: channel=webhook recipient=user1 message=hello"
 loopforge channel drain
 ```

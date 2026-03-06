@@ -123,7 +123,7 @@ async fn harness_run_retries_on_init_sh_failure_and_checkpoints() {
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

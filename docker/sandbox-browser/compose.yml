@@ -1,5 +1,5 @@
 services:
-  rexos-browser-sandbox:
+  loopforge-browser-sandbox:
     build:
       context: ../..
       dockerfile: docker/sandbox-browser/Dockerfile
@@ -7,7 +7,7 @@ services:
       - "127.0.0.1:9222:9222"
       - "127.0.0.1:6080:6080"
     environment:
-      REXOS_SANDBOX_BROWSER_HEADLESS: "0"
-      REXOS_SANDBOX_BROWSER_NO_SANDBOX: "1"
-      REXOS_SANDBOX_BROWSER_NOVNC_PASSWORD: "rexos"
+      LOOPFORGE_SANDBOX_BROWSER_HEADLESS: "0"
+      LOOPFORGE_SANDBOX_BROWSER_NO_SANDBOX: "1"
+      LOOPFORGE_SANDBOX_BROWSER_NOVNC_PASSWORD: "loopforge"
     shm_size: "1gb"

@@ -1,6 +1,6 @@
-# 配置参考（`~/.rexos/config.toml`）
+# 配置参考（`~/.loopforge/config.toml`）
 
-LoopForge 把配置存放在 `~/.rexos/config.toml`（路径为兼容保留）。
+LoopForge 把配置存放在 `~/.loopforge/config.toml`（路径为兼容保留）。
 
 ## Providers
 

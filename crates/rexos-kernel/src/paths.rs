@@ -11,7 +11,7 @@ impl RexosPaths {
     pub fn discover() -> anyhow::Result<Self> {
         let home_dir = dirs::home_dir().context("could not resolve home directory")?;
         Ok(Self {
-            base_dir: home_dir.join(".rexos"),
+            base_dir: home_dir.join(".loopforge"),
         })
     }
 
@@ -20,15 +20,11 @@ impl RexosPaths {
     }
 
     pub fn db_path(&self) -> PathBuf {
-        self.base_dir.join("rexos.db")
+        self.base_dir.join("loopforge.db")
     }
 
     pub fn workspace_skills_dir(workspace_root: &Path) -> PathBuf {
         workspace_root.join(".loopforge/skills")
-    }
-
-    pub fn workspace_legacy_skills_dir(workspace_root: &Path) -> PathBuf {
-        workspace_root.join(".rexos/skills")
     }
 
     pub fn codex_home_skills_dir(home_dir: &Path) -> PathBuf {
@@ -62,17 +58,18 @@ mod tests {
     }
 
     #[test]
-    fn skills_paths_follow_expected_layout() {
+    fn paths_use_loopforge_naming() {
+        let paths = RexosPaths {
+            base_dir: PathBuf::from("/tmp/home/.loopforge"),
+        };
         let workspace = Path::new("/tmp/workspace");
         let home = Path::new("/tmp/home");
 
+        assert_eq!(paths.config_path(), PathBuf::from("/tmp/home/.loopforge/config.toml"));
+        assert_eq!(paths.db_path(), PathBuf::from("/tmp/home/.loopforge/loopforge.db"));
         assert_eq!(
             RexosPaths::workspace_skills_dir(workspace),
             PathBuf::from("/tmp/workspace/.loopforge/skills")
-        );
-        assert_eq!(
-            RexosPaths::workspace_legacy_skills_dir(workspace),
-            PathBuf::from("/tmp/workspace/.rexos/skills")
         );
         assert_eq!(
             RexosPaths::codex_home_skills_dir(home),

@@ -83,7 +83,7 @@ Run: `cargo test -p rexos-skills loader_discovery -- --nocapture`
 Expected: FAIL（发现顺序/覆盖规则未实现）。
 
 **Step 3: 实现加载规则**
-- 扫描目录：`<workspace>/.loopforge/skills/`、`<workspace>/.rexos/skills/`（兼容）、`$HOME/.codex/skills/`
+- 扫描目录：`<workspace>/.loopforge/skills/`、`<workspace>/.loopforge/skills/`（兼容）、`$HOME/.codex/skills/`
 - 规则：同名 skill 采用“workspace > home”
 - 忽略无效目录并记录 warning。
 
@@ -342,4 +342,4 @@ git commit -m "release(skills): finalize rollout checklist and migration notes"
 - 依赖循环导致加载阻塞：必须在 resolver 阶段 fail-fast。
 - 高危权限绕过：审批闸门默认 deny，审计必须可追溯。
 - 文档与实现漂移：每个里程碑都绑定命令级验收。
-- 兼容性回归：保留 `.rexos/skills` 读取兼容窗口，分阶段弃用。
+- 兼容性回归：保留 `.loopforge/skills` 读取兼容窗口，分阶段弃用。

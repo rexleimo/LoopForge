@@ -1,4 +1,4 @@
-# RexOS Progress Log
+# LoopForge Progress Log
 
 This file is intentionally simple and append-only.
 

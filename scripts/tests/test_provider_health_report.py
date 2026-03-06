@@ -18,7 +18,7 @@ mod = load_module()
 class ProviderHealthReportTests(unittest.TestCase):
     def test_build_smoke_cases_always_includes_ollama(self):
         env = {
-            "REXOS_OLLAMA_MODEL": "qwen3:4b",
+            "LOOPFORGE_OLLAMA_MODEL": "qwen3:4b",
         }
         cases = mod.build_smoke_cases(env)
         ids = [c["id"] for c in cases]
@@ -26,19 +26,31 @@ class ProviderHealthReportTests(unittest.TestCase):
 
     def test_build_smoke_cases_adds_provider_when_key_present(self):
         env = {
-            "REXOS_OLLAMA_MODEL": "qwen3:4b",
+            "LOOPFORGE_OLLAMA_MODEL": "qwen3:4b",
             "ZHIPUAI_API_KEY": "id.secret",
-            "REXOS_GLM_MODEL": "glm-4",
+            "LOOPFORGE_GLM_MODEL": "glm-4",
             "MINIMAX_API_KEY": "k",
-            "REXOS_MINIMAX_MODEL": "MiniMax-M2.5",
+            "LOOPFORGE_MINIMAX_MODEL": "MiniMax-M2.5",
             "NVIDIA_API_KEY": "k",
-            "REXOS_NVIDIA_MODEL": "meta/llama-3.2-3b-instruct",
+            "LOOPFORGE_NVIDIA_MODEL": "meta/llama-3.2-3b-instruct",
         }
         cases = mod.build_smoke_cases(env)
         ids = [c["id"] for c in cases]
         self.assertIn("zhipu_smoke", ids)
         self.assertIn("minimax_smoke", ids)
         self.assertIn("nvidia_smoke", ids)
+
+    def test_build_smoke_cases_use_loopforge_env_names_in_commands(self):
+        env = {
+            "LOOPFORGE_OLLAMA_MODEL": "qwen3:4b",
+            "ZHIPUAI_API_KEY": "id.secret",
+            "LOOPFORGE_GLM_MODEL": "glm-4.5",
+        }
+        cases = mod.build_smoke_cases(env)
+        commands = "\n".join(str(c["command"]) for c in cases)
+        self.assertIn("LOOPFORGE_OLLAMA_MODEL=qwen3:4b", commands)
+        self.assertIn("LOOPFORGE_GLM_MODEL=glm-4.5", commands)
+        self.assertNotIn("REXOS_", commands)
 
     def test_markdown_report_contains_summary_table(self):
         report = {

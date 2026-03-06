@@ -102,7 +102,7 @@ async fn reserved_agent_tools_spawn_list_find_kill_and_send() {
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

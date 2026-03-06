@@ -8,9 +8,9 @@ If you are blocked, run `loopforge doctor` first.
 ```bash
 ollama serve
 loopforge init
-mkdir -p rexos-demo
-loopforge agent run --workspace rexos-demo --prompt "Create hello.txt with the word hi"
-cat rexos-demo/hello.txt
+mkdir -p loopforge-demo
+loopforge agent run --workspace loopforge-demo --prompt "Create hello.txt with the word hi"
+cat loopforge-demo/hello.txt
 ```
 
 Expected: `hello.txt` exists and contains `hi`.
@@ -29,7 +29,7 @@ If needed:
 ollama pull qwen3:4b
 ```
 
-Then set `~/.rexos/config.toml`:
+Then set `~/.loopforge/config.toml`:
 
 ```toml
 [providers.ollama]
@@ -63,7 +63,7 @@ Try:
 Example:
 
 ```bash
-loopforge agent run --workspace rexos-demo --prompt "Read README.md and write notes/summary.md with 5 bullets."
+loopforge agent run --workspace loopforge-demo --prompt "Read README.md and write notes/summary.md with 5 bullets."
 ```
 
 ## 5) Why did a tool call fail with argument errors?
@@ -80,8 +80,8 @@ Practical mitigations:
 Always use a dedicated workspace and commit early:
 
 ```bash
-mkdir -p /tmp/rexos-work
-loopforge agent run --workspace /tmp/rexos-work --prompt "..."
+mkdir -p /tmp/loopforge-work
+loopforge agent run --workspace /tmp/loopforge-work --prompt "..."
 ```
 
 For repository work, prefer harness:
@@ -115,7 +115,7 @@ Verification command:
 Example:
 
 ```bash
-loopforge agent run --workspace rexos-demo --prompt "Goal: summarize Cargo.toml dependencies. Output file: notes/deps.md. Constraints: 8 bullets max. Verification: file must exist."
+loopforge agent run --workspace loopforge-demo --prompt "Goal: summarize Cargo.toml dependencies. Output file: notes/deps.md. Constraints: 8 bullets max. Verification: file must exist."
 ```
 
 ## 9) What should I include in a bug report?

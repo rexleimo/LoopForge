@@ -13,7 +13,7 @@
 ollama list
 ```
 
-默认情况下，LoopForge 会在 `~/.rexos/config.toml` 里使用：
+默认情况下，LoopForge 会在 `~/.loopforge/config.toml` 里使用：
 
 - `providers.ollama.default_model = "llama3.2"`
 
@@ -41,8 +41,8 @@ ollama serve
 ## 2) 初始化 LoopForge
 
 会创建：
-- `~/.rexos/config.toml`
-- `~/.rexos/rexos.db`
+- `~/.loopforge/config.toml`
+- `~/.loopforge/loopforge.db`
 
 ```bash
 loopforge init
@@ -54,24 +54,24 @@ loopforge init
 
 === "macOS/Linux"
     ```bash
-    mkdir -p rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
-    cat rexos-work/hello.txt
+    mkdir -p loopforge-work
+    loopforge agent run --workspace loopforge-work --prompt "Create hello.txt with the word hi"
+    cat loopforge-work/hello.txt
     ```
 
 === "Windows (PowerShell)"
     ```powershell
-    mkdir rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
-    Get-Content .\rexos-work\hello.txt
+    mkdir loopforge-work
+    loopforge agent run --workspace loopforge-work --prompt "Create hello.txt with the word hi"
+    Get-Content .\loopforge-work\hello.txt
     ```
 
-LoopForge 会输出最终回答，并把稳定的 `session_id` 持久化到 `rexos-work/.rexos/session_id`。
+LoopForge 会输出最终回答，并把稳定的 `session_id` 持久化到 `loopforge-work/.loopforge/session_id`。
 
 ## 4) 在同一个 workspace 里续跑（可选）
 
 ```bash
-loopforge agent run --workspace rexos-work --prompt "Now append a newline + bye to hello.txt"
+loopforge agent run --workspace loopforge-work --prompt "Now append a newline + bye to hello.txt"
 ```
 
 ## 下一步

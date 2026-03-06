@@ -216,7 +216,7 @@ impl OpenAiCompatibleClient {
 
 fn openai_compat_timeout() -> Duration {
     const DEFAULT_SECS: u64 = 600;
-    match std::env::var("REXOS_OPENAI_COMPAT_TIMEOUT_SECS") {
+    match std::env::var("LOOPFORGE_OPENAI_COMPAT_TIMEOUT_SECS") {
         Ok(raw) => match raw.trim().parse::<u64>() {
             Ok(secs) if secs > 0 => Duration::from_secs(secs),
             _ => Duration::from_secs(DEFAULT_SECS),
@@ -227,7 +227,7 @@ fn openai_compat_timeout() -> Duration {
 
 fn llm_retry_max() -> u32 {
     const DEFAULT: u32 = 2;
-    match std::env::var("REXOS_LLM_RETRY_MAX") {
+    match std::env::var("LOOPFORGE_LLM_RETRY_MAX") {
         Ok(v) => v.trim().parse::<u32>().ok().unwrap_or(DEFAULT),
         Err(_) => DEFAULT,
     }

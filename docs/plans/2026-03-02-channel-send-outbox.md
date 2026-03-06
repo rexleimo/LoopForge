@@ -65,7 +65,7 @@ Expected: PASS.
 
 **Step 2: Minimal implementation**
 - `console` adapter: mark as sent and print a structured line.
-- `webhook` adapter: POST JSON to `REXOS_WEBHOOK_URL` (only if set).
+- `webhook` adapter: POST JSON to `LOOPFORGE_WEBHOOK_URL` (only if set).
 - Update attempts + last_error on failures.
 
 **Step 3: Run tests**

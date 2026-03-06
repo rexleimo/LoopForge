@@ -2,8 +2,8 @@ site_name: LoopForge
 site_description: LoopForge is a personal AI engineer for reproducible software delivery
 site_url: https://os.rexai.top/
 
-repo_name: rexleimo/rexos
-repo_url: https://github.com/rexleimo/rexos
+repo_name: rexleimo/LoopForge
+repo_url: https://github.com/rexleimo/LoopForge
 edit_uri: edit/main/docs-site/
 
 docs_dir: docs-site
@@ -164,7 +164,7 @@ extra_javascript:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/rexleimo/rexos
+      link: https://github.com/rexleimo/LoopForge
 
 nav:
   - Guides:
@@ -222,7 +222,7 @@ nav:
       - Safe Code Execution: blog/safe-code-execution.md
       - Personal AI Engineer: blog/personal-ai-engineer.md
       - What Is LoopForge?: blog/what-is-loopforge.md
-      - LoopForge vs OpenFang/OpenClaw: blog/rexos-vs-openfang-openclaw.md
+      - LoopForge vs OpenFang/OpenClaw: blog/loopforge-vs-openfang-openclaw.md
       - Editorial Calendar: blog/editorial-calendar.md
   - Reference:
       - CLI: reference/cli.md

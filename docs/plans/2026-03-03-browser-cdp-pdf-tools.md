@@ -51,8 +51,8 @@ Expected: PASS.
 
 **Step 1: Write failing test**
 
-- Add an env `REXOS_BROWSER_CDP_TAB_MODE=reuse|new` (default `new`).
-- Add a `#[tokio::test]` that sets `REXOS_BROWSER_CDP_TAB_MODE=reuse` and runs against a server that:
+- Add an env `LOOPFORGE_BROWSER_CDP_TAB_MODE=reuse|new` (default `new`).
+- Add a `#[tokio::test]` that sets `LOOPFORGE_BROWSER_CDP_TAB_MODE=reuse` and runs against a server that:
   - fails `/json/new`
   - succeeds `/json/list` and increments a counter if `/json/new` is called
 - Expect: the counter is `0` (reuse mode must not call `/json/new`).
@@ -62,7 +62,7 @@ Expected: FAIL before implementation.
 
 **Step 2: Implement**
 
-- Parse `REXOS_BROWSER_CDP_TAB_MODE` once per call (cheap):
+- Parse `LOOPFORGE_BROWSER_CDP_TAB_MODE` once per call (cheap):
   - `new` (default): try `/json/new` first, then fall back to `/json/list`
   - `reuse`: skip `/json/new` entirely; only use `/json/list`
 
@@ -73,7 +73,7 @@ Expected: PASS.
 
 **Step 4: Document**
 
-- Mention `REXOS_BROWSER_CDP_TAB_MODE` in tools reference (en + zh-CN).
+- Mention `LOOPFORGE_BROWSER_CDP_TAB_MODE` in tools reference (en + zh-CN).
 
 ---
 

@@ -1,6 +1,6 @@
-/* RexOS docs polish (small, non-invasive). */
+/* LoopForge docs polish (small, non-invasive). */
 
-.rexos-hero {
+.loopforge-hero {
   padding: 1.25rem 1.25rem 1.1rem;
   border-radius: 0.8rem;
   border: 1px solid var(--md-default-fg-color--lightest);
@@ -9,16 +9,16 @@
     radial-gradient(circle at 85% 85%, rgba(3, 169, 244, 0.18), transparent 55%);
 }
 
-.rexos-hero h1 {
+.loopforge-hero h1 {
   margin-top: 0;
 }
 
-.rexos-hero .md-button {
+.loopforge-hero .md-button {
   margin-right: 0.5rem;
   margin-top: 0.35rem;
 }
 
-.rexos-muted {
+.loopforge-muted {
   color: var(--md-default-fg-color--light);
 }
 

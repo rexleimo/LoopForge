@@ -123,7 +123,6 @@ pub fn permission_tools(permissions: &[String]) -> Vec<String> {
 pub fn source_name(source: SkillSource) -> &'static str {
     match source {
         SkillSource::Home => "home",
-        SkillSource::WorkspaceLegacy => "workspace_legacy",
         SkillSource::Workspace => "workspace",
     }
 }
@@ -141,11 +140,7 @@ pub fn doctor(workspace_root: &Path) -> anyhow::Result<SkillsDoctorReport> {
             path: None,
         });
     }
-    for root in [
-        home_skills,
-        workspace_root.join(".rexos/skills"),
-        workspace_root.join(".loopforge/skills"),
-    ] {
+    for root in [home_skills, workspace_root.join(".loopforge/skills")] {
         inspect_root(&root, &mut issues)?;
     }
 

@@ -4,7 +4,7 @@
 
 ## 一句话结论
 
-- 如果你最关注“编码任务可复现 + 可追踪交付”，优先 **LoopForge**（原 RexOS）。
+- 如果你最关注“编码任务可复现 + 可追踪交付”，优先 **LoopForge**。
 - 如果你最关注“多渠道运营 + 大量适配器”，优先 **OpenFang**。
 - 如果你最关注“个人助手体验 + 多端多渠道覆盖”，优先 **OpenClaw**。
 
@@ -36,7 +36,7 @@ LoopForge 默认就是本地 Ollama 开发流：
 ```bash
 ollama serve
 loopforge init
-loopforge agent run --workspace rexos-work --prompt "Create hello.txt with the word hi"
+loopforge agent run --workspace loopforge-work --prompt "Create hello.txt with the word hi"
 ```
 
 对工程团队来说，首跑成本更低。
@@ -63,7 +63,7 @@ LoopForge 对应优化（本次已开始补齐）：
 ```bash
 ollama serve
 loopforge init
-loopforge agent run --workspace rexos-demo --prompt "Create notes/plan.md with a 7-day migration checklist"
+loopforge agent run --workspace loopforge-demo --prompt "Create notes/plan.md with a 7-day migration checklist"
 ```
 
 ## 继续阅读

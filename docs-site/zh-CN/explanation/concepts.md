@@ -17,7 +17,7 @@ LoopForge 会记住：
 - 聊天记录
 - 小的配置状态
 
-存在 `~/.rexos/rexos.db`，下次跑的时候能接上。
+存在 `~/.loopforge/loopforge.db`，下次跑的时候能接上。
 
 ## 工具（沙盒里）
 
@@ -31,9 +31,9 @@ Agent 能用的工具：
 !!! note "浏览器依赖"
     默认用本地 Chrome/Chromium/Edge（通过 CDP）。
 
-    找不到浏览器的话，设 `REXOS_BROWSER_CHROME_PATH`。
+    找不到浏览器的话，设 `LOOPFORGE_BROWSER_CHROME_PATH`。
 
-    旧方案：设 `REXOS_BROWSER_BACKEND=playwright` 并安装 Python + Playwright：
+    旧方案：设 `LOOPFORGE_BROWSER_BACKEND=playwright` 并安装 Python + Playwright：
 
     ```bash
     python3 -m pip install playwright

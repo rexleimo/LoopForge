@@ -11,20 +11,20 @@ LoopForge 默认会启动本机的 Chromium 系浏览器（Chrome / Chromium / E
 ### 前置条件
 
 - 安装任意 Chromium 系浏览器（Chrome/Chromium/Edge）。
-- 如果 LoopForge 找不到可执行文件，可以设置 `REXOS_BROWSER_CHROME_PATH` 指向浏览器可执行文件路径。
+- 如果 LoopForge 找不到可执行文件，可以设置 `LOOPFORGE_BROWSER_CHROME_PATH` 指向浏览器可执行文件路径。
 
 ### 远程 CDP（可选）
 
 如果你已经有一个带远程调试端口的浏览器实例（或你在 Docker 里启动了一个），可以让 LoopForge 直接连接：
 
 ```bash
-export REXOS_BROWSER_CDP_HTTP="http://127.0.0.1:9222"
+export LOOPFORGE_BROWSER_CDP_HTTP="http://127.0.0.1:9222"
 ```
 
 默认情况下，LoopForge 只允许连接 **loopback** 的 CDP endpoint。若要连接非 loopback 的 CDP URL，你必须显式开启：
 
 ```bash
-export REXOS_BROWSER_CDP_ALLOW_REMOTE=1
+export LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE=1
 ```
 
 如果你想直接用 Docker 跑一个”带 GUI + noVNC 观察界面”的 Chromium 沙盒（CDP 暴露在 `127.0.0.1:9222`），见：[百度天气](browser-use-cases/baidu-weather.md)。
@@ -39,14 +39,14 @@ LoopForge 默认以 **headless** 模式启动浏览器。
 { "url": "https://www.baidu.com", "headless": false }
 ```
 
-你也可以设置 `REXOS_BROWSER_HEADLESS=0`，让未显式传入 `headless` 时默认使用有界面模式。
+你也可以设置 `LOOPFORGE_BROWSER_HEADLESS=0`，让未显式传入 `headless` 时默认使用有界面模式。
 
 ## 可选后端：Playwright bridge（legacy）
 
 如果你更习惯 Playwright（或你的环境 CDP 不方便），可以切换后端：
 
 ```bash
-export REXOS_BROWSER_BACKEND=playwright
+export LOOPFORGE_BROWSER_BACKEND=playwright
 ```
 
 然后安装 Playwright（Python）：
@@ -56,7 +56,7 @@ python3 -m pip install playwright
 python3 -m playwright install chromium
 ```
 
-如果你的 Python 可执行文件不是 `python3`，可以通过环境变量 `REXOS_BROWSER_PYTHON` 指定（例如 `python`）。
+如果你的 Python 可执行文件不是 `python3`，可以通过环境变量 `LOOPFORGE_BROWSER_PYTHON` 指定（例如 `python`）。
 
 ## 工具集
 
@@ -102,14 +102,14 @@ python3 -m playwright install chromium
 规则：
 - navigate/click/type/press_key 之后尽快 browser_read_page；如果页面异步更新，先 browser_wait_for 再 read_page。
 - 动作尽量少且可回滚。selector 失败时先读页面内容，再调整 selector。
-- 最后把截图保存到 .rexos/browser/<topic>.png。
+- 最后把截图保存到 .loopforge/browser/<topic>.png。
 - 未经用户明确确认，不要输入账号密码，也不要进行任何付费/下单操作。
 ```
 
 示例运行：
 
 ```bash
-loopforge agent run --workspace . --prompt "使用 browser 工具打开 https://example.com，读取页面内容，把简短总结写到 notes/example.md，并把截图保存到 .rexos/browser/example.png。"
+loopforge agent run --workspace . --prompt "使用 browser 工具打开 https://example.com，读取页面内容，把简短总结写到 notes/example.md，并把截图保存到 .loopforge/browser/example.png。"
 ```
 
 ## 安全说明
@@ -121,9 +121,9 @@ loopforge agent run --workspace . --prompt "使用 browser 工具打开 https://
 
 ## 故障排查
 
-- 报错提示找不到 Chrome/Chromium：安装浏览器或设置 `REXOS_BROWSER_CHROME_PATH`。
-- 如果在 Docker 里提示 sandbox 相关问题：设置 `REXOS_BROWSER_NO_SANDBOX=1`（仅限可信 sandbox 环境）。
-- 报错提示 Playwright 缺失：设置 `REXOS_BROWSER_BACKEND=playwright` 并安装 Playwright。
-- 报错提示找不到 `python3`（Playwright 后端）：设置 `REXOS_BROWSER_PYTHON=python`。
-- 看不到浏览器窗口：默认是 headless；用 `headless=false`（或设置 `REXOS_BROWSER_HEADLESS=0`）。
+- 报错提示找不到 Chrome/Chromium：安装浏览器或设置 `LOOPFORGE_BROWSER_CHROME_PATH`。
+- 如果在 Docker 里提示 sandbox 相关问题：设置 `LOOPFORGE_BROWSER_NO_SANDBOX=1`（仅限可信 sandbox 环境）。
+- 报错提示 Playwright 缺失：设置 `LOOPFORGE_BROWSER_BACKEND=playwright` 并安装 Playwright。
+- 报错提示找不到 `python3`（Playwright 后端）：设置 `LOOPFORGE_BROWSER_PYTHON=python`。
+- 看不到浏览器窗口：默认是 headless；用 `headless=false`（或设置 `LOOPFORGE_BROWSER_HEADLESS=0`）。
 - 报错提示 session 未启动：先调用 `browser_navigate`。

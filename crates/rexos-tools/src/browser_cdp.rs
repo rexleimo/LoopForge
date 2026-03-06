@@ -36,10 +36,10 @@ impl CdpBrowserSession {
         headless: bool,
         allow_private: bool,
     ) -> anyhow::Result<Self> {
-        if let Ok(v) = std::env::var("REXOS_BROWSER_CDP_HTTP") {
+        if let Ok(v) = std::env::var("LOOPFORGE_BROWSER_CDP_HTTP") {
             let v = v.trim().to_string();
             if !v.is_empty() {
-                let base = reqwest::Url::parse(&v).context("parse REXOS_BROWSER_CDP_HTTP")?;
+                let base = reqwest::Url::parse(&v).context("parse LOOPFORGE_BROWSER_CDP_HTTP")?;
                 validate_remote_cdp_base_url(&base)?;
                 return Self::connect_remote(http, &v, headless, allow_private).await;
             }
@@ -54,7 +54,7 @@ impl CdpBrowserSession {
         headless: bool,
         allow_private: bool,
     ) -> anyhow::Result<Self> {
-        let base = reqwest::Url::parse(base_http).context("parse REXOS_BROWSER_CDP_HTTP")?;
+        let base = reqwest::Url::parse(base_http).context("parse LOOPFORGE_BROWSER_CDP_HTTP")?;
         validate_remote_cdp_base_url(&base)?;
         let page_ws = find_or_create_page_ws(&http, &base).await?;
         let cdp = CdpConnection::connect(&page_ws).await?;
@@ -106,7 +106,7 @@ impl CdpBrowserSession {
             args.push("--disable-gpu".to_string());
         }
 
-        if std::env::var("REXOS_BROWSER_NO_SANDBOX")
+        if std::env::var("LOOPFORGE_BROWSER_NO_SANDBOX")
             .ok()
             .map(|v| {
                 matches!(
@@ -495,19 +495,19 @@ impl CdpBrowserSession {
 fn validate_remote_cdp_base_url(base: &reqwest::Url) -> anyhow::Result<()> {
     match base.scheme() {
         "http" | "https" => {}
-        _ => anyhow::bail!("REXOS_BROWSER_CDP_HTTP must be http(s)"),
+        _ => anyhow::bail!("LOOPFORGE_BROWSER_CDP_HTTP must be http(s)"),
     }
 
     let host = base.host_str().unwrap_or("");
     if host.is_empty() {
-        anyhow::bail!("REXOS_BROWSER_CDP_HTTP is missing host");
+        anyhow::bail!("LOOPFORGE_BROWSER_CDP_HTTP is missing host");
     }
 
     if is_loopback_host(host) {
         return Ok(());
     }
 
-    let allow = std::env::var("REXOS_BROWSER_CDP_ALLOW_REMOTE")
+    let allow = std::env::var("LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE")
         .ok()
         .map(|v| {
             matches!(
@@ -521,7 +521,7 @@ fn validate_remote_cdp_base_url(base: &reqwest::Url) -> anyhow::Result<()> {
     }
 
     anyhow::bail!(
-        "REXOS_BROWSER_CDP_HTTP points to non-loopback host ({host}). This is powerful and unsafe by default. Set REXOS_BROWSER_CDP_ALLOW_REMOTE=1 to allow (prefer a TLS tunnel / tailnet-only endpoint)."
+        "LOOPFORGE_BROWSER_CDP_HTTP points to non-loopback host ({host}). This is powerful and unsafe by default. Set LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE=1 to allow (prefer a TLS tunnel / tailnet-only endpoint)."
     );
 }
 
@@ -584,7 +584,7 @@ mod tests {
     #[test]
     fn validate_remote_cdp_base_url_rejects_non_loopback_by_default() {
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-        std::env::remove_var("REXOS_BROWSER_CDP_ALLOW_REMOTE");
+        std::env::remove_var("LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE");
         let url = reqwest::Url::parse("http://example.com:9222").unwrap();
         let err = validate_remote_cdp_base_url(&url).unwrap_err();
         assert!(err.to_string().contains("ALLOW_REMOTE"), "{err}");
@@ -593,7 +593,7 @@ mod tests {
     #[test]
     fn validate_remote_cdp_base_url_allows_loopback() {
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-        std::env::remove_var("REXOS_BROWSER_CDP_ALLOW_REMOTE");
+        std::env::remove_var("LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE");
         let url = reqwest::Url::parse("http://127.0.0.1:9222").unwrap();
         validate_remote_cdp_base_url(&url).unwrap();
     }
@@ -601,10 +601,10 @@ mod tests {
     #[test]
     fn validate_remote_cdp_base_url_allows_non_loopback_with_opt_in() {
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-        std::env::set_var("REXOS_BROWSER_CDP_ALLOW_REMOTE", "1");
+        std::env::set_var("LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE", "1");
         let url = reqwest::Url::parse("http://example.com:9222").unwrap();
         validate_remote_cdp_base_url(&url).unwrap();
-        std::env::remove_var("REXOS_BROWSER_CDP_ALLOW_REMOTE");
+        std::env::remove_var("LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE");
     }
 
     #[tokio::test]
@@ -669,7 +669,7 @@ mod tests {
         }
 
         let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-        let _mode_guard = EnvVarGuard::set("REXOS_BROWSER_CDP_TAB_MODE", "reuse");
+        let _mode_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_CDP_TAB_MODE", "reuse");
 
         let state = StateData {
             calls_new: Arc::new(AtomicUsize::new(0)),
@@ -866,7 +866,7 @@ async fn find_or_create_page_ws(
         .context("build loopback CDP http client")?;
     let http = loopback_client.as_ref().unwrap_or(http);
 
-    let tab_mode = std::env::var("REXOS_BROWSER_CDP_TAB_MODE")
+    let tab_mode = std::env::var("LOOPFORGE_BROWSER_CDP_TAB_MODE")
         .ok()
         .map(|v| v.trim().to_ascii_lowercase())
         .unwrap_or_else(|| "new".to_string());
@@ -1068,12 +1068,12 @@ impl Drop for CdpConnection {
 // ── Chromium discovery ─────────────────────────────────────────────────────
 
 fn find_chromium() -> anyhow::Result<PathBuf> {
-    if let Ok(path) = std::env::var("REXOS_BROWSER_CHROME_PATH") {
+    if let Ok(path) = std::env::var("LOOPFORGE_BROWSER_CHROME_PATH") {
         let p = PathBuf::from(path.trim());
         if p.exists() {
             return Ok(p);
         }
-        bail!("REXOS_BROWSER_CHROME_PATH does not exist: {}", p.display());
+        bail!("LOOPFORGE_BROWSER_CHROME_PATH does not exist: {}", p.display());
     }
 
     if let Ok(path) = std::env::var("CHROME_PATH") {
@@ -1103,7 +1103,7 @@ fn find_chromium() -> anyhow::Result<PathBuf> {
     }
 
     bail!(
-        "could not find Chrome/Chromium. Install Chrome/Chromium or set REXOS_BROWSER_CHROME_PATH."
+        "could not find Chrome/Chromium. Install Chrome/Chromium or set LOOPFORGE_BROWSER_CHROME_PATH."
     )
 }
 

@@ -6,7 +6,7 @@
 
 **Architecture:** Keep runtime changes minimal and additive. Introduce one new stable browser smoke test and relax brittle assumptions in Baidu smoke. Add a CLI onboarding command that composes existing `init/config/doctor/agent` flow. Add a Python provider report script + nightly workflow + docs. Expand docs/blog with beginner-first guidance and operating cadence.
 
-**Tech Stack:** Rust (`clap`, existing RexOS runtime), Python `unittest`, GitHub Actions, MkDocs.
+**Tech Stack:** Rust (`clap`, existing LoopForge runtime), Python `unittest`, GitHub Actions, MkDocs.
 
 ---
 
@@ -28,7 +28,7 @@
 
 Run:
 ```bash
-REXOS_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_baidu_weather_smoke -- --ignored --nocapture
+LOOPFORGE_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_baidu_weather_smoke -- --ignored --nocapture
 ```
 Expected (before fix): intermittent FAIL on `weather` keyword or results selector timeout.
 
@@ -67,7 +67,7 @@ git commit -m "test: stabilize baidu browser smoke assertions"
 **Step 2: Run new smoke test (expected pass)**
 
 ```bash
-REXOS_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_wikipedia_smoke -- --ignored --nocapture
+LOOPFORGE_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_wikipedia_smoke -- --ignored --nocapture
 ```
 
 **Step 3: Update docs to recommend baseline-first**
@@ -107,7 +107,7 @@ Expected (before implementation): FAIL.
 
 - Add `Command::Onboard { workspace, prompt, skip_agent }`
 - Flow:
-  1. Ensure `~/.rexos` + default config + db
+  1. Ensure `~/.loopforge` + default config + db
   2. Validate config
   3. Run doctor (text output)
   4. Optionally run first agent prompt in workspace
@@ -235,9 +235,9 @@ python3 -m mkdocs build --strict
 **Step 4: Real Ollama smoke checks**
 
 ```bash
-REXOS_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test ollama_smoke -- --ignored --nocapture
-REXOS_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_wikipedia_smoke -- --ignored --nocapture
-REXOS_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_baidu_weather_smoke -- --ignored --nocapture
+LOOPFORGE_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test ollama_smoke -- --ignored --nocapture
+LOOPFORGE_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_wikipedia_smoke -- --ignored --nocapture
+LOOPFORGE_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_baidu_weather_smoke -- --ignored --nocapture
 ```
 
 **Step 5: CLI onboarding verification**

@@ -8,7 +8,7 @@
 2) better Browser/CDP startup diagnostics (stderr tail included),
 3) a more OpenClaw-like `pdf` extraction interface (page-range support).
 
-**Architecture:** Keep RexOS’s existing tool surface and semantics:
+**Architecture:** Keep LoopForge’s existing tool surface and semantics:
 
 - `web_fetch` remains a fetch tool (SSRF-protected), but returns a better truncated body.
 - `process_*` remains incremental via `process_poll`, but when output bursts exceed the buffer, return head+tail instead of tail-only.

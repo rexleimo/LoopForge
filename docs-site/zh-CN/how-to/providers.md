@@ -1,10 +1,10 @@
 # Providers 与路由
 
-LoopForge 从 `~/.rexos/config.toml` 读取 providers 配置，并把每个任务类型（planning/coding/summary）路由到 `(provider, model)`。
+LoopForge 从 `~/.loopforge/config.toml` 读取 providers 配置，并把每个任务类型（planning/coding/summary）路由到 `(provider, model)`。
 
 ## 开箱即用的 presets
 
-执行 `loopforge init` 后，`~/.rexos/config.toml` 默认已经包含常用 providers（可直接改路由使用）：
+执行 `loopforge init` 后，`~/.loopforge/config.toml` 默认已经包含常用 providers（可直接改路由使用）：
 
 - 本地：`ollama`
 - OpenAI-compatible：`deepseek`、`kimi` / `kimi_cn`、`qwen` / `qwen_cn` / `qwen_sg`、`glm`、`minimax`、`nvidia`
@@ -136,16 +136,16 @@ LoopForge 会从 `api_key_env` 指定的环境变量读取 key。
 
 ```bash
 # Ollama（OpenAI-compatible）
-REXOS_OLLAMA_MODEL=<your-model> cargo test -p rexos --test ollama_smoke -- --ignored
+LOOPFORGE_OLLAMA_MODEL=<your-model> cargo test -p rexos --test ollama_smoke -- --ignored
 
 # GLM（智谱原生）
-ZHIPUAI_API_KEY=<id.secret> REXOS_GLM_MODEL=<model> cargo test -p rexos --test zhipu_smoke -- --ignored
+ZHIPUAI_API_KEY=<id.secret> LOOPFORGE_GLM_MODEL=<model> cargo test -p rexos --test zhipu_smoke -- --ignored
 
 # MiniMax（原生）
-MINIMAX_API_KEY=<key> REXOS_MINIMAX_MODEL=<model> cargo test -p rexos --test minimax_smoke -- --ignored
+MINIMAX_API_KEY=<key> LOOPFORGE_MINIMAX_MODEL=<model> cargo test -p rexos --test minimax_smoke -- --ignored
 
 # NVIDIA NIM（OpenAI-compatible）
-NVIDIA_API_KEY=<key> REXOS_NVIDIA_MODEL=<model> cargo test -p rexos --test nvidia_nim_smoke -- --ignored
+NVIDIA_API_KEY=<key> LOOPFORGE_NVIDIA_MODEL=<model> cargo test -p rexos --test nvidia_nim_smoke -- --ignored
 ```
 
 ## Provider 质量报告（适合 nightly）
@@ -169,5 +169,5 @@ python3 scripts/provider_health_report.py --out-dir .tmp/provider-health --run
 - 在没有本地 Ollama 的 CI 环境中，可设置：
 
 ```bash
-export REXOS_SKIP_OLLAMA_SMOKE=1
+export LOOPFORGE_SKIP_OLLAMA_SMOKE=1
 ```

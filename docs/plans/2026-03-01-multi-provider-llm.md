@@ -4,7 +4,7 @@
 
 **Goal:** Add multi-provider LLM drivers (OpenAI-compatible, Anthropic, Gemini) with unified tool calling, plus presets for popular providers (MinMax, GLM-5, Kimi, Qwen, DeepSeek).
 
-**Architecture:** Introduce a `LlmDriver` abstraction that accepts/returns RexOS’s internal chat types (`ChatMessage`, `ToolDefinition`, `ToolCall`). Providers register as named configs (e.g. `ollama`, `anthropic`, `gemini`, `deepseek`), and the router selects `provider + model` per `TaskKind`. OpenAI-compatible providers share one driver implementation. Anthropic and Gemini use native APIs with adapters to/from internal tool-calling structures.
+**Architecture:** Introduce a `LlmDriver` abstraction that accepts/returns LoopForge’s internal chat types (`ChatMessage`, `ToolDefinition`, `ToolCall`). Providers register as named configs (e.g. `ollama`, `anthropic`, `gemini`, `deepseek`), and the router selects `provider + model` per `TaskKind`. OpenAI-compatible providers share one driver implementation. Anthropic and Gemini use native APIs with adapters to/from internal tool-calling structures.
 
 **Tech Stack:** Rust 2021, `reqwest`, `tokio`, `serde`, `toml`, `axum` (tests).
 
@@ -103,7 +103,7 @@ git commit -m "feat: llm driver trait and registry"
 **Step 1: Write failing test (mock server)**
 
 - Use `axum` to stand up a local server.
-- Assert RexOS sends:
+- Assert LoopForge sends:
   - `system` string (from internal system message)
   - `messages` list (user/assistant)
   - `tools` in Anthropic schema

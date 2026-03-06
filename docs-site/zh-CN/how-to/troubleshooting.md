@@ -8,7 +8,7 @@
 loopforge doctor
 ```
 
-它会检查：`~/.rexos` 路径、`config.toml`、provider 的环境变量、（本地时）Ollama 连通性、浏览器/CDP 连通性，以及 `git` 等基础依赖。
+它会检查：`~/.loopforge` 路径、`config.toml`、provider 的环境变量、（本地时）Ollama 连通性、浏览器/CDP 连通性，以及 `git` 等基础依赖。
 
 ## 文档站点显示 “There isn't a GitHub Pages site here” / “GitHub Pages is designed to host…”
 
@@ -49,7 +49,7 @@ ollama serve
 curl -s http://127.0.0.1:11434/v1/models | head
 ```
 
-3) 如果默认模型没拉取，先 pull（或改 `~/.rexos/config.toml` 的 `default_model`）：
+3) 如果默认模型没拉取，先 pull（或改 `~/.loopforge/config.toml` 的 `default_model`）：
 
 ```bash
 ollama pull llama3.2
@@ -73,7 +73,7 @@ harness workspace 会同时生成 `init.sh` 和 `init.ps1`。
 
 ## Provider API key 没生效
 
-LoopForge 会从 `~/.rexos/config.toml` 里 `api_key_env` 指定的环境变量读取 key。
+LoopForge 会从 `~/.loopforge/config.toml` 里 `api_key_env` 指定的环境变量读取 key。
 
 例如（智谱 GLM 原生）：
 

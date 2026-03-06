@@ -18,7 +18,7 @@ OpenClaw is known as a personal assistant. LoopForge is positioned as a personal
 
 </div>
 
-> Brand update: LoopForge is the new name (formerly RexOS). CLI is `loopforge`; config stays in `~/.rexos`.
+> LoopForge is the product name. CLI is `loopforge`; config stays in `~/.loopforge`.
 
 <div class="grid cards" markdown>
 

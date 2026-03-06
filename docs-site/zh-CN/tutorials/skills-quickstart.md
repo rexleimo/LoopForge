@@ -48,7 +48,7 @@ loopforge skills run hello-skill --workspace . --input "分析这个仓库"
 
 ## 6. 可选：开启审批策略
 
-编辑 `~/.rexos/config.toml`：
+编辑 `~/.loopforge/config.toml`：
 
 ```toml
 [skills]
@@ -61,11 +61,11 @@ experimental = true
 如果 skill 有高风险权限，需要显式批准：
 
 ```bash
-export REXOS_SKILL_APPROVAL_ALLOW=hello-skill
+export LOOPFORGE_SKILL_APPROVAL_ALLOW=hello-skill
 ```
 
 ## 常见报错
 
 - `skill not found`：检查目录路径和 `skill.toml` 的 `name`
 - `entry file missing`：检查 `entry` 指向的文件是否存在
-- `approval required`：设置 `REXOS_SKILL_APPROVAL_ALLOW` 或降低危险权限
+- `approval required`：设置 `LOOPFORGE_SKILL_APPROVAL_ALLOW` 或降低危险权限

@@ -8,7 +8,7 @@ If you’re not sure what’s wrong, start here:
 loopforge doctor
 ```
 
-It checks: `~/.rexos` paths, `config.toml`, provider env vars, Ollama connectivity (when local), browser/CDP connectivity, and core tooling like `git`.
+It checks: `~/.loopforge` paths, `config.toml`, provider env vars, Ollama connectivity (when local), browser/CDP connectivity, and core tooling like `git`.
 
 ## Docs site shows “There isn't a GitHub Pages site here” / “GitHub Pages is designed to host…”
 
@@ -46,7 +46,7 @@ ollama serve
 curl -s http://127.0.0.1:11434/v1/models | head
 ```
 
-3) If your model isn’t available, pull it (or change `default_model` in `~/.rexos/config.toml`):
+3) If your model isn’t available, pull it (or change `default_model` in `~/.loopforge/config.toml`):
 
 ```bash
 ollama pull llama3.2
@@ -70,7 +70,7 @@ The harness workspace includes both `init.sh` and `init.ps1`.
 
 ## Provider API keys not picked up
 
-Providers read keys from the env var in `api_key_env` in `~/.rexos/config.toml`.
+Providers read keys from the env var in `api_key_env` in `~/.loopforge/config.toml`.
 
 Example (Zhipu GLM native):
 

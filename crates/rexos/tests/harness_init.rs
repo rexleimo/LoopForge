@@ -8,7 +8,7 @@ fn harness_init_creates_artifacts_and_git_commit() {
     rexos::harness::init_workspace(workspace).unwrap();
 
     assert!(workspace.join("features.json").exists());
-    assert!(workspace.join("rexos-progress.md").exists());
+    assert!(workspace.join("loopforge-progress.md").exists());
     assert!(workspace.join("init.sh").exists());
     assert!(workspace.join("init.ps1").exists());
     assert!(workspace.join(".git").exists());
@@ -31,7 +31,7 @@ fn harness_init_creates_artifacts_and_git_commit() {
     assert!(subject.status.success());
     assert_eq!(
         String::from_utf8_lossy(&subject.stdout).trim(),
-        "chore: initialize rexos harness"
+        "chore: initialize loopforge harness"
     );
 
     let err = rexos::harness::init_workspace(workspace).unwrap_err();

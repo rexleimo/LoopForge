@@ -13,10 +13,10 @@ jobs:
       ZHIPUAI_API_KEY: ${{ secrets.ZHIPUAI_API_KEY }}
       MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-      REXOS_GLM_MODEL: glm-4
-      REXOS_MINIMAX_MODEL: MiniMax-M2.5
-      REXOS_NVIDIA_MODEL: meta/llama-3.2-3b-instruct
-      REXOS_SKIP_OLLAMA_SMOKE: "1"
+      LOOPFORGE_GLM_MODEL: glm-4
+      LOOPFORGE_MINIMAX_MODEL: MiniMax-M2.5
+      LOOPFORGE_NVIDIA_MODEL: meta/llama-3.2-3b-instruct
+      LOOPFORGE_SKIP_OLLAMA_SMOKE: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

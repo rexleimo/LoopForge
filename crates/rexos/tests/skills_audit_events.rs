@@ -40,7 +40,7 @@ fn build_agent(memory: rexos::memory::MemoryStore) -> rexos::agent::AgentRuntime
 fn emits_skill_events_and_audit_records() {
     let tmp = tempfile::tempdir().unwrap();
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

@@ -115,7 +115,7 @@ async fn session_tool_whitelist_blocks_tool_and_audits_failure() {
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).unwrap();
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
     let memory = rexos::memory::MemoryStore::open_or_create(&paths).unwrap();
@@ -213,7 +213,7 @@ async fn tool_audit_marks_truncated_for_large_output() {
         .unwrap();
 
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
     let memory = rexos::memory::MemoryStore::open_or_create(&paths).unwrap();
@@ -306,7 +306,7 @@ async fn acp_events_capture_session_and_tool_lifecycle() {
     std::fs::write(workspace.join("hello.txt"), "hello").unwrap();
 
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
     let memory = rexos::memory::MemoryStore::open_or_create(&paths).unwrap();
@@ -375,8 +375,8 @@ async fn approval_enforce_blocks_dangerous_tool_calls() {
         }))
     }
 
-    let _guard_mode = EnvVarGuard::set("REXOS_APPROVAL_MODE", "enforce");
-    let _guard_allow = EnvVarGuard::set("REXOS_APPROVAL_ALLOW", "");
+    let _guard_mode = EnvVarGuard::set("LOOPFORGE_APPROVAL_MODE", "enforce");
+    let _guard_allow = EnvVarGuard::set("LOOPFORGE_APPROVAL_ALLOW", "");
 
     let state = TestState::default();
     let app = Router::new()
@@ -392,7 +392,7 @@ async fn approval_enforce_blocks_dangerous_tool_calls() {
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).unwrap();
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
     let memory = rexos::memory::MemoryStore::open_or_create(&paths).unwrap();
@@ -491,7 +491,7 @@ async fn workflow_run_persists_state_and_executes_steps() {
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).unwrap();
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
     let memory = rexos::memory::MemoryStore::open_or_create(&paths).unwrap();
@@ -513,7 +513,7 @@ async fn workflow_run_persists_state_and_executes_steps() {
         "hello workflow"
     );
 
-    let state_path = workspace.join(".rexos/workflows/wf-demo.json");
+    let state_path = workspace.join(".loopforge/workflows/wf-demo.json");
     let state_raw = std::fs::read_to_string(&state_path).unwrap();
     let state_json: serde_json::Value = serde_json::from_str(&state_raw).unwrap();
     assert_eq!(state_json["status"], "completed");
@@ -575,7 +575,7 @@ async fn delivery_checkpoint_is_written_after_dispatch() {
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).unwrap();
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
     let memory = rexos::memory::MemoryStore::open_or_create(&paths).unwrap();

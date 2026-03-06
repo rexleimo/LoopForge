@@ -2,18 +2,18 @@
 set -euo pipefail
 
 export DISPLAY=:1
-export HOME=/tmp/rexos-home
+export HOME=/tmp/loopforge-home
 export XDG_CONFIG_HOME="${HOME}/.config"
 export XDG_CACHE_HOME="${HOME}/.cache"
 
-CDP_PORT="${REXOS_SANDBOX_BROWSER_CDP_PORT:-9222}"
-CDP_SOURCE_RANGE="${REXOS_SANDBOX_BROWSER_CDP_SOURCE_RANGE:-}"
-VNC_PORT="${REXOS_SANDBOX_BROWSER_VNC_PORT:-5900}"
-NOVNC_PORT="${REXOS_SANDBOX_BROWSER_NOVNC_PORT:-6080}"
-ENABLE_NOVNC="${REXOS_SANDBOX_BROWSER_ENABLE_NOVNC:-1}"
-HEADLESS="${REXOS_SANDBOX_BROWSER_HEADLESS:-0}"
-NO_SANDBOX="${REXOS_SANDBOX_BROWSER_NO_SANDBOX:-1}"
-NOVNC_PASSWORD="${REXOS_SANDBOX_BROWSER_NOVNC_PASSWORD:-}"
+CDP_PORT="${LOOPFORGE_SANDBOX_BROWSER_CDP_PORT:-9222}"
+CDP_SOURCE_RANGE="${LOOPFORGE_SANDBOX_BROWSER_CDP_SOURCE_RANGE:-}"
+VNC_PORT="${LOOPFORGE_SANDBOX_BROWSER_VNC_PORT:-5900}"
+NOVNC_PORT="${LOOPFORGE_SANDBOX_BROWSER_NOVNC_PORT:-6080}"
+ENABLE_NOVNC="${LOOPFORGE_SANDBOX_BROWSER_ENABLE_NOVNC:-1}"
+HEADLESS="${LOOPFORGE_SANDBOX_BROWSER_HEADLESS:-0}"
+NO_SANDBOX="${LOOPFORGE_SANDBOX_BROWSER_NO_SANDBOX:-1}"
+NOVNC_PASSWORD="${LOOPFORGE_SANDBOX_BROWSER_NOVNC_PASSWORD:-}"
 
 mkdir -p "${HOME}" "${HOME}/.chrome" "${XDG_CONFIG_HOME}" "${XDG_CACHE_HOME}"
 
@@ -68,7 +68,7 @@ if [[ -n "${CDP_SOURCE_RANGE}" ]]; then
 fi
 socat "${SOCAT_LISTEN_ADDR}" "TCP:127.0.0.1:${CHROME_CDP_PORT}" &
 
-echo "[rexos] CDP endpoint: http://127.0.0.1:${CDP_PORT}"
+echo "[loopforge] CDP endpoint: http://127.0.0.1:${CDP_PORT}"
 
 if [[ "${ENABLE_NOVNC}" == "1" && "${HEADLESS}" != "1" ]]; then
   # VNC auth passwords are max 8 chars; use a deterministic default only when explicitly set.
@@ -85,8 +85,8 @@ if [[ "${ENABLE_NOVNC}" == "1" && "${HEADLESS}" != "1" ]]; then
   x11vnc -display :1 -rfbport "${VNC_PORT}" -shared -forever -rfbauth "${NOVNC_PASSWD_FILE}" -localhost &
   websockify --web /usr/share/novnc/ "${NOVNC_PORT}" "localhost:${VNC_PORT}" &
 
-  echo "[rexos] noVNC password: ${NOVNC_PASSWORD}"
-  echo "[rexos] noVNC URL: http://127.0.0.1:${NOVNC_PORT}/vnc.html"
+  echo "[loopforge] noVNC password: ${NOVNC_PASSWORD}"
+  echo "[loopforge] noVNC URL: http://127.0.0.1:${NOVNC_PORT}/vnc.html"
 fi
 
 wait -n

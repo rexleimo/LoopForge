@@ -231,12 +231,12 @@ def render_markdown(report: dict[str, object]) -> str:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
-        description="Generate onboarding success/failure daily report from ~/.rexos metrics/events"
+        description="Generate onboarding success/failure daily report from ~/.loopforge metrics/events"
     )
     parser.add_argument(
         "--base-dir",
-        default=str(Path.home() / ".rexos"),
-        help="LoopForge data dir (default: ~/.rexos)",
+        default=str(Path.home() / ".loopforge"),
+        help="LoopForge data dir (default: ~/.loopforge)",
     )
     parser.add_argument(
         "--out-dir",

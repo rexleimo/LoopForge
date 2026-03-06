@@ -21,8 +21,8 @@ def _env(name: str, env: dict[str, str], default: str = "") -> str:
 
 
 def build_smoke_cases(env: dict[str, str]) -> list[dict[str, object]]:
-    ollama_model = _env("REXOS_OLLAMA_MODEL", env, "qwen3:4b")
-    skip_ollama = _env("REXOS_SKIP_OLLAMA_SMOKE", env).lower() in (
+    ollama_model = _env("LOOPFORGE_OLLAMA_MODEL", env, "qwen3:4b")
+    skip_ollama = _env("LOOPFORGE_SKIP_OLLAMA_SMOKE", env).lower() in (
         "1",
         "true",
         "yes",
@@ -37,50 +37,50 @@ def build_smoke_cases(env: dict[str, str]) -> list[dict[str, object]]:
                 "description": "Local Ollama OpenAI-compatible smoke",
                 "required_env": [],
                 "command": (
-                    f"REXOS_OLLAMA_MODEL={shlex.quote(ollama_model)} "
-                    "cargo test -p rexos --test ollama_smoke -- --ignored --nocapture"
+                    f"LOOPFORGE_OLLAMA_MODEL={shlex.quote(ollama_model)} "
+                    "cargo test --workspace --test ollama_smoke -- --ignored --nocapture"
                 ),
             }
         )
 
     if _env("ZHIPUAI_API_KEY", env):
-        model = _env("REXOS_GLM_MODEL", env, "glm-4")
+        model = _env("LOOPFORGE_GLM_MODEL", env, "glm-4")
         cases.append(
             {
                 "id": "zhipu_smoke",
                 "description": "Zhipu GLM native smoke",
                 "required_env": ["ZHIPUAI_API_KEY"],
                 "command": (
-                    f"REXOS_GLM_MODEL={shlex.quote(model)} "
-                    "cargo test -p rexos --test zhipu_smoke -- --ignored --nocapture"
+                    f"LOOPFORGE_GLM_MODEL={shlex.quote(model)} "
+                    "cargo test --workspace --test zhipu_smoke -- --ignored --nocapture"
                 ),
             }
         )
 
     if _env("MINIMAX_API_KEY", env):
-        model = _env("REXOS_MINIMAX_MODEL", env, "MiniMax-M2.5")
+        model = _env("LOOPFORGE_MINIMAX_MODEL", env, "MiniMax-M2.5")
         cases.append(
             {
                 "id": "minimax_smoke",
                 "description": "MiniMax native smoke",
                 "required_env": ["MINIMAX_API_KEY"],
                 "command": (
-                    f"REXOS_MINIMAX_MODEL={shlex.quote(model)} "
-                    "cargo test -p rexos --test minimax_smoke -- --ignored --nocapture"
+                    f"LOOPFORGE_MINIMAX_MODEL={shlex.quote(model)} "
+                    "cargo test --workspace --test minimax_smoke -- --ignored --nocapture"
                 ),
             }
         )
 
     if _env("NVIDIA_API_KEY", env):
-        model = _env("REXOS_NVIDIA_MODEL", env, "meta/llama-3.2-3b-instruct")
+        model = _env("LOOPFORGE_NVIDIA_MODEL", env, "meta/llama-3.2-3b-instruct")
         cases.append(
             {
                 "id": "nvidia_smoke",
                 "description": "NVIDIA NIM OpenAI-compatible smoke",
                 "required_env": ["NVIDIA_API_KEY"],
                 "command": (
-                    f"REXOS_NVIDIA_MODEL={shlex.quote(model)} "
-                    "cargo test -p rexos --test nvidia_nim_smoke -- --ignored --nocapture"
+                    f"LOOPFORGE_NVIDIA_MODEL={shlex.quote(model)} "
+                    "cargo test --workspace --test nvidia_nim_smoke -- --ignored --nocapture"
                 ),
             }
         )

@@ -3,8 +3,8 @@ use std::collections::BTreeMap;
 #[tokio::test]
 #[ignore]
 async fn ollama_agent_shell_tool_smoke_creates_file() {
-    let model = std::env::var("REXOS_OLLAMA_MODEL").unwrap_or_else(|_| "qwen3:4b".to_string());
-    let base_url = std::env::var("REXOS_OLLAMA_BASE_URL")
+    let model = std::env::var("LOOPFORGE_OLLAMA_MODEL").unwrap_or_else(|_| "qwen3:4b".to_string());
+    let base_url = std::env::var("LOOPFORGE_OLLAMA_BASE_URL")
         .unwrap_or_else(|_| "http://127.0.0.1:11434/v1".to_string());
 
     let tmp = tempfile::tempdir().unwrap();
@@ -13,7 +13,7 @@ async fn ollama_agent_shell_tool_smoke_creates_file() {
 
     let home = tmp.path().join("home");
     let paths = rexos::paths::RexosPaths {
-        base_dir: home.join(".rexos"),
+        base_dir: home.join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

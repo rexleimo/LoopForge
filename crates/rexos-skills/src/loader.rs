@@ -8,7 +8,6 @@ const SKILL_MANIFEST_FILE: &str = "skill.toml";
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SkillSource {
     Home,
-    WorkspaceLegacy,
     Workspace,
 }
 
@@ -30,10 +29,6 @@ pub fn discover_skills(
     // Lower precedence first, later inserts override.
     let roots = [
         (SkillSource::Home, home_skills_root.to_path_buf()),
-        (
-            SkillSource::WorkspaceLegacy,
-            workspace_root.join(".rexos/skills"),
-        ),
         (SkillSource::Workspace, workspace_root.join(".loopforge/skills")),
     ];
 

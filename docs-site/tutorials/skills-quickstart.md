@@ -48,7 +48,7 @@ loopforge skills run hello-skill --workspace . --input "Analyze this repo"
 
 ## 6. Optional: Enable approval policy
 
-Edit `~/.rexos/config.toml`:
+Edit `~/.loopforge/config.toml`:
 
 ```toml
 [skills]
@@ -61,11 +61,11 @@ experimental = true
 For non-readonly permissions, approve explicitly:
 
 ```bash
-export REXOS_SKILL_APPROVAL_ALLOW=hello-skill
+export LOOPFORGE_SKILL_APPROVAL_ALLOW=hello-skill
 ```
 
 ## Common Errors
 
 - `skill not found`: check folder path and `name` in `skill.toml`
 - `entry file missing`: verify `entry` points to a real file
-- `approval required`: set `REXOS_SKILL_APPROVAL_ALLOW` or reduce dangerous permissions
+- `approval required`: set `LOOPFORGE_SKILL_APPROVAL_ALLOW` or reduce dangerous permissions

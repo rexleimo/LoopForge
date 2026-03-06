@@ -55,7 +55,7 @@ impl DoctorReport {
 
     pub fn to_text(&self) -> String {
         let mut out = String::new();
-        out.push_str("LoopForge doctor (compat: rexos)\n\n");
+        out.push_str("LoopForge doctor\n\n");
         for c in &self.checks {
             let prefix = match c.status {
                 CheckStatus::Ok => "OK  ",
@@ -245,7 +245,7 @@ pub async fn run_doctor(opts: DoctorOptions) -> anyhow::Result<DoctorReport> {
     }
 
     // Browser checks.
-    if let Ok(cdp) = std::env::var("REXOS_BROWSER_CDP_HTTP") {
+    if let Ok(cdp) = std::env::var("LOOPFORGE_BROWSER_CDP_HTTP") {
         let cdp = cdp.trim().to_string();
         if !cdp.is_empty() {
             let probe = format!("{}/json/version", cdp.trim_end_matches('/'));
@@ -279,7 +279,7 @@ pub async fn run_doctor(opts: DoctorOptions) -> anyhow::Result<DoctorReport> {
             None => checks.push(DoctorCheck {
                 id: "browser.chromium".to_string(),
                 status: CheckStatus::Warn,
-                message: "chromium/chrome/edge not found; install a Chromium-based browser or set REXOS_BROWSER_CHROME_PATH (or use REXOS_BROWSER_CDP_HTTP)".to_string(),
+                message: "chromium/chrome/edge not found; install a Chromium-based browser or set LOOPFORGE_BROWSER_CHROME_PATH (or use LOOPFORGE_BROWSER_CDP_HTTP)".to_string(),
             }),
         }
     }
@@ -359,7 +359,7 @@ fn check_command(command: &str, args: &[&str], id: &str, required: bool) -> Doct
 }
 
 fn discover_chromium_executable() -> Option<PathBuf> {
-    if let Ok(v) = std::env::var("REXOS_BROWSER_CHROME_PATH") {
+    if let Ok(v) = std::env::var("LOOPFORGE_BROWSER_CHROME_PATH") {
         let p = PathBuf::from(v);
         if p.exists() {
             return Some(p);
@@ -453,7 +453,7 @@ mod tests {
 
         let tmp = tempfile::tempdir().unwrap();
         let paths = RexosPaths {
-            base_dir: tmp.path().join(".rexos"),
+            base_dir: tmp.path().join(".loopforge"),
         };
         std::fs::create_dir_all(&paths.base_dir).unwrap();
 
@@ -473,7 +473,7 @@ mod tests {
             router: rexos::config::RouterConfig::default(),
         };
         std::fs::write(paths.config_path(), toml::to_string(&cfg).unwrap()).unwrap();
-        std::env::set_var("REXOS_BROWSER_CDP_HTTP", format!("http://{addr}"));
+        std::env::set_var("LOOPFORGE_BROWSER_CDP_HTTP", format!("http://{addr}"));
 
         let report = run_doctor(DoctorOptions {
             paths,
@@ -490,7 +490,7 @@ mod tests {
         assert_eq!(statuses.get("ollama.http"), Some(&CheckStatus::Ok));
         assert_eq!(statuses.get("browser.cdp_http"), Some(&CheckStatus::Ok));
 
-        std::env::remove_var("REXOS_BROWSER_CDP_HTTP");
+        std::env::remove_var("LOOPFORGE_BROWSER_CDP_HTTP");
         server.abort();
     }
 }

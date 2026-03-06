@@ -18,7 +18,7 @@ OpenClaw 更像个人生活助理。LoopForge 的定位是工程交付型 AI 助
 
 </div>
 
-> 品牌升级：LoopForge（原 RexOS）。CLI 命令是 `loopforge`，配置目录还是 `~/.rexos`。
+> LoopForge 是当前产品名。CLI 命令是 `loopforge`，配置目录还是 `~/.loopforge`。
 
 <div class="grid cards" markdown>
 

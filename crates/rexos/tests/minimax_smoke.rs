@@ -4,12 +4,12 @@ use rexos::llm::driver::LlmDriver;
 #[ignore]
 async fn minimax_native_smoke() {
     let api_key = std::env::var("MINIMAX_API_KEY")
-        .or_else(|_| std::env::var("REXOS_MINIMAX_API_KEY"))
-        .expect("set MINIMAX_API_KEY (or REXOS_MINIMAX_API_KEY) to run this test");
+        .or_else(|_| std::env::var("LOOPFORGE_MINIMAX_API_KEY"))
+        .expect("set MINIMAX_API_KEY (or LOOPFORGE_MINIMAX_API_KEY) to run this test");
 
-    let base_url = std::env::var("REXOS_MINIMAX_BASE_URL")
+    let base_url = std::env::var("LOOPFORGE_MINIMAX_BASE_URL")
         .unwrap_or_else(|_| "https://api.minimax.chat/v1".to_string());
-    let model = std::env::var("REXOS_MINIMAX_MODEL").unwrap_or_else(|_| "MiniMax-M2.5".to_string());
+    let model = std::env::var("LOOPFORGE_MINIMAX_MODEL").unwrap_or_else(|_| "MiniMax-M2.5".to_string());
 
     let driver = rexos::llm::minimax::MiniMaxDriver::new(base_url, Some(api_key)).unwrap();
 

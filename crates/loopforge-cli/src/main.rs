@@ -61,7 +61,7 @@ struct OnboardEvent {
 #[derive(Debug, Parser)]
 #[command(name = "loopforge")]
 #[command(
-    about = "LoopForge (formerly RexOS): long-running agent operating system",
+    about = "LoopForge: long-running agent operating system",
     long_about = None
 )]
 struct Cli {
@@ -71,7 +71,7 @@ struct Cli {
 
 #[derive(Debug, clap::Subcommand)]
 enum Command {
-    /// Initialize ~/.rexos (config + database)
+    /// Initialize ~/.loopforge (config + database)
     Init,
     /// One-command onboarding check (init + config + doctor + optional first task)
     Onboard {
@@ -144,7 +144,7 @@ enum Command {
 
 #[derive(Debug, clap::Subcommand)]
 enum ConfigCommand {
-    /// Validate ~/.rexos/config.toml and exit non-zero when invalid
+    /// Validate ~/.loopforge/config.toml and exit non-zero when invalid
     Validate {
         /// Print JSON output (machine-readable)
         #[arg(long)]
@@ -496,7 +496,7 @@ async fn main() -> anyhow::Result<()> {
                     }
                     eprintln!("onboard: first agent run failed: {e}");
                     eprintln!(
-                        "hint: run `ollama list` and set [providers.ollama].default_model in ~/.rexos/config.toml to an available chat model"
+                        "hint: run `ollama list` and set [providers.ollama].default_model in ~/.loopforge/config.toml to an available chat model"
                     );
                     return Err(e);
                 }
@@ -1425,6 +1425,17 @@ mod tests {
     }
 
     #[test]
+    fn cli_about_uses_loopforge_only_branding() {
+        use clap::CommandFactory;
+        let about = Cli::command()
+            .get_about()
+            .map(|s| s.to_string())
+            .unwrap_or_default();
+        assert!(about.contains("LoopForge"), "expected LoopForge about text, got: {about}");
+        assert!(!about.contains("RexOS"), "expected no RexOS mention, got: {about}");
+    }
+
+    #[test]
     fn cli_parses_config_validate_with_loopforge_binary_name() {
         let parsed = Cli::try_parse_from(["loopforge", "config", "validate"]);
         assert!(
@@ -1580,7 +1591,7 @@ edition = "2021"
     fn validate_config_reports_success_for_default_config() {
         let tmp = tempdir().unwrap();
         let paths = RexosPaths {
-            base_dir: tmp.path().join(".rexos"),
+            base_dir: tmp.path().join(".loopforge"),
         };
         paths.ensure_dirs().unwrap();
         RexosConfig::ensure_default(&paths).unwrap();
@@ -1594,7 +1605,7 @@ edition = "2021"
     fn validate_config_reports_parse_error_for_invalid_toml() {
         let tmp = tempdir().unwrap();
         let paths = RexosPaths {
-            base_dir: tmp.path().join(".rexos"),
+            base_dir: tmp.path().join(".loopforge"),
         };
         paths.ensure_dirs().unwrap();
         std::fs::write(paths.config_path(), "[providers\nbroken = true").unwrap();
@@ -1689,7 +1700,7 @@ edition = "2021"
     fn record_onboard_attempt_updates_metrics_and_events() {
         let tmp = tempdir().unwrap();
         let paths = RexosPaths {
-            base_dir: tmp.path().join(".rexos"),
+            base_dir: tmp.path().join(".loopforge"),
         };
         std::fs::create_dir_all(&paths.base_dir).unwrap();
         let workspace = tmp.path().join("demo-work");

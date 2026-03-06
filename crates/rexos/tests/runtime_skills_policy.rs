@@ -63,7 +63,7 @@ impl Drop for EnvVarGuard {
 fn blocks_skill_when_not_in_session_allowed_skills() {
     let tmp = tempfile::tempdir().unwrap();
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 
@@ -85,7 +85,7 @@ fn blocks_skill_when_not_in_session_allowed_skills() {
 fn blocks_skill_when_policy_requires_approval() {
     let tmp = tempfile::tempdir().unwrap();
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 
@@ -103,7 +103,7 @@ fn blocks_skill_when_policy_requires_approval() {
         )
         .unwrap();
 
-    let _allow_guard = EnvVarGuard::set("REXOS_SKILL_APPROVAL_ALLOW", "");
+    let _allow_guard = EnvVarGuard::set("LOOPFORGE_SKILL_APPROVAL_ALLOW", "");
     let err = agent
         .authorize_skill("s2", "shell-helper", &["tool:shell".to_string()])
         .unwrap_err();
@@ -118,7 +118,7 @@ fn blocks_skill_when_policy_requires_approval() {
 fn auto_approves_readonly_skill_when_policy_enabled() {
     let tmp = tempfile::tempdir().unwrap();
     let paths = rexos::paths::RexosPaths {
-        base_dir: tmp.path().join(".rexos"),
+        base_dir: tmp.path().join(".loopforge"),
     };
     paths.ensure_dirs().unwrap();
 

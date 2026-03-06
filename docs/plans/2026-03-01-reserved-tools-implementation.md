@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Implement the first reserved tool group in RexOS — `agent_*`, `task_*`, and `event_publish` — so they no longer return “tool not implemented yet”, and so multi-session collaboration flows are possible with persistent state.
+**Goal:** Implement the first reserved tool group in LoopForge — `agent_*`, `task_*`, and `event_publish` — so they no longer return “tool not implemented yet”, and so multi-session collaboration flows are possible with persistent state.
 
-**Architecture:** Implement these tools in `rexos-runtime` (like `memory_store/memory_recall`) because they require access to the runtime’s persistent `MemoryStore` and, for `agent_send`, the ability to run nested sessions. Persist state in the existing SQLite KV store using namespaced keys (no schema migration in phase 1). Update tool definitions in `rexos-tools` to provide real parameter schemas and RexOS-native descriptions. Update docs to move implemented tool names out of the “reserved stubs” list.
+**Architecture:** Implement these tools in `rexos-runtime` (like `memory_store/memory_recall`) because they require access to the runtime’s persistent `MemoryStore` and, for `agent_send`, the ability to run nested sessions. Persist state in the existing SQLite KV store using namespaced keys (no schema migration in phase 1). Update tool definitions in `rexos-tools` to provide real parameter schemas and LoopForge-native descriptions. Update docs to move implemented tool names out of the “reserved stubs” list.
 
 **Tech Stack:** Rust 2021, `serde_json`, `uuid`, SQLite (rusqlite via `rexos-memory`), axum mock servers for integration tests.
 
@@ -117,7 +117,7 @@ Expected: PASS.
 - Modify: `docs-site/zh/reference/tools.md`
 
 **Steps:**
-- Replace stub schemas/descriptions for implemented tools with real parameter schemas + RexOS-native descriptions.
+- Replace stub schemas/descriptions for implemented tools with real parameter schemas + LoopForge-native descriptions.
 - Move implemented tool names out of “Reserved tools (stubs)” sections, leaving the remaining names as stubs.
 
 **Verification:**

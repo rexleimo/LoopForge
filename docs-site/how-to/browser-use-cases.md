@@ -7,9 +7,9 @@ See also: [Browser Automation (CDP)](browser-automation.md).
 ## Prerequisites (default: CDP)
 
 - Install a Chromium-based browser (Chrome/Chromium/Edge).
-- If LoopForge can’t find it, set `REXOS_BROWSER_CHROME_PATH`.
+- If LoopForge can’t find it, set `LOOPFORGE_BROWSER_CHROME_PATH`.
 
-Optional: use the Playwright backend (legacy) by setting `REXOS_BROWSER_BACKEND=playwright` and following the install steps in [Browser Automation](browser-automation.md).
+Optional: use the Playwright backend (legacy) by setting `LOOPFORGE_BROWSER_BACKEND=playwright` and following the install steps in [Browser Automation](browser-automation.md).
 
 ## Recipes
 

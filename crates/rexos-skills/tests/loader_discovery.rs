@@ -29,7 +29,7 @@ fn workspace_skills_override_global_skills() {
 }
 
 #[test]
-fn legacy_workspace_skills_override_home_when_loopforge_missing() {
+fn legacy_workspace_skills_are_ignored() {
     let tmp = tempfile::tempdir().unwrap();
     let workspace = tmp.path().join("workspace");
     let home_skills = tmp.path().join("home/.codex/skills");
@@ -40,6 +40,6 @@ fn legacy_workspace_skills_override_home_when_loopforge_missing() {
     let resolved = discover_skills(&workspace, &home_skills).unwrap();
     let skill = resolved.get("hello").unwrap();
 
-    assert_eq!(skill.source, SkillSource::WorkspaceLegacy);
-    assert_eq!(skill.manifest.version.to_string(), "0.3.0");
+    assert_eq!(skill.source, SkillSource::Home);
+    assert_eq!(skill.manifest.version.to_string(), "0.1.0");
 }

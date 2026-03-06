@@ -43,7 +43,7 @@
 
 **Step 1: Write failing test**
 - Add test that triggers runtime tool `workflow_run` and verifies:
-  - workflow state file exists at `.rexos/workflows/<id>.json`
+  - workflow state file exists at `.loopforge/workflows/<id>.json`
   - steps recorded with success/failure
   - output includes workflow id and final status
 
@@ -69,8 +69,8 @@
 
 **Step 2: Implement**
 - Add env-driven policy:
-  - `REXOS_APPROVAL_MODE=off|warn|enforce`
-  - `REXOS_APPROVAL_ALLOW=<tool1,tool2,all>`
+  - `LOOPFORGE_APPROVAL_MODE=off|warn|enforce`
+  - `LOOPFORGE_APPROVAL_ALLOW=<tool1,tool2,all>`
 - Enforce policy before tool execution.
 
 **Step 3: Verify**
@@ -88,8 +88,8 @@
 
 **Step 1: Implement artifacts**
 - Add a compose stack exposing noVNC + CDP endpoint.
-- Add script that boots stack and prints required `REXOS_BROWSER_CDP_HTTP` env.
-- Document secure usage and `REXOS_BROWSER_CDP_ALLOW_REMOTE=1` implications.
+- Add script that boots stack and prints required `LOOPFORGE_BROWSER_CDP_HTTP` env.
+- Document secure usage and `LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE=1` implications.
 
 **Step 2: Verify**
 - `bash scripts/browser_sandbox_up.sh --help`

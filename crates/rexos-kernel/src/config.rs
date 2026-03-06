@@ -474,7 +474,7 @@ experimental = true
     fn ensure_default_writes_skills_table() {
         let tmp = tempfile::tempdir().unwrap();
         let paths = crate::paths::RexosPaths {
-            base_dir: tmp.path().join(".rexos"),
+            base_dir: tmp.path().join(".loopforge"),
         };
         paths.ensure_dirs().unwrap();
 

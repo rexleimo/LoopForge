@@ -66,11 +66,11 @@ case "${cmd}" in
     cat <<'ENV_HINT'
 
 Sandbox is up.
-Set these before running RexOS browser tools:
-  export REXOS_BROWSER_CDP_HTTP="http://127.0.0.1:9222"
+Set these before running LoopForge browser tools:
+  export LOOPFORGE_BROWSER_CDP_HTTP="http://127.0.0.1:9222"
 
 Optional (only if you intentionally connect to non-loopback CDP):
-  export REXOS_BROWSER_CDP_ALLOW_REMOTE=1
+  export LOOPFORGE_BROWSER_CDP_ALLOW_REMOTE=1
 
 Observer UI (noVNC):
   http://127.0.0.1:6080/vnc.html

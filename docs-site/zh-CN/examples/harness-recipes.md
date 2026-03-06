@@ -37,7 +37,7 @@ loopforge harness run . --prompt "继续。优先处理 verifier 输出里最先
 
 - workspace 会有持久化产物：
   - `features.json`（checklist）
-  - `rexos-progress.md`（只追加的进度日志）
+  - `loopforge-progress.md`（只追加的进度日志）
   - `init.sh` + `init.ps1`（你的 verifier 脚本）
 - 当 verifier 通过时，LoopForge 会创建 **checkpoint git commit**。
 
@@ -58,4 +58,4 @@ loopforge harness run . --prompt "继续。优先处理 verifier 输出里最先
 
 ## 3) 让任务可复现、可分享
 
-把 harness 产物（`features.json`、`rexos-progress.md`、init 脚本）一起提交，别人就能复用同一套长任务循环（甚至继续推进）。
+把 harness 产物（`features.json`、`loopforge-progress.md`、init 脚本）一起提交，别人就能复用同一套长任务循环（甚至继续推进）。

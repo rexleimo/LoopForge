@@ -4,13 +4,13 @@ use rexos::tools::Toolset;
 #[tokio::test]
 #[ignore]
 async fn browser_wikipedia_and_summarize_with_ollama_smoke() {
-    let model = std::env::var("REXOS_OLLAMA_MODEL").unwrap_or_else(|_| "qwen3:4b".to_string());
-    let keep_workspace_dir = std::env::var("REXOS_BROWSER_SMOKE_WORKSPACE")
+    let model = std::env::var("LOOPFORGE_OLLAMA_MODEL").unwrap_or_else(|_| "qwen3:4b".to_string());
+    let keep_workspace_dir = std::env::var("LOOPFORGE_BROWSER_SMOKE_WORKSPACE")
         .ok()
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty());
     let keep_artifacts = keep_workspace_dir.is_some();
-    let headless = match std::env::var("REXOS_BROWSER_HEADLESS") {
+    let headless = match std::env::var("LOOPFORGE_BROWSER_HEADLESS") {
         Ok(v) => match v.trim().to_ascii_lowercase().as_str() {
             "1" | "true" | "yes" | "on" => true,
             "0" | "false" | "no" | "off" => false,
@@ -22,7 +22,7 @@ async fn browser_wikipedia_and_summarize_with_ollama_smoke() {
     let (tmp, workspace) = match keep_workspace_dir.as_deref() {
         Some(dir) => {
             let p = std::path::PathBuf::from(dir);
-            std::fs::create_dir_all(&p).expect("create REXOS_BROWSER_SMOKE_WORKSPACE");
+            std::fs::create_dir_all(&p).expect("create LOOPFORGE_BROWSER_SMOKE_WORKSPACE");
             println!("[rexos][wikipedia_smoke] artifacts_dir={}", p.display());
             (None, p)
         }
@@ -57,7 +57,7 @@ async fn browser_wikipedia_and_summarize_with_ollama_smoke() {
     let _ = tools
         .call(
             "browser_screenshot",
-            r#"{ "path": ".rexos/browser/wikipedia_home.png" }"#,
+            r#"{ "path": ".loopforge/browser/wikipedia_home.png" }"#,
         )
         .await
         .expect("browser_screenshot wikipedia home");
@@ -94,7 +94,7 @@ async fn browser_wikipedia_and_summarize_with_ollama_smoke() {
         page_text.len()
     );
 
-    let screenshot_path = workspace.join(".rexos/browser/wikipedia_home.png");
+    let screenshot_path = workspace.join(".loopforge/browser/wikipedia_home.png");
     let screenshot_bytes = std::fs::read(&screenshot_path).expect("read screenshot");
     assert!(
         screenshot_bytes.starts_with(&[0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a]),

@@ -18,8 +18,8 @@ RUN apt-get update \
     xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-COPY docker/sandbox-browser/entrypoint.sh /usr/local/bin/rexos-sandbox-browser
-RUN chmod +x /usr/local/bin/rexos-sandbox-browser
+COPY docker/sandbox-browser/entrypoint.sh /usr/local/bin/loopforge-sandbox-browser
+RUN chmod +x /usr/local/bin/loopforge-sandbox-browser
 
 RUN useradd --create-home --shell /bin/bash sandbox
 USER sandbox
@@ -27,4 +27,4 @@ WORKDIR /home/sandbox
 
 EXPOSE 9222 5900 6080
 
-CMD ["rexos-sandbox-browser"]
+CMD ["loopforge-sandbox-browser"]

@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task.
 
-**Goal:** Make RexOS browser automation work out-of-the-box without Python/Playwright by default (native CDP), improve “resume conversation” ergonomics for `rexos agent run`, and polish docs + SEO for https://os.rexai.top.
+**Goal:** Make LoopForge browser automation work out-of-the-box without Python/Playwright by default (native CDP), improve “resume conversation” ergonomics for `rexos agent run`, and polish docs + SEO for https://os.rexai.top.
 
-**Architecture:** Keep the existing `browser_*` tool surface stable, but swap the default implementation from a Python Playwright bridge to a Rust CDP session. Preserve the Python bridge as an optional fallback backend for compatibility. Make sessions persistent per workspace by default via `.rexos/session_id` when `--session` is not provided.
+**Architecture:** Keep the existing `browser_*` tool surface stable, but swap the default implementation from a Python Playwright bridge to a Rust CDP session. Preserve the Python bridge as an optional fallback backend for compatibility. Make sessions persistent per workspace by default via `.loopforge/session_id` when `--session` is not provided.
 
 **Tech Stack:** Rust (tokio, reqwest, tokio-tungstenite), MkDocs Material + `mkdocs-static-i18n`, GitHub Pages.
 
@@ -26,7 +26,7 @@
 ### Out of scope (separate later work)
 
 - Full ACP runtime implementation (Agent Client Protocol) with DB-backed event logs and delivery checkpoints (we’ll capture design notes + a minimal roadmap only).
-- Full Lobster DSL runtime (we’ll plan a RexOS-native equivalent and reserve tool/CLI names).
+- Full Lobster DSL runtime (we’ll plan a LoopForge-native equivalent and reserve tool/CLI names).
 - A full “GUI browser sandbox image” with noVNC (we’ll add remote-CDP support now, and document how to run a container later).
 
 ---
@@ -53,7 +53,7 @@ Expected: PASS (no behavior change yet).
 
 Implement:
 - Chromium executable resolution with:
-  - `REXOS_BROWSER_CHROME_PATH` (explicit path)
+  - `LOOPFORGE_BROWSER_CHROME_PATH` (explicit path)
   - common OS locations + `PATH` fallbacks
 - Spawn Chromium with:
   - `--remote-debugging-port=0`
@@ -97,12 +97,12 @@ Expected: PASS.
 - Modify: `docs-site/how-to/browser-automation.md`
 
 **Behavior:**
-- Add `REXOS_BROWSER_BACKEND=playwright|cdp` (default `cdp`).
+- Add `LOOPFORGE_BROWSER_BACKEND=playwright|cdp` (default `cdp`).
 - If `playwright`, use existing bridge logic and env vars:
-  - `REXOS_BROWSER_PYTHON`
-  - `REXOS_BROWSER_BRIDGE_PATH`
+  - `LOOPFORGE_BROWSER_PYTHON`
+  - `LOOPFORGE_BROWSER_BRIDGE_PATH`
 
-Update unit tests that set a stub bridge to also set `REXOS_BROWSER_BACKEND=playwright`.
+Update unit tests that set a stub bridge to also set `LOOPFORGE_BROWSER_BACKEND=playwright`.
 
 Run: `cargo test -p rexos-tools`
 Expected: PASS.
@@ -116,7 +116,7 @@ Expected: PASS.
 - Modify: `docs-site/how-to/browser-automation.md`
 
 Add env:
-- `REXOS_BROWSER_CDP_HTTP=http://127.0.0.1:9222` (or similar)
+- `LOOPFORGE_BROWSER_CDP_HTTP=http://127.0.0.1:9222` (or similar)
 
 If set:
 - do not spawn Chromium locally
@@ -136,7 +136,7 @@ This enables later adding a Docker/NoVNC “GUI browser sandbox” without chang
 Update test notes to reflect the new default backend (CDP; no Python required).
 
 Run:
-`REXOS_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_baidu_weather_smoke -- --ignored`
+`LOOPFORGE_OLLAMA_MODEL=qwen3:4b cargo test -p rexos --test browser_baidu_weather_smoke -- --ignored`
 
 Expected:
 - A Chromium window appears (when headless=false)
@@ -155,7 +155,7 @@ Expected:
 
 Change default behavior:
 - If `rexos agent run` is called without `--session`, derive session id from workspace:
-  - Use `rexos::harness::resolve_session_id(&workspace)` to create/read `.rexos/session_id`
+  - Use `rexos::harness::resolve_session_id(&workspace)` to create/read `.loopforge/session_id`
   - This makes “follow-up prompts” continue the same conversation by default.
 
 Run: `cargo test -p rexos`
@@ -172,7 +172,7 @@ Expected: PASS.
 Deliverable:
 - A short design doc describing:
   - `workflow_run` tool (YAML steps, approval gates, resume token)
-  - durable state storage under `.rexos/workflows/<id>.json`
+  - durable state storage under `.loopforge/workflows/<id>.json`
   - how this complements harness checkpoints
 
 No implementation required in this batch unless requested.

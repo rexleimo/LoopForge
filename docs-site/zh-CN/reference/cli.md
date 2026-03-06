@@ -4,7 +4,7 @@ LoopForge 的二进制命令是 `loopforge`。
 
 ## 顶层命令
 
-- `loopforge init` — 初始化 `~/.rexos`（配置 + 数据库）
+- `loopforge init` — 初始化 `~/.loopforge`（配置 + 数据库）
 - `loopforge onboard` — 一键 onboarding（`init` + 配置校验 + `doctor` + 可选首任务）
 - `loopforge doctor` — 诊断常见配置问题（配置文件、providers、浏览器、基础依赖）
 - `loopforge agent run` — 在 workspace 中运行一次 agent session
@@ -20,14 +20,14 @@ LoopForge 的二进制命令是 `loopforge`。
 === "macOS/Linux"
     ```bash
     loopforge init
-    loopforge onboard --workspace rexos-onboard-demo
+    loopforge onboard --workspace loopforge-onboard-demo
 
-    mkdir -p rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt"
+    mkdir -p loopforge-work
+    loopforge agent run --workspace loopforge-work --prompt "Create hello.txt"
 
-    mkdir -p rexos-task
-    loopforge harness init rexos-task --prompt "Initialize a features checklist for refactoring this repo"
-    loopforge harness run rexos-task --prompt "Continue"
+    mkdir -p loopforge-task
+    loopforge harness init loopforge-task --prompt "Initialize a features checklist for refactoring this repo"
+    loopforge harness run loopforge-task --prompt "Continue"
 
     loopforge channel drain
 
@@ -37,14 +37,14 @@ LoopForge 的二进制命令是 `loopforge`。
 === "Windows (PowerShell)"
     ```powershell
     loopforge init
-    loopforge onboard --workspace rexos-onboard-demo
+    loopforge onboard --workspace loopforge-onboard-demo
 
-    mkdir rexos-work
-    loopforge agent run --workspace rexos-work --prompt "Create hello.txt"
+    mkdir loopforge-work
+    loopforge agent run --workspace loopforge-work --prompt "Create hello.txt"
 
-    mkdir rexos-task
-    loopforge harness init rexos-task --prompt "Initialize a features checklist for refactoring this repo"
-    loopforge harness run rexos-task --prompt "Continue"
+    mkdir loopforge-task
+    loopforge harness init loopforge-task --prompt "Initialize a features checklist for refactoring this repo"
+    loopforge harness run loopforge-task --prompt "Continue"
 
     loopforge channel drain
 
