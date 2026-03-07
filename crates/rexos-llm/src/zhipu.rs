@@ -65,7 +65,8 @@ impl LlmDriver for ZhipuDriver {
                 .error_for_status()
                 .context("zhipu HTTP error")?;
 
-            let body: RawChatCompletionResponse = resp.json().await.context("decode zhipu response")?;
+            let body: RawChatCompletionResponse =
+                resp.json().await.context("decode zhipu response")?;
             let choice = body.choices.into_iter().next().context("no choices")?;
             Ok(map_message(choice.message)?)
         })

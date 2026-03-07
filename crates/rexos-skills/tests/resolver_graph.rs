@@ -1,4 +1,4 @@
-use rexos_skills::resolver::{SkillDependencyConstraint, SkillNode, resolve_load_order};
+use rexos_skills::resolver::{resolve_load_order, SkillDependencyConstraint, SkillNode};
 
 fn node(name: &str, version: &str, deps: Vec<(&str, &str)>) -> SkillNode {
     SkillNode {

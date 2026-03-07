@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use crate::manifest::{SkillManifest, parse_manifest};
+use crate::manifest::{parse_manifest, SkillManifest};
 
 const SKILL_MANIFEST_FILE: &str = "skill.toml";
 
@@ -29,7 +29,10 @@ pub fn discover_skills(
     // Lower precedence first, later inserts override.
     let roots = [
         (SkillSource::Home, home_skills_root.to_path_buf()),
-        (SkillSource::Workspace, workspace_root.join(".loopforge/skills")),
+        (
+            SkillSource::Workspace,
+            workspace_root.join(".loopforge/skills"),
+        ),
     ];
 
     for (source, root) in roots {

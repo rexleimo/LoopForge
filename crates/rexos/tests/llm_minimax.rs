@@ -56,8 +56,9 @@ async fn minimax_driver_maps_messages_tools_and_tool_calls() {
         axum::serve(listener, app).await.unwrap();
     });
 
-    let driver = rexos::llm::minimax::MiniMaxDriver::new(format!("http://{addr}/v1"), Some("k".to_string()))
-        .unwrap();
+    let driver =
+        rexos::llm::minimax::MiniMaxDriver::new(format!("http://{addr}/v1"), Some("k".to_string()))
+            .unwrap();
 
     let req = rexos::llm::openai_compat::ChatCompletionRequest {
         model: "MiniMax-M2.5".to_string(),
@@ -109,4 +110,3 @@ async fn minimax_driver_maps_messages_tools_and_tool_calls() {
 
     server.abort();
 }
-

@@ -48,7 +48,10 @@ async fn dashscope_driver_maps_messages_tools_and_tool_calls() {
 
     let state = TestState::default();
     let app = Router::new()
-        .route("/api/v1/services/aigc/text-generation/generation", post(handler))
+        .route(
+            "/api/v1/services/aigc/text-generation/generation",
+            post(handler),
+        )
         .with_state(state.clone());
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -107,9 +110,11 @@ async fn dashscope_driver_maps_messages_tools_and_tool_calls() {
     assert_eq!(captured["model"], "qwen-plus");
     assert_eq!(captured["parameters"]["result_format"], "message");
     assert_eq!(captured["parameters"]["temperature"], 0.7);
-    assert_eq!(captured["parameters"]["tools"][0]["function"]["name"], "fs_read");
+    assert_eq!(
+        captured["parameters"]["tools"][0]["function"]["name"],
+        "fs_read"
+    );
     assert_eq!(captured["input"]["messages"][0]["role"], "system");
 
     server.abort();
 }
-

@@ -14,4 +14,3 @@ fn harness_session_id_is_persisted_per_workspace() {
     let ignore = std::fs::read_to_string(workspace.join(".gitignore")).unwrap();
     assert!(ignore.lines().any(|l| l.trim() == ".loopforge/"));
 }
-

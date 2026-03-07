@@ -142,14 +142,26 @@ fn map_messages(messages: &[ChatMessage]) -> anyhow::Result<(String, Vec<Anthrop
     for m in messages {
         match m.role {
             Role::System => {
-                if let Some(s) = m.content.as_ref().map(|s| s.trim()).filter(|s| !s.is_empty()) {
+                if let Some(s) = m
+                    .content
+                    .as_ref()
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                {
                     system_parts.push(s.to_string());
                 }
             }
             Role::User => {
                 let mut blocks = Vec::new();
-                if let Some(s) = m.content.as_ref().map(|s| s.trim()).filter(|s| !s.is_empty()) {
-                    blocks.push(AnthropicContentBlock::Text { text: s.to_string() });
+                if let Some(s) = m
+                    .content
+                    .as_ref()
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                {
+                    blocks.push(AnthropicContentBlock::Text {
+                        text: s.to_string(),
+                    });
                 }
                 if !blocks.is_empty() {
                     out.push(AnthropicMessage {
@@ -160,14 +172,22 @@ fn map_messages(messages: &[ChatMessage]) -> anyhow::Result<(String, Vec<Anthrop
             }
             Role::Assistant => {
                 let mut blocks = Vec::new();
-                if let Some(s) = m.content.as_ref().map(|s| s.trim()).filter(|s| !s.is_empty()) {
-                    blocks.push(AnthropicContentBlock::Text { text: s.to_string() });
+                if let Some(s) = m
+                    .content
+                    .as_ref()
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                {
+                    blocks.push(AnthropicContentBlock::Text {
+                        text: s.to_string(),
+                    });
                 }
 
                 if let Some(calls) = &m.tool_calls {
                     for c in calls {
-                        let input = serde_json::from_str::<serde_json::Value>(&c.function.arguments)
-                            .unwrap_or(serde_json::Value::Null);
+                        let input =
+                            serde_json::from_str::<serde_json::Value>(&c.function.arguments)
+                                .unwrap_or(serde_json::Value::Null);
                         blocks.push(AnthropicContentBlock::ToolUse {
                             id: c.id.clone(),
                             name: c.function.name.clone(),

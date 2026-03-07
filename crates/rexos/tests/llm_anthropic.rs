@@ -37,7 +37,11 @@ async fn anthropic_driver_maps_system_tools_and_tool_use() {
         axum::serve(listener, app).await.unwrap();
     });
 
-    let driver = rexos::llm::anthropic::AnthropicDriver::new(format!("http://{addr}"), Some("k".to_string())).unwrap();
+    let driver = rexos::llm::anthropic::AnthropicDriver::new(
+        format!("http://{addr}"),
+        Some("k".to_string()),
+    )
+    .unwrap();
 
     let req = rexos::llm::openai_compat::ChatCompletionRequest {
         model: "claude-test".to_string(),

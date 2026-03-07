@@ -45,9 +45,11 @@ async fn gemini_driver_maps_system_tools_and_function_call() {
         axum::serve(listener, app).await.unwrap();
     });
 
-    let driver =
-        rexos::llm::gemini::GeminiDriver::new(format!("http://{addr}/v1beta"), Some("k".to_string()))
-            .unwrap();
+    let driver = rexos::llm::gemini::GeminiDriver::new(
+        format!("http://{addr}/v1beta"),
+        Some("k".to_string()),
+    )
+    .unwrap();
 
     let req = rexos::llm::openai_compat::ChatCompletionRequest {
         model: "gemini-test".to_string(),
@@ -98,4 +100,3 @@ async fn gemini_driver_maps_system_tools_and_function_call() {
 
     server.abort();
 }
-

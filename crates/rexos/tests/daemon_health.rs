@@ -36,7 +36,12 @@ async fn healthz_returns_ok() {
     let app = rexos::daemon::app();
 
     let response = app
-        .oneshot(Request::builder().uri("/healthz").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::builder()
+                .uri("/healthz")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
 
@@ -55,7 +60,12 @@ async fn status_returns_ok_and_security_headers() {
     let app = rexos::daemon::app();
 
     let response = app
-        .oneshot(Request::builder().uri("/status").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::builder()
+                .uri("/status")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
 
@@ -79,7 +89,12 @@ async fn healthz_requires_bearer_token_when_auth_is_enabled() {
 
     let unauthorized = app
         .clone()
-        .oneshot(Request::builder().uri("/healthz").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::builder()
+                .uri("/healthz")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(unauthorized.status(), StatusCode::UNAUTHORIZED);

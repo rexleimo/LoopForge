@@ -78,7 +78,8 @@ async fn reserved_hand_tools_list_activate_status_and_deactivate() {
         }
 
         if *calls == 2 {
-            let instance_id = extract_hand_instance_id(&payload).unwrap_or_else(|| "missing".into());
+            let instance_id =
+                extract_hand_instance_id(&payload).unwrap_or_else(|| "missing".into());
             return Json(json!({
                 "choices": [{
                     "index": 0,

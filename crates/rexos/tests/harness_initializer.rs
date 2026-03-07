@@ -141,9 +141,7 @@ async fn harness_bootstrap_with_prompt_populates_features_and_checkpoints() {
 
 #[tokio::test]
 async fn harness_bootstrap_with_prompt_errors_if_initializer_does_not_write_features_json() {
-    async fn handler(
-        Json(_payload): Json<serde_json::Value>,
-    ) -> Json<serde_json::Value> {
+    async fn handler(Json(_payload): Json<serde_json::Value>) -> Json<serde_json::Value> {
         Json(json!({
             "choices": [{
                 "index": 0,
@@ -332,7 +330,10 @@ async fn harness_bootstrap_with_prompt_normalizes_minimal_features_json() {
     let raw = std::fs::read_to_string(workspace.join("features.json")).unwrap();
     let v: serde_json::Value = serde_json::from_str(&raw).unwrap();
     assert_eq!(v["version"], 1);
-    assert!(v["rules"]["editing"].as_str().unwrap_or("").contains("passes"));
+    assert!(v["rules"]["editing"]
+        .as_str()
+        .unwrap_or("")
+        .contains("passes"));
     assert_eq!(v["features"].as_array().unwrap().len(), 1);
     assert_eq!(v["features"][0]["passes"], false);
 

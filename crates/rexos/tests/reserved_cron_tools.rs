@@ -150,7 +150,8 @@ async fn reserved_cron_tools_create_list_and_cancel() {
     let cron_lists: Vec<String> = msgs
         .iter()
         .filter(|m| {
-            m.role == rexos::llm::openai_compat::Role::Tool && m.name.as_deref() == Some("cron_list")
+            m.role == rexos::llm::openai_compat::Role::Tool
+                && m.name.as_deref() == Some("cron_list")
         })
         .filter_map(|m| m.content.clone())
         .collect();
@@ -171,4 +172,3 @@ async fn reserved_cron_tools_create_list_and_cancel() {
 
     server.abort();
 }
-

@@ -56,9 +56,11 @@ async fn zhipu_driver_generates_jwt_for_key_id_secret_and_maps_tool_calls() {
         axum::serve(listener, app).await.unwrap();
     });
 
-    let driver =
-        rexos::llm::zhipu::ZhipuDriver::new(format!("http://{addr}/api/paas/v4"), Some("kid.secret".to_string()))
-            .unwrap();
+    let driver = rexos::llm::zhipu::ZhipuDriver::new(
+        format!("http://{addr}/api/paas/v4"),
+        Some("kid.secret".to_string()),
+    )
+    .unwrap();
 
     let req = rexos::llm::openai_compat::ChatCompletionRequest {
         model: "glm-4".to_string(),
@@ -114,4 +116,3 @@ async fn zhipu_driver_generates_jwt_for_key_id_secret_and_maps_tool_calls() {
 
     server.abort();
 }
-

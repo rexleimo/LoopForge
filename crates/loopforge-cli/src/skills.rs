@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, bail};
+use anyhow::{bail, Context};
 use serde::Serialize;
 
 use rexos::paths::RexosPaths;
-use rexos_skills::loader::{DiscoveredSkill, SkillSource, discover_skills};
+use rexos_skills::loader::{discover_skills, DiscoveredSkill, SkillSource};
 use rexos_skills::manifest::parse_manifest;
 
 #[derive(Debug, Clone, Serialize)]
@@ -41,7 +41,9 @@ pub struct SkillsDoctorReport {
     pub issues: Vec<SkillsDoctorIssue>,
 }
 
-pub fn discover_workspace_skills(workspace_root: &Path) -> anyhow::Result<BTreeMap<String, DiscoveredSkill>> {
+pub fn discover_workspace_skills(
+    workspace_root: &Path,
+) -> anyhow::Result<BTreeMap<String, DiscoveredSkill>> {
     let home_skills = home_skills_root()?;
     discover_skills(workspace_root, &home_skills)
 }

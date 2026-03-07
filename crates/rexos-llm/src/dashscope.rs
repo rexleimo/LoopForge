@@ -43,10 +43,7 @@ impl LlmDriver for DashscopeDriver {
                 },
             };
 
-            let url = format!(
-                "{}/services/aigc/text-generation/generation",
-                self.base_url
-            );
+            let url = format!("{}/services/aigc/text-generation/generation", self.base_url);
             let mut http_req = self.http.post(url).json(&dash_req);
             if let Some(key) = &self.api_key {
                 if !key.trim().is_empty() {
@@ -137,7 +134,11 @@ fn map_messages(messages: &[ChatMessage]) -> Vec<DashscopeMessage> {
 }
 
 fn clean_message(mut m: ChatMessage) -> ChatMessage {
-    if m.content.as_ref().map(|s| s.trim().is_empty()).unwrap_or(false) {
+    if m.content
+        .as_ref()
+        .map(|s| s.trim().is_empty())
+        .unwrap_or(false)
+    {
         m.content = None;
     }
     if m.tool_calls.as_ref().map(|c| c.is_empty()).unwrap_or(false) {

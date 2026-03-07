@@ -54,9 +54,7 @@ async fn web_fetch_allows_loopback_when_allow_private_true() {
     let out = tools
         .call(
             "web_fetch",
-            &format!(
-                r#"{{ "url": "http://{addr}/", "allow_private": true, "max_bytes": 1000 }}"#
-            ),
+            &format!(r#"{{ "url": "http://{addr}/", "allow_private": true, "max_bytes": 1000 }}"#),
         )
         .await
         .unwrap();
@@ -67,4 +65,3 @@ async fn web_fetch_allows_loopback_when_allow_private_true() {
 
     server.abort();
 }
-

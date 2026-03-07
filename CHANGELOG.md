@@ -4,6 +4,8 @@ All notable user-visible changes are documented in this file.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-07
+
 ### Added
 
 - Versioning policy documented in `docs/versioning-and-release.md`.
@@ -20,6 +22,7 @@ All notable user-visible changes are documented in this file.
 
 ### Changed
 
+- Internal readability refactor: decomposed `rexos-tools` browser/defs/dispatch/ops/patch internals into smaller modules and aligned dependent crates/tests with the new layout.
 - Competitor-analysis posts were moved out of `docs-site/` into `docs/internal/competitive/`, and public blog/homepage references to OpenFang/OpenClaw were removed.
 - `loopforge release check` now fails when public docs contain competitor-analysis terms or when semver tags on HEAD do not match the requested release tag.
 

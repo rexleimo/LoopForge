@@ -83,7 +83,9 @@ impl LlmRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rexos_kernel::config::{LlmConfig, ProviderConfig, ProviderKind, RexosConfig, RouterConfig};
+    use rexos_kernel::config::{
+        LlmConfig, ProviderConfig, ProviderKind, RexosConfig, RouterConfig,
+    };
 
     #[test]
     fn registry_builds_and_resolves_drivers() {

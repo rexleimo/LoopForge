@@ -557,7 +557,10 @@ fn run_init_script_capture(workspace_dir: &Path) -> anyhow::Result<String> {
     Ok(combined)
 }
 
-fn run_powershell_script_output(workspace_dir: &Path, script: &str) -> anyhow::Result<std::process::Output> {
+fn run_powershell_script_output(
+    workspace_dir: &Path,
+    script: &str,
+) -> anyhow::Result<std::process::Output> {
     let args = [
         "-NoProfile",
         "-NonInteractive",

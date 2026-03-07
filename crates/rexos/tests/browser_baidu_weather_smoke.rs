@@ -19,8 +19,8 @@ fn percent_encode_query(query: &str) -> String {
 #[ignore]
 async fn browser_baidu_search_weather_and_summarize_with_ollama_smoke() {
     let model = std::env::var("LOOPFORGE_OLLAMA_MODEL").unwrap_or_else(|_| "qwen3:4b".to_string());
-    let query =
-        std::env::var("LOOPFORGE_BAIDU_WEATHER_QUERY").unwrap_or_else(|_| "北京 今天天气".to_string());
+    let query = std::env::var("LOOPFORGE_BAIDU_WEATHER_QUERY")
+        .unwrap_or_else(|_| "北京 今天天气".to_string());
     let keep_workspace_dir = std::env::var("LOOPFORGE_BROWSER_SMOKE_WORKSPACE")
         .ok()
         .map(|v| v.trim().to_string())
@@ -163,7 +163,10 @@ async fn browser_baidu_search_weather_and_summarize_with_ollama_smoke() {
         .and_then(|v| v.as_str())
         .unwrap_or("")
         .to_string();
-    assert!(page_url.contains("baidu.com"), "unexpected results url: {page_url:?}");
+    assert!(
+        page_url.contains("baidu.com"),
+        "unexpected results url: {page_url:?}"
+    );
     assert!(
         page_text.chars().count() >= 800,
         "expected non-trivial page text (got len={})",

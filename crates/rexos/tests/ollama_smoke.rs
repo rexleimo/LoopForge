@@ -29,4 +29,3 @@ async fn ollama_openai_compat_smoke() {
     let content = res.content.unwrap_or_default();
     assert!(!content.trim().is_empty());
 }
-

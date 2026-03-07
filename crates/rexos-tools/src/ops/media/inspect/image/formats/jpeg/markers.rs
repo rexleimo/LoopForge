@@ -1,0 +1,10 @@
+pub(super) fn is_terminal_marker(marker: u8) -> bool {
+    matches!(marker, 0xD9 | 0xDA)
+}
+
+pub(super) fn is_jpeg_sof(marker: u8) -> bool {
+    matches!(
+        marker,
+        0xC0 | 0xC1 | 0xC2 | 0xC3 | 0xC5 | 0xC6 | 0xC7 | 0xC9 | 0xCA | 0xCB | 0xCD | 0xCE | 0xCF
+    )
+}

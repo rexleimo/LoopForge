@@ -105,7 +105,9 @@ struct GeminiContent {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 enum GeminiPart {
-    Text { text: String },
+    Text {
+        text: String,
+    },
     FunctionCall {
         #[serde(rename = "functionCall")]
         function_call: GeminiFunctionCall,
@@ -168,14 +170,21 @@ fn map_tools(tools: &[ToolDefinition]) -> Vec<GeminiTool> {
     }
 }
 
-fn map_messages(messages: &[ChatMessage]) -> anyhow::Result<(Option<GeminiSystemInstruction>, Vec<GeminiContent>)> {
+fn map_messages(
+    messages: &[ChatMessage],
+) -> anyhow::Result<(Option<GeminiSystemInstruction>, Vec<GeminiContent>)> {
     let mut system_parts = Vec::new();
     let mut out = Vec::new();
     let mut tool_name_by_id: BTreeMap<String, String> = BTreeMap::new();
 
     for m in messages {
         if let Role::System = m.role {
-            if let Some(s) = m.content.as_ref().map(|s| s.trim()).filter(|s| !s.is_empty()) {
+            if let Some(s) = m
+                .content
+                .as_ref()
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+            {
                 system_parts.push(s.to_string());
             }
         }
@@ -197,7 +206,9 @@ fn map_messages(messages: &[ChatMessage]) -> anyhow::Result<(Option<GeminiSystem
                 if !text.is_empty() {
                     out.push(GeminiContent {
                         role: "user".to_string(),
-                        parts: vec![GeminiPart::Text { text: text.to_string() }],
+                        parts: vec![GeminiPart::Text {
+                            text: text.to_string(),
+                        }],
                     });
                 }
             }
@@ -205,7 +216,9 @@ fn map_messages(messages: &[ChatMessage]) -> anyhow::Result<(Option<GeminiSystem
                 let mut parts = Vec::new();
                 let text = m.content.as_ref().map(|s| s.trim()).unwrap_or("");
                 if !text.is_empty() {
-                    parts.push(GeminiPart::Text { text: text.to_string() });
+                    parts.push(GeminiPart::Text {
+                        text: text.to_string(),
+                    });
                 }
                 if let Some(calls) = &m.tool_calls {
                     for c in calls {
@@ -295,9 +308,17 @@ fn map_response(resp: GeminiResponse) -> anyhow::Result<ChatMessage> {
 
     Ok(ChatMessage {
         role: Role::Assistant,
-        content: if texts.is_empty() { None } else { Some(texts.join("\n")) },
+        content: if texts.is_empty() {
+            None
+        } else {
+            Some(texts.join("\n"))
+        },
         name: None,
         tool_call_id: None,
-        tool_calls: if tool_calls.is_empty() { None } else { Some(tool_calls) },
+        tool_calls: if tool_calls.is_empty() {
+            None
+        } else {
+            Some(tool_calls)
+        },
     })
 }

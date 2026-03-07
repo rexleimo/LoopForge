@@ -65,8 +65,14 @@ mod tests {
         let workspace = Path::new("/tmp/workspace");
         let home = Path::new("/tmp/home");
 
-        assert_eq!(paths.config_path(), PathBuf::from("/tmp/home/.loopforge/config.toml"));
-        assert_eq!(paths.db_path(), PathBuf::from("/tmp/home/.loopforge/loopforge.db"));
+        assert_eq!(
+            paths.config_path(),
+            PathBuf::from("/tmp/home/.loopforge/config.toml")
+        );
+        assert_eq!(
+            paths.db_path(),
+            PathBuf::from("/tmp/home/.loopforge/loopforge.db")
+        );
         assert_eq!(
             RexosPaths::workspace_skills_dir(workspace),
             PathBuf::from("/tmp/workspace/.loopforge/skills")

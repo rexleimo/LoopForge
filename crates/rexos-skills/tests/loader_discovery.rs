@@ -1,10 +1,8 @@
-use rexos_skills::loader::{SkillSource, discover_skills};
+use rexos_skills::loader::{discover_skills, SkillSource};
 
 fn write_manifest(dir: &std::path::Path, name: &str, version: &str) {
     std::fs::create_dir_all(dir).unwrap();
-    let manifest = format!(
-        "name = \"{name}\"\nversion = \"{version}\"\nentry = \"SKILL.md\"\n"
-    );
+    let manifest = format!("name = \"{name}\"\nversion = \"{version}\"\nentry = \"SKILL.md\"\n");
     std::fs::write(dir.join("skill.toml"), manifest).unwrap();
 }
 

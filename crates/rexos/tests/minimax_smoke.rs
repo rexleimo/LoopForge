@@ -9,7 +9,8 @@ async fn minimax_native_smoke() {
 
     let base_url = std::env::var("LOOPFORGE_MINIMAX_BASE_URL")
         .unwrap_or_else(|_| "https://api.minimax.chat/v1".to_string());
-    let model = std::env::var("LOOPFORGE_MINIMAX_MODEL").unwrap_or_else(|_| "MiniMax-M2.5".to_string());
+    let model =
+        std::env::var("LOOPFORGE_MINIMAX_MODEL").unwrap_or_else(|_| "MiniMax-M2.5".to_string());
 
     let driver = rexos::llm::minimax::MiniMaxDriver::new(base_url, Some(api_key)).unwrap();
 

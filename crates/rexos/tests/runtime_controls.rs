@@ -34,10 +34,7 @@ impl Drop for EnvVarGuard {
     }
 }
 
-fn test_agent(
-    base_url: String,
-    memory: rexos::memory::MemoryStore,
-) -> rexos::agent::AgentRuntime {
+fn test_agent(base_url: String, memory: rexos::memory::MemoryStore) -> rexos::agent::AgentRuntime {
     let mut providers = BTreeMap::new();
     providers.insert(
         "ollama".to_string(),
@@ -152,7 +149,10 @@ async fn session_tool_whitelist_blocks_tool_and_audits_failure() {
     assert_eq!(last["session_id"], "s-whitelist");
     assert_eq!(last["tool_name"], "fs_write");
     assert_eq!(last["success"], false);
-    assert!(last["error"].as_str().unwrap_or("").contains("tool not allowed"));
+    assert!(last["error"]
+        .as_str()
+        .unwrap_or("")
+        .contains("tool not allowed"));
 
     server.abort();
 }
@@ -209,8 +209,11 @@ async fn tool_audit_marks_truncated_for_large_output() {
     let tmp = tempfile::tempdir().unwrap();
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).unwrap();
-    std::fs::write(workspace.join("large.txt"), format!("HEAD:{}:TAIL", "x".repeat(25_000)))
-        .unwrap();
+    std::fs::write(
+        workspace.join("large.txt"),
+        format!("HEAD:{}:TAIL", "x".repeat(25_000)),
+    )
+    .unwrap();
 
     let paths = rexos::paths::RexosPaths {
         base_dir: tmp.path().join(".loopforge"),
@@ -332,15 +335,18 @@ async fn acp_events_capture_session_and_tool_lifecycle() {
     let events: serde_json::Value = serde_json::from_str(&raw).unwrap();
     let arr = events.as_array().unwrap();
     assert!(
-        arr.iter().any(|v| v["session_id"] == "s-acp-events" && v["event_type"] == "session.started"),
+        arr.iter()
+            .any(|v| v["session_id"] == "s-acp-events" && v["event_type"] == "session.started"),
         "missing session.started: {events}"
     );
     assert!(
-        arr.iter().any(|v| v["session_id"] == "s-acp-events" && v["event_type"] == "tool.succeeded"),
+        arr.iter()
+            .any(|v| v["session_id"] == "s-acp-events" && v["event_type"] == "tool.succeeded"),
         "missing tool.succeeded: {events}"
     );
     assert!(
-        arr.iter().any(|v| v["session_id"] == "s-acp-events" && v["event_type"] == "session.completed"),
+        arr.iter()
+            .any(|v| v["session_id"] == "s-acp-events" && v["event_type"] == "session.completed"),
         "missing session.completed: {events}"
     );
 
@@ -419,9 +425,9 @@ async fn approval_enforce_blocks_dangerous_tool_calls() {
     let events: serde_json::Value = serde_json::from_str(&raw).unwrap();
     let arr = events.as_array().expect("acp events should be an array");
     assert!(
-        arr
-            .iter()
-            .any(|v| v["session_id"] == "s-approval-enforce" && v["event_type"] == "approval.blocked"),
+        arr.iter()
+            .any(|v| v["session_id"] == "s-approval-enforce"
+                && v["event_type"] == "approval.blocked"),
         "missing approval.blocked event: {events}"
     );
 
@@ -610,9 +616,7 @@ async fn delivery_checkpoint_is_written_after_dispatch() {
         .as_array()
         .expect("acp checkpoints should be an array");
     assert!(
-        arr
-            .iter()
-            .any(|v| v["channel"] == "console"),
+        arr.iter().any(|v| v["channel"] == "console"),
         "missing console checkpoint: {checkpoints}"
     );
 

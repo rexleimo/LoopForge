@@ -103,4 +103,3 @@ async fn agent_uses_provider_default_model_when_router_model_is_default() {
 
     server.abort();
 }
-

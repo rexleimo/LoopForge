@@ -74,7 +74,9 @@ fn emits_skill_events_and_audit_records() {
         .unwrap_or_default();
     let records: serde_json::Value = serde_json::from_str(&raw).unwrap();
     let arr = records.as_array().unwrap();
-    assert!(arr.iter().any(|v| v["session_id"] == session_id && v["success"] == true));
+    assert!(arr
+        .iter()
+        .any(|v| v["session_id"] == session_id && v["success"] == true));
     assert!(arr.iter().any(|v| {
         v["session_id"] == session_id
             && v["success"] == false

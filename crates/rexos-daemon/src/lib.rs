@@ -126,9 +126,7 @@ pub async fn serve(addr: SocketAddr) -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .with_context(|| format!("bind {addr}"))?;
-    axum::serve(listener, app())
-        .await
-        .context("serve http")?;
+    axum::serve(listener, app()).await.context("serve http")?;
     Ok(())
 }
 
@@ -185,7 +183,10 @@ async fn enforce_auth_and_rate_limit(
     next.run(request).await
 }
 
-async fn add_security_headers(request: axum::http::Request<axum::body::Body>, next: Next) -> Response {
+async fn add_security_headers(
+    request: axum::http::Request<axum::body::Body>,
+    next: Next,
+) -> Response {
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     headers.insert(

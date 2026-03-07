@@ -92,12 +92,19 @@ impl MemoryStore {
     pub fn kv_get(&self, key: &str) -> anyhow::Result<Option<String>> {
         let value = self
             .conn
-            .query_row("SELECT value FROM kv WHERE key=?1", (key,), |row| row.get(0))
+            .query_row("SELECT value FROM kv WHERE key=?1", (key,), |row| {
+                row.get(0)
+            })
             .optional()?;
         Ok(value)
     }
 
-    pub fn append_message(&self, session_id: &str, role: &str, content: &str) -> anyhow::Result<()> {
+    pub fn append_message(
+        &self,
+        session_id: &str,
+        role: &str,
+        content: &str,
+    ) -> anyhow::Result<()> {
         let now = now_epoch_seconds().to_string();
 
         self.conn.execute(

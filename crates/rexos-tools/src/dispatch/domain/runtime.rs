@@ -1,0 +1,32 @@
+pub(super) fn is_runtime_compat_tool(name: &str) -> bool {
+    matches!(
+        name,
+        "memory_store"
+            | "memory_recall"
+            | "agent_send"
+            | "agent_spawn"
+            | "agent_list"
+            | "agent_kill"
+            | "agent_find"
+            | "hand_list"
+            | "hand_activate"
+            | "hand_status"
+            | "hand_deactivate"
+            | "task_post"
+            | "task_claim"
+            | "task_complete"
+            | "task_list"
+            | "event_publish"
+            | "schedule_create"
+            | "schedule_list"
+            | "schedule_delete"
+            | "knowledge_add_entity"
+            | "knowledge_add_relation"
+            | "knowledge_query"
+            | "cron_create"
+            | "cron_list"
+            | "cron_cancel"
+            | "channel_send"
+            | "workflow_run"
+    )
+}
