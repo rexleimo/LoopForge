@@ -23,4 +23,4 @@
 - `notes/release-readiness-audit.md`
 
 !!! note
-    This task is for preflight analysis. It should not create tags or publish releases.
+    This task is for preflight analysis. It should not create tags or publish releases. In LoopForge itself, maintainers now typically merge the version/changelog change to `main` and let Actions auto-create the missing semver tag before the existing Release workflow publishes GitHub assets.

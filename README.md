@@ -93,9 +93,12 @@ To run the optional NVIDIA NIM smoke test: `NVIDIA_API_KEY=<key> cargo test --wo
 
 ## Releasing (maintainers)
 
-Pushing a `v*` tag triggers the Release workflow which attaches prebuilt archives to a GitHub Release.
+Pushing a `v*` tag still triggers the Release workflow which attaches prebuilt archives to a GitHub Release.
+On `main`, maintainers usually do not need to push the tag manually anymore: once CI succeeds and the workspace version/changelog are ready, the `Auto Release Tag` workflow creates the missing `vX.Y.Z` tag automatically and then the existing Release workflow publishes the GitHub release.
 Before every release, follow the versioning/changelog policy in `docs/versioning-and-release.md`.
 If an iteration is marked as "needs version bump", the same change set must include both version number updates and changelog updates (`CHANGELOG.md`).
+
+Manual fallback:
 
 ```bash
 git tag v1.0.0

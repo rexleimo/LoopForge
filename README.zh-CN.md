@@ -66,9 +66,12 @@ loopforge agent run --workspace /tmp/loopforge-work --prompt "Create hello.txt w
 
 ## 发版（维护者）
 
-推送一个 `v*` tag 会触发 Release 工作流，构建并把预编译压缩包上传到 GitHub Release。
+推送一个 `v*` tag 仍然会触发 Release 工作流，构建并把预编译压缩包上传到 GitHub Release。
+但在 `main` 上，维护者通常不需要再手动推 tag：当 CI 成功、workspace version 与 `CHANGELOG.md` 都准备好后，`Auto Release Tag` 工作流会自动创建缺失的 `vX.Y.Z` tag，随后由现有 Release 工作流发布 GitHub 版本。
 每次发版前请遵循 `docs/versioning-and-release.md` 的版本与更新说明规则。
 如果本次迭代被标记为“需要升级版本号”，则同一批改动必须同时包含版本号更新和 `CHANGELOG.md` 更新。
+
+手动兜底：
 
 ```bash
 git tag v1.0.0

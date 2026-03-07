@@ -1,0 +1,97 @@
+name: Auto Release Tag
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-release-main
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: auto-tag release
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main tip
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --force --tags origin
+
+      - name: Ensure workflow run matches current main tip
+        id: current_tip
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_main="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ "$current_main" != "${{ github.event.workflow_run.head_sha }}" ]; then
+            echo "is_current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping auto-tag because a newer main commit exists."
+            exit 0
+          fi
+          echo "is_current=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        if: steps.current_tip.outputs.is_current == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Resolve release tag
+        if: steps.current_tip.outputs.is_current == 'true'
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/resolve_release_tag.py > release-decision.json
+          cat release-decision.json
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(Path("release-decision.json").read_text(encoding="utf-8"))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"should_tag={'true' if data['should_tag'] else 'false'}\n")
+              handle.write(f"tag={data.get('tag') or ''}\n")
+              handle.write(f"reason={data['reason']}\n")
+          PY
+
+      - name: Install Rust
+        if: steps.resolve.outputs.should_tag == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        if: steps.resolve.outputs.should_tag == 'true'
+        uses: Swatinem/rust-cache@v2
+
+      - name: Release preflight
+        if: steps.resolve.outputs.should_tag == 'true'
+        run: cargo run -p loopforge-cli -- release check --tag "${{ steps.resolve.outputs.tag }}"
+
+      - name: Create semver tag
+        if: steps.resolve.outputs.should_tag == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${{ steps.resolve.outputs.tag }}" "${{ github.event.workflow_run.head_sha }}"
+          git push origin "${{ steps.resolve.outputs.tag }}"
+
+      - name: No release needed
+        if: steps.current_tip.outputs.is_current == 'true' && steps.resolve.outputs.should_tag != 'true'
+        run: echo "${{ steps.resolve.outputs.reason }}"

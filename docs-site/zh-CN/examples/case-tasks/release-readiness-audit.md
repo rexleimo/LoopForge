@@ -23,4 +23,4 @@
 - `notes/release-readiness-audit.md`
 
 !!! note
-    这是发布前分析任务，不应创建 tag 或实际发布。
+    这是发布前分析任务，不应创建 tag 或实际发布。在 LoopForge 自身仓库里，维护者现在通常只需要把版本号与 `CHANGELOG.md` 的更新合并进 `main`，后续由 Actions 自动创建缺失的 semver tag，再由现有 Release 工作流发布 GitHub 版本。

@@ -12,6 +12,7 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("python3 -m unittest", ci)
         self.assertIn("scripts.tests.test_verify_version_changelog", ci)
         self.assertIn("scripts.tests.test_verify_release_consistency", ci)
+        self.assertIn("scripts.tests.test_resolve_release_tag", ci)
         self.assertIn("scripts.tests.test_provider_health_report", ci)
         self.assertIn("scripts.tests.test_package_release", ci)
         self.assertIn("scripts.tests.test_onboard_metrics_report", ci)
@@ -52,6 +53,18 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("loopforge-${version}", workflow)
         self.assertIn("runner.os != 'Windows'", workflow)
         self.assertIn("runner.os == 'Windows'", workflow)
+
+    def test_auto_release_tag_workflow_creates_missing_semver_tag_after_ci(self):
+        workflow = (
+            REPO_ROOT / ".github/workflows/auto-release-tag.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("workflow_run", workflow)
+        self.assertIn('workflows: ["CI"]', workflow)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", workflow)
+        self.assertIn("github.event.workflow_run.head_branch == 'main'", workflow)
+        self.assertIn("scripts/resolve_release_tag.py", workflow)
+        self.assertIn("release check --tag", workflow)
+        self.assertIn("git push origin", workflow)
 
     def test_release_dry_run_workflow_has_packaged_binary_smoke_steps(self):
         workflow = (

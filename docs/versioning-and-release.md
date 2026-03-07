@@ -14,7 +14,7 @@ This repo uses SemVer with a `v` tag prefix (`vMAJOR.MINOR.PATCH`):
 - `MINOR`: planned feature iteration (preferred during `0.x` stage).
 - `PATCH`: bugfixes, documentation, or small safe improvements.
 
-Current workspace version is `1.2.0` (from root `Cargo.toml` `[workspace.package].version`).
+Current workspace version is `1.3.0` (from root `Cargo.toml` `[workspace.package].version`).
 
 ## Public/Internal Publishing Boundary
 
@@ -28,14 +28,16 @@ Release preflight now treats competitor-analysis references in public docs as a 
 Release target:
 - Core CLI path is runnable (`loopforge init`, `loopforge agent run`).
 - Existing multi-provider routing and harness flow are stable enough for first external users.
-- GitHub Release binary workflow is available (tag-triggered).
+- GitHub Release binary workflow is available (tag-triggered), and `main` now auto-creates the missing semver tag after CI succeeds when the workspace version is ahead of the latest published tag.
 
 Release checklist:
 1. Run full test suite: `cargo test`.
 2. Confirm release packaging script works locally:
    `python3 scripts/package_release.py --version v1.0.0 --target local --bin target/release/loopforge --out-dir dist`
 3. Ensure `CHANGELOG.md` contains a `1.0.0` section.
-4. Create and push tag:
+4. Merge the version/changelog change to `main`.
+5. Wait for CI to pass; the `Auto Release Tag` workflow will create and push `vX.Y.Z` automatically when the workspace version is ahead of the latest release tag.
+6. Use manual tag push only as a fallback when automation is intentionally bypassed:
    `git tag v1.0.0 && git push origin v1.0.0`
 
 ## Mandatory Rule for Version-Bump Iterations
@@ -62,7 +64,7 @@ If either item is missing, iteration is not considered releasable.
 3. If iteration is marked "needs version bump", update version + changelog together.
 4. Run verification (`cargo test`, plus release packaging smoke check when release-bound).
 5. Run `loopforge release check --tag vX.Y.Z` and confirm it passes.
-6. Merge, then cut tag (`vX.Y.Z`).
+6. Merge to `main`; CI + `Auto Release Tag` will cut `vX.Y.Z` automatically if release metadata is ready.
 
 ## Changelog Format
 
