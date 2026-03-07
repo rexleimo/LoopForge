@@ -12,7 +12,7 @@
 [为什么是 LoopForge](explanation/why-loopforge.md){ .md-button }
 
 <p class="rexos-muted">
-OpenClaw 更像个人生活助理。LoopForge 的定位是工程交付型 AI 助理：本地优先、产物导向、可审计。
+LoopForge 的定位是工程交付型 AI 助理：本地优先、产物导向、可审计。
 </p>
 
 </div>

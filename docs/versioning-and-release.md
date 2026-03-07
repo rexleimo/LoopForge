@@ -16,6 +16,13 @@ This repo uses SemVer with a `v` tag prefix (`vMAJOR.MINOR.PATCH`):
 
 Current workspace version is `1.1.0` (from root `Cargo.toml` `[workspace.package].version`).
 
+## Public/Internal Publishing Boundary
+
+Public docs are generated only from `docs-site/` plus `mkdocs.yml` navigation.
+Competitor analysis, internal positioning, and strategy notes must stay under internal-only paths such as `docs/internal/` and must not be published from the docs site.
+
+Release preflight now treats competitor-analysis references in public docs as a release blocker.
+
 ## First Release Plan (`v1.0.0`)
 
 Release target:
@@ -35,6 +42,10 @@ Release checklist:
 
 When the maintainer explicitly says this iteration needs a version bump, the delivery must include all of the following in the same change set:
 
+In addition, any GitHub release tag must match the workspace version in `Cargo.toml` and the target section in `CHANGELOG.md`.
+If HEAD already has a semver tag, it must match the requested release tag exactly.
+
+
 1. Version number update:
    - Root `Cargo.toml` `[workspace.package].version`
    - Any docs/examples that include hardcoded version text
@@ -50,7 +61,8 @@ If either item is missing, iteration is not considered releasable.
 2. Implement changes normally.
 3. If iteration is marked "needs version bump", update version + changelog together.
 4. Run verification (`cargo test`, plus release packaging smoke check when release-bound).
-5. Merge, then cut tag (`vX.Y.Z`).
+5. Run `loopforge release check --tag vX.Y.Z` and confirm it passes.
+6. Merge, then cut tag (`vX.Y.Z`).
 
 ## Changelog Format
 

@@ -15,6 +15,8 @@ const BROWSER_BRIDGE_SCRIPT: &str = include_str!("browser_bridge.py");
 static BROWSER_BRIDGE_PATH: OnceLock<PathBuf> = OnceLock::new();
 
 mod browser_cdp;
+mod patch;
+use patch::{apply_hunks_to_text, parse_patch, PatchApplyResult, PatchOp};
 
 #[derive(Debug, Clone)]
 pub struct Toolset {
@@ -376,8 +378,8 @@ impl Toolset {
                 .await
             }
             "browser_back" => {
-                let _args: serde_json::Value = serde_json::from_str(arguments_json)
-                    .context("parse browser_back arguments")?;
+                let _args: serde_json::Value =
+                    serde_json::from_str(arguments_json).context("parse browser_back arguments")?;
                 self.browser_back().await
             }
             "browser_close" => {
@@ -408,8 +410,8 @@ impl Toolset {
                     .await
             }
             "browser_wait" => {
-                let args: BrowserWaitArgs = serde_json::from_str(arguments_json)
-                    .context("parse browser_wait arguments")?;
+                let args: BrowserWaitArgs =
+                    serde_json::from_str(arguments_json).context("parse browser_wait arguments")?;
                 self.browser_wait(&args.selector, args.timeout_ms).await
             }
             "browser_wait_for" => {
@@ -1701,7 +1703,11 @@ impl Toolset {
         Ok(out.to_string())
     }
 
-    async fn browser_wait(&self, selector: &str, timeout_ms: Option<u64>) -> anyhow::Result<String> {
+    async fn browser_wait(
+        &self,
+        selector: &str,
+        timeout_ms: Option<u64>,
+    ) -> anyhow::Result<String> {
         if selector.trim().is_empty() {
             bail!("selector is empty");
         }
@@ -1866,7 +1872,6 @@ impl BridgeResponse {
             self.error.unwrap_or_else(|| "unknown error".to_string())
         )
     }
-
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2242,7 +2247,10 @@ fn browser_bridge_script_path() -> anyhow::Result<PathBuf> {
         if p.exists() {
             return Ok(p);
         }
-        bail!("LOOPFORGE_BROWSER_BRIDGE_PATH does not exist: {}", p.display());
+        bail!(
+            "LOOPFORGE_BROWSER_BRIDGE_PATH does not exist: {}",
+            p.display()
+        );
     }
 
     if let Some(p) = BROWSER_BRIDGE_PATH.get() {
@@ -2734,186 +2742,6 @@ fn parse_jpeg_dimensions(bytes: &[u8]) -> Option<(u32, u32)> {
     }
 
     None
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum PatchOp {
-    AddFile { path: String, content: String },
-    UpdateFile { path: String, hunks: Vec<PatchHunk> },
-    DeleteFile { path: String },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct PatchHunk {
-    old_lines: Vec<String>,
-    new_lines: Vec<String>,
-}
-
-#[derive(Debug, Default)]
-struct PatchApplyResult {
-    files_added: u32,
-    files_updated: u32,
-    files_deleted: u32,
-}
-
-impl PatchApplyResult {
-    fn summary(&self) -> String {
-        let mut parts = Vec::new();
-        if self.files_added > 0 {
-            parts.push(format!("{} added", self.files_added));
-        }
-        if self.files_updated > 0 {
-            parts.push(format!("{} updated", self.files_updated));
-        }
-        if self.files_deleted > 0 {
-            parts.push(format!("{} deleted", self.files_deleted));
-        }
-        if parts.is_empty() {
-            "No changes applied".to_string()
-        } else {
-            parts.join(", ")
-        }
-    }
-}
-
-fn parse_patch(input: &str) -> anyhow::Result<Vec<PatchOp>> {
-    let lines: Vec<&str> = input.lines().collect();
-    let begin = lines
-        .iter()
-        .position(|l| l.trim() == "*** Begin Patch")
-        .context("missing '*** Begin Patch' marker")?;
-    let end = lines
-        .iter()
-        .rposition(|l| l.trim() == "*** End Patch")
-        .context("missing '*** End Patch' marker")?;
-    if end <= begin {
-        bail!("'*** End Patch' must come after '*** Begin Patch'");
-    }
-
-    let body = &lines[begin + 1..end];
-    let mut ops = Vec::new();
-    let mut i = 0usize;
-
-    while i < body.len() {
-        let line = body[i].trim();
-        if line.is_empty() {
-            i += 1;
-            continue;
-        }
-
-        if let Some(rest) = line.strip_prefix("*** Add File:") {
-            let path = rest.trim().to_string();
-            if path.is_empty() {
-                bail!("empty path in '*** Add File:'");
-            }
-            i += 1;
-
-            let mut content_lines = Vec::new();
-            while i < body.len() && !body[i].trim().starts_with("***") {
-                let raw = body[i];
-                if let Some(stripped) = raw.strip_prefix('+') {
-                    content_lines.push(stripped.to_string());
-                } else if raw.trim().is_empty() {
-                    content_lines.push(String::new());
-                } else {
-                    bail!("expected '+' prefix in Add File content, got: {}", raw);
-                }
-                i += 1;
-            }
-
-            ops.push(PatchOp::AddFile {
-                path,
-                content: content_lines.join("\n"),
-            });
-            continue;
-        }
-
-        if let Some(rest) = line.strip_prefix("*** Update File:") {
-            let path = rest.trim().to_string();
-            if path.is_empty() {
-                bail!("empty path in '*** Update File:'");
-            }
-            i += 1;
-
-            let mut hunks = Vec::new();
-            while i < body.len() && !body[i].trim().starts_with("***") {
-                let cur = body[i].trim();
-                if cur.starts_with("@@") {
-                    i += 1;
-                    let mut old_lines = Vec::new();
-                    let mut new_lines = Vec::new();
-                    while i < body.len()
-                        && !body[i].trim().starts_with("@@")
-                        && !body[i].trim().starts_with("***")
-                    {
-                        let hl = body[i];
-                        if let Some(stripped) = hl.strip_prefix('-') {
-                            old_lines.push(stripped.to_string());
-                        } else if let Some(stripped) = hl.strip_prefix('+') {
-                            new_lines.push(stripped.to_string());
-                        }
-                        i += 1;
-                    }
-                    hunks.push(PatchHunk {
-                        old_lines,
-                        new_lines,
-                    });
-                } else {
-                    i += 1;
-                }
-            }
-
-            if hunks.is_empty() {
-                bail!("Update File '{path}' has no hunks");
-            }
-
-            ops.push(PatchOp::UpdateFile { path, hunks });
-            continue;
-        }
-
-        if let Some(rest) = line.strip_prefix("*** Delete File:") {
-            let path = rest.trim().to_string();
-            if path.is_empty() {
-                bail!("empty path in '*** Delete File:'");
-            }
-            i += 1;
-            ops.push(PatchOp::DeleteFile { path });
-            continue;
-        }
-
-        bail!("unknown patch directive: {line}");
-    }
-
-    Ok(ops)
-}
-
-fn apply_hunks_to_text(before: &str, hunks: &[PatchHunk]) -> anyhow::Result<String> {
-    let trailing_newline = before.ends_with('\n');
-    let mut lines: Vec<String> = before.lines().map(|l| l.to_string()).collect();
-
-    for hunk in hunks {
-        if hunk.old_lines.is_empty() {
-            lines.extend(hunk.new_lines.clone());
-            continue;
-        }
-
-        let mut found = None;
-        for idx in 0..=lines.len().saturating_sub(hunk.old_lines.len()) {
-            if lines[idx..idx + hunk.old_lines.len()] == hunk.old_lines {
-                found = Some(idx);
-                break;
-            }
-        }
-
-        let idx = found.context("hunk target not found in file")?;
-        lines.splice(idx..idx + hunk.old_lines.len(), hunk.new_lines.clone());
-    }
-
-    let mut out = lines.join("\n");
-    if trailing_newline {
-        out.push('\n');
-    }
-    Ok(out)
 }
 
 fn parse_ddg_results(html: &str, max: usize) -> Vec<(String, String, String)> {
@@ -4673,7 +4501,10 @@ mod tests {
     async fn workflow_run_is_reported_as_runtime_implemented() {
         let tmp = tempfile::tempdir().unwrap();
         let tools = Toolset::new(tmp.path().to_path_buf()).unwrap();
-        let err = tools.call("workflow_run", r#"{ "steps": [] }"#).await.unwrap_err();
+        let err = tools
+            .call("workflow_run", r#"{ "steps": [] }"#)
+            .await
+            .unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("runtime"), "{msg}");
     }
@@ -5034,7 +4865,12 @@ mod tests {
             .to_string();
 
         // Give the process time to emit enough output to overflow the buffer before we poll.
-        tokio::time::sleep(Duration::from_millis(if cfg!(windows) { 1200 } else { 500 })).await;
+        tokio::time::sleep(Duration::from_millis(if cfg!(windows) {
+            1200
+        } else {
+            500
+        }))
+        .await;
 
         let deadline = tokio::time::Instant::now()
             + if cfg!(windows) {
@@ -5354,7 +5190,8 @@ mod tests {
         let python = if cfg!(windows) { "python" } else { "python3" };
         let _backend_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_BACKEND", "playwright");
         let _python_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_PYTHON", python);
-        let _bridge_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
+        let _bridge_guard =
+            EnvVarGuard::set("LOOPFORGE_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
 
         let tools = Toolset::new(workspace.clone()).unwrap();
 
@@ -5374,7 +5211,10 @@ mod tests {
         assert_eq!(v["result"], 2);
 
         let out = tools
-            .call("browser_scroll", r#"{ "direction": "down", "amount": 123 }"#)
+            .call(
+                "browser_scroll",
+                r#"{ "direction": "down", "amount": 123 }"#,
+            )
             .await
             .unwrap();
         let v: serde_json::Value = serde_json::from_str(&out).unwrap();
@@ -5388,7 +5228,10 @@ mod tests {
         assert_eq!(v["key"], "Enter");
 
         let out = tools
-            .call("browser_wait", r##"{ "selector": "#content", "timeout_ms": 1 }"##)
+            .call(
+                "browser_wait",
+                r##"{ "selector": "#content", "timeout_ms": 1 }"##,
+            )
             .await
             .unwrap();
         let v: serde_json::Value = serde_json::from_str(&out).unwrap();
@@ -5421,10 +5264,7 @@ mod tests {
 
         let out = tools.call("browser_back", r#"{}"#).await.unwrap();
         let v: serde_json::Value = serde_json::from_str(&out).unwrap();
-        assert!(
-            v.get("url").and_then(|v| v.as_str()).is_some(),
-            "{v}"
-        );
+        assert!(v.get("url").and_then(|v| v.as_str()).is_some(), "{v}");
 
         let out = tools.call("browser_close", r#"{}"#).await.unwrap();
         assert_eq!(out.trim(), "ok");
@@ -5467,7 +5307,11 @@ mod tests {
 
         assert!(body.contains("HEAD_MARKER"), "{body}");
         assert!(body.contains("TAIL_MARKER"), "{body}");
-        assert_eq!(v.get("truncated").and_then(|v| v.as_bool()), Some(true), "{v}");
+        assert_eq!(
+            v.get("truncated").and_then(|v| v.as_bool()),
+            Some(true),
+            "{v}"
+        );
 
         server.abort();
     }
@@ -5486,7 +5330,8 @@ mod tests {
         let python = if cfg!(windows) { "python" } else { "python3" };
         let _backend_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_BACKEND", "playwright");
         let _python_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_PYTHON", python);
-        let _bridge_guard = EnvVarGuard::set("LOOPFORGE_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
+        let _bridge_guard =
+            EnvVarGuard::set("LOOPFORGE_BROWSER_BRIDGE_PATH", bridge_path.as_os_str());
 
         let tools = Toolset::new(workspace).unwrap();
 

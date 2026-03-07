@@ -1,3 +1,5 @@
+> Internal-only note: retained for product strategy reference; do not publish from `docs-site/` or link from `mkdocs.yml`.
+
 # What LoopForge Is Borrowing Next from OpenFang and OpenClaw
 
 ## TL;DR

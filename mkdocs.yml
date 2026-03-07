@@ -122,8 +122,6 @@ plugins:
             Blog: 博客
             "What Is LoopForge?": 什么是 LoopForge？
             Personal AI Engineer: 个人研发助理定位
-            LoopForge vs OpenFang/OpenClaw: LoopForge 与 OpenFang/OpenClaw
-            What LoopForge Is Borrowing Next from OpenFang and OpenClaw: LoopForge 下一轮从 OpenFang 和 OpenClaw 借鉴什么
             MCP Integration Guide: MCP 集成指南
             Agent Memory Design: Agent 记忆设计
             Safe Code Execution: 安全代码执行
@@ -223,13 +221,11 @@ nav:
   - Blog:
       - Index: blog/index.md
       - LoopForge v1.0.0 Release Notes: blog/loopforge-v1-0-0-release-notes.md
-      - What LoopForge Is Borrowing Next from OpenFang and OpenClaw: blog/loopforge-next-iteration-openfang-openclaw.md
       - MCP Integration Guide: blog/mcp-integration-guide.md
       - Agent Memory Design: blog/agent-memory-design.md
       - Safe Code Execution: blog/safe-code-execution.md
       - Personal AI Engineer: blog/personal-ai-engineer.md
       - What Is LoopForge?: blog/what-is-loopforge.md
-      - LoopForge vs OpenFang/OpenClaw: blog/loopforge-vs-openfang-openclaw.md
       - Editorial Calendar: blog/editorial-calendar.md
   - Reference:
       - CLI: reference/cli.md

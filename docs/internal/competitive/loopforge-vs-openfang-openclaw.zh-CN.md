@@ -1,3 +1,5 @@
+> Internal-only note: retained for product strategy reference; do not publish from `docs-site/` or link from `mkdocs.yml`.
+
 # LoopForge 与 OpenFang/OpenClaw 对比（开发者视角）
 
 本文基于当前工作区在 **2026 年 3 月 4 日** 的本地快照做对比，目标是帮开发团队更快选型。

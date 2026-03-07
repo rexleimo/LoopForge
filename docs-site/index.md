@@ -12,7 +12,7 @@ Start with one command, get a real artifact, and keep a reproducible trail from 
 [Why LoopForge](explanation/why-loopforge.md){ .md-button }
 
 <p class="rexos-muted">
-OpenClaw is closer to a personal assistant. LoopForge is optimized for builders: local-first, artifact-oriented, and audit-friendly.
+LoopForge is optimized for builders who care about local-first workflows, real artifacts, and audit-friendly delivery.
 </p>
 
 </div>

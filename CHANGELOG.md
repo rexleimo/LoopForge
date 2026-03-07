@@ -18,6 +18,11 @@ All notable user-visible changes are documented in this file.
 
 - `loopforge onboard` no longer reports built-in starter success unless the expected artifact is actually created, and runtime JSON fallback now recognizes `function_name`-style tool calls emitted by real Ollama-compatible models.
 
+### Changed
+
+- Competitor-analysis posts were moved out of `docs-site/` into `docs/internal/competitive/`, and public blog/homepage references to OpenFang/OpenClaw were removed.
+- `loopforge release check` now fails when public docs contain competitor-analysis terms or when semver tags on HEAD do not match the requested release tag.
+
 ## [1.1.0] - 2026-03-06
 
 ### Added

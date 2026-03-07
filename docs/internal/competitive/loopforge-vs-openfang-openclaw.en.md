@@ -1,3 +1,5 @@
+> Internal-only note: retained for product strategy reference; do not publish from `docs-site/` or link from `mkdocs.yml`.
+
 # LoopForge vs OpenFang/OpenClaw (Builder View)
 
 This comparison is based on local snapshots in this workspace on **March 4, 2026**.
