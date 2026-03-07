@@ -10,7 +10,7 @@ impl Toolset {
         url: &str,
         allow_private: bool,
     ) -> anyhow::Result<String> {
-        let url = super::url::agent_card_url(url, allow_private).await?;
+        let url = super::url::agent_card_url(url, allow_private, &self.security).await?;
         let resp = self
             .http
             .get(url.clone())

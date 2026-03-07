@@ -18,7 +18,14 @@ impl Toolset {
         validate::ensure_non_empty_message(message)?;
 
         let url = validate::parse_agent_url(agent_url)?;
-        super::super::ensure_remote_url_allowed(&url, allow_private).await?;
+        super::super::ensure_remote_url_allowed(
+            &url,
+            allow_private,
+            "a2a_send",
+            "POST",
+            &self.security,
+        )
+        .await?;
 
         let value =
             status::send_request(&self.http, url, request::send_request(message, session_id))

@@ -130,6 +130,7 @@ async fn reserved_knowledge_tools_add_entity_relation_and_query() {
         llm: rexos::config::LlmConfig::default(),
         providers,
         router: rexos::config::RouterConfig::default(),
+        security: Default::default(),
     };
     let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg).unwrap();
     let router = rexos::router::ModelRouter::new(rexos::config::RouterConfig {

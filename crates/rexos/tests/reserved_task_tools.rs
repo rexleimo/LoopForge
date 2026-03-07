@@ -130,6 +130,7 @@ async fn reserved_task_tools_post_claim_complete_and_publish_event() {
         llm: rexos::config::LlmConfig::default(),
         providers,
         router: rexos::config::RouterConfig::default(),
+        security: Default::default(),
     };
     let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg).unwrap();
     let router = rexos::router::ModelRouter::new(rexos::config::RouterConfig {

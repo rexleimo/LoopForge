@@ -1,5 +1,6 @@
 use axum::routing::get;
 use axum::Router;
+use rexos_kernel::security::{EgressConfig, EgressRule, SecurityConfig};
 
 #[tokio::test]
 async fn web_fetch_rejects_non_http_schemes() {
@@ -64,4 +65,33 @@ async fn web_fetch_allows_loopback_when_allow_private_true() {
     assert_eq!(v["body"], "hello");
 
     server.abort();
+}
+
+#[tokio::test]
+async fn web_fetch_respects_egress_policy_rules() {
+    let tmp = tempfile::tempdir().unwrap();
+    let tools = rexos::tools::Toolset::new_with_security_config(
+        tmp.path().to_path_buf(),
+        SecurityConfig {
+            egress: EgressConfig {
+                rules: vec![EgressRule {
+                    tool: "web_fetch".to_string(),
+                    host: "example.com".to_string(),
+                    path_prefix: "/".to_string(),
+                    methods: vec!["GET".to_string()],
+                }],
+            },
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let err = tools
+        .call(
+            "web_fetch",
+            r#"{ "url": "http://127.0.0.1:1/", "allow_private": true }"#,
+        )
+        .await
+        .unwrap_err();
+    assert!(err.to_string().contains("host"), "{err}");
 }

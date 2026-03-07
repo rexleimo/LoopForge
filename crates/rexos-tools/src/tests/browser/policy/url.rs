@@ -1,4 +1,5 @@
 use super::super::*;
+use rexos_kernel::security::{EgressConfig, EgressRule, SecurityConfig};
 
 #[tokio::test]
 async fn ensure_browser_url_allowed_rejects_file_scheme_even_when_allow_private_true() {
@@ -69,4 +70,34 @@ async fn browser_navigate_allows_loopback_when_allow_private_true() {
             );
         }
     }
+}
+
+#[tokio::test]
+async fn browser_navigate_respects_egress_policy_rules() {
+    let tmp = tempfile::tempdir().unwrap();
+    let tools = Toolset::new_with_security_config(
+        tmp.path().to_path_buf(),
+        SecurityConfig {
+            egress: EgressConfig {
+                rules: vec![EgressRule {
+                    tool: "browser_navigate".to_string(),
+                    host: "example.com".to_string(),
+                    path_prefix: "/".to_string(),
+                    methods: vec!["GET".to_string()],
+                }],
+            },
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let err = tools
+        .call(
+            "browser_navigate",
+            r#"{ "url": "http://127.0.0.1:1/", "allow_private": true }"#,
+        )
+        .await
+        .unwrap_err();
+
+    assert!(err.to_string().contains("host"), "{err}");
 }

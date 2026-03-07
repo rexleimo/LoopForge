@@ -4,8 +4,9 @@ mod url;
 pub(super) async fn validated_browser_url(
     url: &str,
     allow_private: bool,
+    security: &rexos_kernel::security::SecurityConfig,
 ) -> anyhow::Result<reqwest::Url> {
-    url::validated_browser_url(url, allow_private).await
+    url::validated_browser_url(url, allow_private, security).await
 }
 
 pub(super) fn ensure_session_compatible(

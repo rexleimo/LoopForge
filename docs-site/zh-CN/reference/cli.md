@@ -69,6 +69,7 @@ loopforge doctor --json
 - 配置解析
 - router → provider 映射
 - 缺失的 provider 环境变量
+- 安全姿态（`security.secrets`、`security.leaks`、`security.egress`）
 - 本地 Ollama 连通性（在已配置时）
 - 浏览器前置条件
 - Git 等基础工具

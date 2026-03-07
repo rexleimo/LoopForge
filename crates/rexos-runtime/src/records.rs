@@ -275,6 +275,8 @@ pub(crate) struct ToolAuditRecord {
     pub(crate) truncated: bool,
     #[serde(default)]
     pub(crate) error: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) leak_guard: Option<crate::leak_guard::LeakGuardAudit>,
     pub(crate) created_at: i64,
 }
 

@@ -4,6 +4,22 @@ All notable user-visible changes are documented in this file.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-03-07
+
+### Added
+
+- Security hardening baseline for runtime and CLI:
+  - `security.secrets` config for explicit host-env secret resolution
+  - `security.leaks` modes (`off`, `warn`, `redact`, `enforce`) with runtime leak-guarded tool output
+  - `security.egress.rules` allowlists enforced for `web_fetch`, A2A requests, and browser navigation entrypoints
+- Tool audit records now carry leak-guard metadata without persisting matched secret values.
+- Internal operator note `docs/internal/loopforge-network-security.md` documenting trust boundaries and rollout expectations.
+
+### Changed
+
+- `loopforge doctor` now reports security posture for secret resolution, leak-guard mode, and outbound allowlist coverage.
+- Public security/config/CLI docs (EN + zh-CN) now document the security model and safe configuration examples.
+
 ## [1.2.0] - 2026-03-07
 
 ### Added

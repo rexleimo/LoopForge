@@ -217,6 +217,58 @@ pub async fn run_doctor(opts: DoctorOptions) -> anyhow::Result<DoctorReport> {
             });
         }
 
+        checks.push(DoctorCheck {
+            id: "security.secrets.mode".to_string(),
+            status: CheckStatus::Ok,
+            message: match cfg.security.secrets.mode {
+                rexos::security::SecretMode::EnvFirst => {
+                    "env_first (provider credentials resolve from host environment)".to_string()
+                }
+            },
+        });
+
+        checks.push(DoctorCheck {
+            id: "security.leaks.mode".to_string(),
+            status: match cfg.security.leaks.mode {
+                rexos::security::LeakMode::Off | rexos::security::LeakMode::Warn => {
+                    CheckStatus::Warn
+                }
+                rexos::security::LeakMode::Redact | rexos::security::LeakMode::Enforce => {
+                    CheckStatus::Ok
+                }
+            },
+            message: match cfg.security.leaks.mode {
+                rexos::security::LeakMode::Off => {
+                    "off (tool output is not scanned for secrets)".to_string()
+                }
+                rexos::security::LeakMode::Warn => {
+                    "warn (detects likely secrets but still forwards raw output)".to_string()
+                }
+                rexos::security::LeakMode::Redact => {
+                    "redact (masks detected secrets before persistence and follow-up model calls)"
+                        .to_string()
+                }
+                rexos::security::LeakMode::Enforce => {
+                    "enforce (blocks tool output when likely secrets are detected)".to_string()
+                }
+            },
+        });
+
+        let egress_rules = cfg.security.egress.rules.len();
+        checks.push(DoctorCheck {
+            id: "security.egress.rules".to_string(),
+            status: if egress_rules == 0 {
+                CheckStatus::Warn
+            } else {
+                CheckStatus::Ok
+            },
+            message: if egress_rules == 0 {
+                "no allowlist rules configured; network tools still rely on baseline SSRF/private-network guards only".to_string()
+            } else {
+                format!("{egress_rules} outbound allowlist rule(s) configured")
+            },
+        });
+
         // Probe Ollama only when it looks local and requires no key.
         if let Some(ollama) = cfg.providers.get("ollama") {
             if ollama.kind == ProviderKind::OpenAiCompatible && ollama.api_key_env.trim().is_empty()
@@ -382,6 +434,30 @@ fn derive_next_actions(checks: &[DoctorCheck]) -> Vec<String> {
                 &mut actions,
                 format!(
                     "Export the missing provider credentials before rerunning LoopForge ({})",
+                    check.message
+                ),
+            );
+        }
+    }
+
+    if let Some(check) = find("security.leaks.mode") {
+        if check.status == CheckStatus::Warn {
+            push_unique(
+                &mut actions,
+                format!(
+                    "Set `[security.leaks].mode = \"redact\"` or `\"enforce\"` in `~/.loopforge/config.toml` to keep secret-like tool output out of follow-up model context and audits ({})",
+                    check.message
+                ),
+            );
+        }
+    }
+
+    if let Some(check) = find("security.egress.rules") {
+        if check.status == CheckStatus::Warn {
+            push_unique(
+                &mut actions,
+                format!(
+                    "Add `[security.egress.rules]` entries in `~/.loopforge/config.toml` to allow only the outbound hosts your workflows need ({})",
                     check.message
                 ),
             );
@@ -672,6 +748,7 @@ mod tests {
             .into_iter()
             .collect(),
             router: rexos::config::RouterConfig::default(),
+            security: Default::default(),
         };
         std::fs::write(paths.config_path(), toml::to_string(&cfg).unwrap()).unwrap();
         std::env::set_var("LOOPFORGE_BROWSER_CDP_HTTP", format!("http://{addr}"));
@@ -693,5 +770,125 @@ mod tests {
 
         std::env::remove_var("LOOPFORGE_BROWSER_CDP_HTTP");
         server.abort();
+    }
+
+    #[tokio::test]
+    async fn doctor_reports_security_posture_checks() {
+        let tmp = tempfile::tempdir().unwrap();
+        let paths = RexosPaths {
+            base_dir: tmp.path().join(".loopforge"),
+        };
+        std::fs::create_dir_all(&paths.base_dir).unwrap();
+
+        let mut cfg = RexosConfig {
+            llm: rexos::config::LlmConfig::default(),
+            providers: [(
+                "ollama".to_string(),
+                rexos::config::ProviderConfig {
+                    kind: ProviderKind::OpenAiCompatible,
+                    base_url: "http://127.0.0.1:11434/v1".to_string(),
+                    api_key_env: "".to_string(),
+                    default_model: "x".to_string(),
+                },
+            )]
+            .into_iter()
+            .collect(),
+            router: rexos::config::RouterConfig::default(),
+            security: Default::default(),
+        };
+        cfg.security.leaks.mode = rexos::security::LeakMode::Redact;
+        cfg.security.egress.rules.push(rexos::security::EgressRule {
+            tool: "web_fetch".to_string(),
+            host: "docs.rs".to_string(),
+            path_prefix: "/".to_string(),
+            methods: vec!["GET".to_string()],
+        });
+        std::fs::write(paths.config_path(), toml::to_string(&cfg).unwrap()).unwrap();
+
+        let report = run_doctor(DoctorOptions {
+            paths,
+            timeout: Duration::from_millis(200),
+        })
+        .await
+        .unwrap();
+
+        let statuses: std::collections::BTreeMap<String, CheckStatus> = report
+            .checks
+            .iter()
+            .map(|c| (c.id.clone(), c.status))
+            .collect();
+        assert_eq!(
+            statuses.get("security.secrets.mode"),
+            Some(&CheckStatus::Ok)
+        );
+        assert_eq!(statuses.get("security.leaks.mode"), Some(&CheckStatus::Ok));
+        assert_eq!(
+            statuses.get("security.egress.rules"),
+            Some(&CheckStatus::Ok)
+        );
+    }
+
+    #[tokio::test]
+    async fn doctor_suggests_leak_guard_and_egress_hardening_when_defaults_are_open() {
+        let tmp = tempfile::tempdir().unwrap();
+        let paths = RexosPaths {
+            base_dir: tmp.path().join(".loopforge"),
+        };
+        std::fs::create_dir_all(&paths.base_dir).unwrap();
+
+        let cfg = RexosConfig {
+            llm: rexos::config::LlmConfig::default(),
+            providers: [(
+                "ollama".to_string(),
+                rexos::config::ProviderConfig {
+                    kind: ProviderKind::OpenAiCompatible,
+                    base_url: "http://127.0.0.1:11434/v1".to_string(),
+                    api_key_env: "".to_string(),
+                    default_model: "x".to_string(),
+                },
+            )]
+            .into_iter()
+            .collect(),
+            router: rexos::config::RouterConfig::default(),
+            security: Default::default(),
+        };
+        std::fs::write(paths.config_path(), toml::to_string(&cfg).unwrap()).unwrap();
+
+        let report = run_doctor(DoctorOptions {
+            paths,
+            timeout: Duration::from_millis(200),
+        })
+        .await
+        .unwrap();
+
+        let statuses: std::collections::BTreeMap<String, CheckStatus> = report
+            .checks
+            .iter()
+            .map(|c| (c.id.clone(), c.status))
+            .collect();
+        assert_eq!(
+            statuses.get("security.leaks.mode"),
+            Some(&CheckStatus::Warn)
+        );
+        assert_eq!(
+            statuses.get("security.egress.rules"),
+            Some(&CheckStatus::Warn)
+        );
+        assert!(
+            report
+                .next_actions
+                .iter()
+                .any(|item| item.contains("security.leaks")),
+            "expected leak-guard guidance, got: {:?}",
+            report.next_actions
+        );
+        assert!(
+            report
+                .next_actions
+                .iter()
+                .any(|item| item.contains("security.egress")),
+            "expected egress guidance, got: {:?}",
+            report.next_actions
+        );
     }
 }

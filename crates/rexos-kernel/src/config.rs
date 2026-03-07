@@ -5,14 +5,19 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use crate::paths::RexosPaths;
+use crate::secrets::SecretResolver;
+use crate::security::SecurityConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RexosConfig {
+    #[serde(default)]
     pub llm: LlmConfig,
     #[serde(default)]
     pub providers: BTreeMap<String, ProviderConfig>,
     #[serde(default)]
     pub router: RouterConfig,
+    #[serde(default)]
+    pub security: SecurityConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -245,6 +250,7 @@ impl Default for RexosConfig {
             llm: LlmConfig::default(),
             providers: providers.clone(),
             router: RouterConfig::default_from_provider("ollama", &providers),
+            security: SecurityConfig::default(),
         }
     }
 }
@@ -363,22 +369,11 @@ impl RexosConfig {
     }
 
     pub fn api_key(&self) -> Option<String> {
-        if self.llm.api_key_env.trim().is_empty() {
-            return None;
-        }
-        std::env::var(&self.llm.api_key_env).ok()
+        SecretResolver::new().resolve_llm_api_key(self)
     }
 
     pub fn provider_api_key(&self, provider: &str) -> Option<String> {
-        let env = self
-            .providers
-            .get(provider)
-            .map(|p| p.api_key_env.as_str())
-            .unwrap_or("");
-        if env.trim().is_empty() {
-            return None;
-        }
-        std::env::var(env).ok()
+        SecretResolver::new().resolve_provider_api_key(self, provider)
     }
 
     pub fn load_skills_config(paths: &RexosPaths) -> anyhow::Result<SkillsConfig> {
@@ -423,6 +418,10 @@ mod tests {
         assert!(toml_str.contains("provider = \"ollama\""));
         assert!(toml_str.contains("[router.coding]"));
         assert!(toml_str.contains("[router.summary]"));
+        assert!(toml_str.contains("[security.secrets]"));
+        assert!(toml_str.contains("mode = \"env_first\""));
+        assert!(toml_str.contains("[security.leaks]"));
+        assert!(toml_str.contains("[security.egress]"));
     }
 
     #[test]
@@ -442,6 +441,36 @@ mod tests {
 
         let nvidia = cfg.providers.get("nvidia").unwrap();
         assert_eq!(nvidia.base_url, "https://integrate.api.nvidia.com/v1");
+    }
+
+    #[test]
+    fn security_config_parses_table_values() {
+        use crate::security::{LeakMode, SecretMode};
+
+        let parsed: RexosConfig = toml::from_str(
+            r#"
+[security.secrets]
+mode = "env_first"
+
+[security.leaks]
+mode = "warn"
+
+[[security.egress.rules]]
+tool = "web_fetch"
+host = "docs.rs"
+path_prefix = "/"
+methods = ["GET"]
+"#,
+        )
+        .unwrap();
+
+        assert_eq!(parsed.security.secrets.mode, SecretMode::EnvFirst);
+        assert_eq!(parsed.security.leaks.mode, LeakMode::Warn);
+        assert_eq!(parsed.security.egress.rules.len(), 1);
+        assert_eq!(parsed.security.egress.rules[0].tool, "web_fetch");
+        assert_eq!(parsed.security.egress.rules[0].host, "docs.rs");
+        assert_eq!(parsed.security.egress.rules[0].path_prefix, "/");
+        assert_eq!(parsed.security.egress.rules[0].methods, vec!["GET"]);
     }
 
     #[test]

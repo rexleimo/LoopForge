@@ -113,6 +113,7 @@ async fn reserved_schedule_tools_create_list_and_delete() {
         llm: rexos::config::LlmConfig::default(),
         providers,
         router: rexos::config::RouterConfig::default(),
+        security: Default::default(),
     };
     let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg).unwrap();
     let router = rexos::router::ModelRouter::new(rexos::config::RouterConfig {

@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context};
 
 use rexos_kernel::router::{ModelRouter, TaskKind};
+use rexos_kernel::security::SecurityConfig;
 use rexos_llm::driver::LlmDriver;
 use rexos_llm::openai_compat::{ChatCompletionRequest, ChatMessage, Role};
 use rexos_llm::registry::LlmRegistry;
@@ -29,6 +30,7 @@ const ACP_CHECKPOINTS_KEY_PREFIX: &str = "rexos.acp.checkpoints.";
 
 mod acp;
 mod approval;
+mod leak_guard;
 mod records;
 mod tool_calls;
 
@@ -39,6 +41,7 @@ use approval::{
     skill_approval_is_granted, skill_permissions_are_readonly, tool_approval_is_granted,
     tool_requires_approval, ApprovalMode,
 };
+use leak_guard::{inspect_tool_output, LeakGuardAudit, LeakGuardVerdict};
 pub use records::{AcpDeliveryCheckpointRecord, AcpEventRecord, SessionSkillPolicy};
 use records::{
     AgentFindToolArgs, AgentKillToolArgs, AgentRecord, AgentSendToolArgs, AgentSpawnToolArgs,
@@ -56,11 +59,47 @@ use tool_calls::{
     normalize_tool_arguments, parse_tool_calls_from_json_content, truncate_tool_result_with_flag,
 };
 
+fn tool_event_payload(
+    tool_name: &str,
+    truncated: Option<bool>,
+    error: Option<&str>,
+    reason: Option<&str>,
+    leak_guard: Option<&LeakGuardAudit>,
+) -> serde_json::Value {
+    let mut payload = serde_json::Map::new();
+    payload.insert(
+        "tool".to_string(),
+        serde_json::Value::String(tool_name.to_string()),
+    );
+    if let Some(truncated) = truncated {
+        payload.insert("truncated".to_string(), serde_json::Value::Bool(truncated));
+    }
+    if let Some(error) = error {
+        payload.insert(
+            "error".to_string(),
+            serde_json::Value::String(error.to_string()),
+        );
+    }
+    if let Some(reason) = reason {
+        payload.insert(
+            "reason".to_string(),
+            serde_json::Value::String(reason.to_string()),
+        );
+    }
+    if let Some(leak_guard) = leak_guard {
+        if let Ok(value) = serde_json::to_value(leak_guard) {
+            payload.insert("leak_guard".to_string(), value);
+        }
+    }
+    serde_json::Value::Object(payload)
+}
+
 #[derive(Debug)]
 pub struct AgentRuntime {
     memory: MemoryStore,
     llms: LlmRegistry,
     router: ModelRouter,
+    security: SecurityConfig,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -248,10 +287,20 @@ impl OutboxDispatcher {
 
 impl AgentRuntime {
     pub fn new(memory: MemoryStore, llms: LlmRegistry, router: ModelRouter) -> Self {
+        Self::new_with_security_config(memory, llms, router, SecurityConfig::default())
+    }
+
+    pub fn new_with_security_config(
+        memory: MemoryStore,
+        llms: LlmRegistry,
+        router: ModelRouter,
+        security: SecurityConfig,
+    ) -> Self {
         Self {
             memory,
             llms,
             router,
+            security,
         }
     }
 
@@ -267,7 +316,11 @@ impl AgentRuntime {
         let allowed_lookup: Option<HashSet<String>> = allowed_tools
             .as_ref()
             .map(|tools| tools.iter().cloned().collect());
-        let tools = Toolset::new_with_allowed_tools(workspace_root.clone(), allowed_tools)?;
+        let tools = Toolset::new_with_allowed_tools_and_security(
+            workspace_root.clone(),
+            allowed_tools,
+            self.security.clone(),
+        )?;
         let provider = self.router.provider_for(kind);
         let model = self.resolve_model(provider, kind)?;
 
@@ -389,6 +442,7 @@ impl AgentRuntime {
                             duration_ms: started_at.elapsed().as_millis() as u64,
                             truncated: false,
                             error: Some(err.clone()),
+                            leak_guard: None,
                             created_at: Self::now_epoch_seconds(),
                         });
                         bail!(err);
@@ -570,18 +624,54 @@ impl AgentRuntime {
                 .await;
 
                 let duration_ms = started_at.elapsed().as_millis() as u64;
-                let output = match output_result {
-                    Ok(output) => output,
+                let (output, leak_guard) = match output_result {
+                    Ok(output) => match inspect_tool_output(output, &self.security) {
+                        LeakGuardVerdict::Allowed { content, audit } => (content, audit),
+                        LeakGuardVerdict::Blocked { error, audit } => {
+                            let _ = self.append_acp_event(AcpEventRecord {
+                                id: uuid::Uuid::new_v4().to_string(),
+                                session_id: Some(session_id.to_string()),
+                                event_type: "tool.blocked".to_string(),
+                                payload: tool_event_payload(
+                                    &call.function.name,
+                                    None,
+                                    Some(&error),
+                                    Some("leak_guard"),
+                                    Some(&audit),
+                                ),
+                                created_at: Self::now_epoch_seconds(),
+                            });
+                            let _ = self.append_tool_audit(ToolAuditRecord {
+                                session_id: session_id.to_string(),
+                                tool_name: call.function.name.clone(),
+                                success: false,
+                                duration_ms,
+                                truncated: false,
+                                error: Some(error.clone()),
+                                leak_guard: Some(audit),
+                                created_at: Self::now_epoch_seconds(),
+                            });
+                            bail!(error);
+                        }
+                    },
                     Err(e) => {
                         let err_text = e.to_string();
+                        let (safe_error, leak_guard) =
+                            match inspect_tool_output(err_text, &self.security) {
+                                LeakGuardVerdict::Allowed { content, audit } => (content, audit),
+                                LeakGuardVerdict::Blocked { error, audit } => (error, Some(audit)),
+                            };
                         let _ = self.append_acp_event(AcpEventRecord {
                             id: uuid::Uuid::new_v4().to_string(),
                             session_id: Some(session_id.to_string()),
                             event_type: "tool.failed".to_string(),
-                            payload: serde_json::json!({
-                                "tool": call.function.name.clone(),
-                                "error": err_text,
-                            }),
+                            payload: tool_event_payload(
+                                &call.function.name,
+                                None,
+                                Some(&safe_error),
+                                None,
+                                leak_guard.as_ref(),
+                            ),
                             created_at: Self::now_epoch_seconds(),
                         });
                         let _ = self.append_tool_audit(ToolAuditRecord {
@@ -590,10 +680,11 @@ impl AgentRuntime {
                             success: false,
                             duration_ms,
                             truncated: false,
-                            error: Some(err_text),
+                            error: Some(safe_error.clone()),
+                            leak_guard,
                             created_at: Self::now_epoch_seconds(),
                         });
-                        return Err(e);
+                        return Err(anyhow::anyhow!(safe_error));
                     }
                 };
 
@@ -606,16 +697,20 @@ impl AgentRuntime {
                     duration_ms,
                     truncated,
                     error: None,
+                    leak_guard: leak_guard.clone(),
                     created_at: Self::now_epoch_seconds(),
                 });
                 let _ = self.append_acp_event(AcpEventRecord {
                     id: uuid::Uuid::new_v4().to_string(),
                     session_id: Some(session_id.to_string()),
                     event_type: "tool.succeeded".to_string(),
-                    payload: serde_json::json!({
-                        "tool": call.function.name.clone(),
-                        "truncated": truncated,
-                    }),
+                    payload: tool_event_payload(
+                        &call.function.name,
+                        Some(truncated),
+                        None,
+                        None,
+                        leak_guard.as_ref(),
+                    ),
                     created_at: Self::now_epoch_seconds(),
                 });
 
@@ -1095,7 +1190,11 @@ impl AgentRuntime {
         self.write_workflow_state(&state_path, &state)?;
 
         let allowed_tools = self.load_session_allowed_tools(session_id)?;
-        let tools = Toolset::new_with_allowed_tools(workspace_root.clone(), allowed_tools)?;
+        let tools = Toolset::new_with_allowed_tools_and_security(
+            workspace_root.clone(),
+            allowed_tools,
+            self.security.clone(),
+        )?;
         let continue_on_error = args.continue_on_error.unwrap_or(false);
         let mut failed_steps = 0usize;
 

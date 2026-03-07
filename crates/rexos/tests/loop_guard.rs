@@ -75,6 +75,7 @@ async fn agent_runtime_detects_repeated_tool_call_loops() {
         llm: rexos::config::LlmConfig::default(),
         providers,
         router: rexos::config::RouterConfig::default(),
+        security: Default::default(),
     };
     let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg).unwrap();
     let router = rexos::router::ModelRouter::new(rexos::config::RouterConfig {

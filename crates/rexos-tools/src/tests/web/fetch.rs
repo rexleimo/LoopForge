@@ -1,4 +1,5 @@
 use super::*;
+use rexos_kernel::security::{EgressConfig, EgressRule, SecurityConfig};
 
 #[tokio::test]
 async fn web_fetch_truncation_preserves_head_and_tail() {
@@ -42,6 +43,50 @@ async fn web_fetch_truncation_preserves_head_and_tail() {
         Some(true),
         "{v}"
     );
+
+    server.abort();
+}
+
+#[tokio::test]
+async fn web_fetch_respects_egress_policy_rules() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move {
+        axum::serve(listener, Router::new().route("/", get(|| async { "ok" })))
+            .await
+            .unwrap();
+    });
+
+    let tmp = tempfile::tempdir().unwrap();
+    let tools = Toolset::new_with_security_config(
+        tmp.path().to_path_buf(),
+        SecurityConfig {
+            egress: EgressConfig {
+                rules: vec![EgressRule {
+                    tool: "web_fetch".to_string(),
+                    host: "example.com".to_string(),
+                    path_prefix: "/".to_string(),
+                    methods: vec!["GET".to_string()],
+                }],
+            },
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let err = tools
+        .call(
+            "web_fetch",
+            &serde_json::json!({
+                "url": format!("http://{addr}/"),
+                "allow_private": true,
+                "max_bytes": 100,
+            })
+            .to_string(),
+        )
+        .await
+        .unwrap_err();
+    assert!(err.to_string().contains("host"), "{err}");
 
     server.abort();
 }

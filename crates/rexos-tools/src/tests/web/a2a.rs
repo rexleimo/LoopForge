@@ -1,4 +1,5 @@
 use super::*;
+use rexos_kernel::security::{EgressConfig, EgressRule, SecurityConfig};
 
 #[tokio::test]
 async fn a2a_discover_denies_loopback_by_default() {
@@ -127,4 +128,34 @@ async fn a2a_send_posts_jsonrpc_and_returns_result() {
     );
 
     server.abort();
+}
+
+#[tokio::test]
+async fn a2a_send_respects_egress_policy_rules() {
+    let tmp = tempfile::tempdir().unwrap();
+    let tools = Toolset::new_with_security_config(
+        tmp.path().to_path_buf(),
+        SecurityConfig {
+            egress: EgressConfig {
+                rules: vec![EgressRule {
+                    tool: "a2a_send".to_string(),
+                    host: "example.com".to_string(),
+                    path_prefix: "/".to_string(),
+                    methods: vec!["POST".to_string()],
+                }],
+            },
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let err = tools
+        .call(
+            "a2a_send",
+            r#"{ "agent_url": "http://127.0.0.1:9/a2a", "message": "hello", "allow_private": true }"#,
+        )
+        .await
+        .unwrap_err();
+
+    assert!(err.to_string().contains("host"), "{err}");
 }

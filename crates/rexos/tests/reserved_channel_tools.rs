@@ -95,6 +95,7 @@ async fn reserved_channel_send_enqueues_outbox_message() {
         llm: rexos::config::LlmConfig::default(),
         providers,
         router: rexos::config::RouterConfig::default(),
+        security: Default::default(),
     };
     let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg).unwrap();
     let router = rexos::router::ModelRouter::new(rexos::config::RouterConfig {

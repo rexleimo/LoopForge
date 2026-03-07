@@ -16,7 +16,8 @@ impl Toolset {
         allow_private: bool,
     ) -> anyhow::Result<String> {
         let url = reqwest::Url::parse(url).context("parse url")?;
-        super::ensure_remote_url_allowed(&url, allow_private).await?;
+        super::ensure_remote_url_allowed(&url, allow_private, "web_fetch", "GET", &self.security)
+            .await?;
 
         let timeout = Duration::from_millis(timeout_ms.unwrap_or(20_000));
         let max_bytes = max_bytes.unwrap_or(200_000) as usize;

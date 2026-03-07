@@ -69,6 +69,7 @@ What doctor reports today:
 - config parsing
 - router → provider mapping
 - missing provider env vars
+- security posture (`security.secrets`, `security.leaks`, `security.egress`)
 - local Ollama connectivity (when configured)
 - browser prerequisites
 - required tooling such as Git

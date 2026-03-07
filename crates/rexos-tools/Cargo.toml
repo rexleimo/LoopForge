@@ -18,6 +18,7 @@ tokio.workspace = true
 tokio-tungstenite = { version = "0.26", features = ["rustls-tls-webpki-roots"] }
 uuid.workspace = true
 rexos-llm = { path = "../rexos-llm" }
+rexos-kernel = { path = "../rexos-kernel" }
 
 [dev-dependencies]
 axum.workspace = true

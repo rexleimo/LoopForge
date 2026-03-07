@@ -16,6 +16,7 @@ fn build_agent(memory: rexos::memory::MemoryStore) -> rexos::agent::AgentRuntime
         llm: rexos::config::LlmConfig::default(),
         providers,
         router: rexos::config::RouterConfig::default(),
+        security: Default::default(),
     };
     let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg).unwrap();
     let router = rexos::router::ModelRouter::new(rexos::config::RouterConfig {

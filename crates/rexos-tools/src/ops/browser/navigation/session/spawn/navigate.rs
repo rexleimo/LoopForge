@@ -9,7 +9,8 @@ impl Toolset {
         allow_private: bool,
         headless: Option<bool>,
     ) -> anyhow::Result<String> {
-        let url = super::super::validate::validated_browser_url(url, allow_private).await?;
+        let url = super::super::validate::validated_browser_url(url, allow_private, &self.security)
+            .await?;
         let backend = browser_backend_default();
 
         let mut guard = self.browser.lock().await;

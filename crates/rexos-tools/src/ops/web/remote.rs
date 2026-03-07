@@ -1,4 +1,5 @@
 use anyhow::{bail, Context};
+use rexos_kernel::security::SecurityConfig;
 
 use crate::defs::resolve_host_ips;
 use crate::net::is_forbidden_ip;
@@ -19,6 +20,9 @@ fn ensure_remote_scheme(url: &reqwest::Url) -> anyhow::Result<()> {
 pub(super) async fn ensure_remote_url_allowed(
     url: &reqwest::Url,
     allow_private: bool,
+    tool_name: &str,
+    method: &str,
+    security: &SecurityConfig,
 ) -> anyhow::Result<()> {
     ensure_remote_scheme(url)?;
 
@@ -32,6 +36,10 @@ pub(super) async fn ensure_remote_url_allowed(
                 bail!("url resolves to loopback/private address: {ip}");
             }
         }
+    }
+
+    if !security.egress.rules.is_empty() {
+        crate::net::egress_rule_allows(tool_name, method, url, security)?;
     }
 
     Ok(())

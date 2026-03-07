@@ -39,6 +39,44 @@ provider = "ollama"
 model = "default"
 ```
 
+## Security
+
+```toml
+[security.secrets]
+mode = "env_first"
+
+[security.leaks]
+mode = "redact"
+
+[[security.egress.rules]]
+tool = "web_fetch"
+host = "docs.rs"
+path_prefix = "/"
+methods = ["GET"]
+```
+
+Fields:
+
+- `security.secrets.mode`
+  - `env_first`: resolve provider credentials from host environment variables
+- `security.leaks.mode`
+  - `off`: do nothing extra
+  - `warn`: annotate likely secret leaks but keep raw output
+  - `redact`: mask detected ranges before persistence and follow-up model calls
+  - `enforce`: block the tool result when likely secrets are detected
+- `security.egress.rules`
+  - when empty, LoopForge keeps baseline SSRF/private-network guards only
+  - when non-empty, outbound requests must match an allow rule in addition to baseline guards
+
+Each egress rule contains:
+
+- `tool`: tool name, for example `web_fetch`
+- `host`: exact destination host
+- `path_prefix`: required URL path prefix
+- `methods`: allowed HTTP methods
+
+Current outbound allowlist enforcement applies to `web_fetch`, A2A requests, and browser navigation entrypoints.
+
 ## Built-in presets
 
 LoopForge includes common provider presets (names may evolve):

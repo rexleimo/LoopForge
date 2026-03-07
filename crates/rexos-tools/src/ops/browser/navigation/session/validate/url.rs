@@ -1,4 +1,5 @@
 use anyhow::{bail, Context};
+use rexos_kernel::security::SecurityConfig;
 
 use crate::defs::resolve_host_ips;
 use crate::net::is_forbidden_ip;
@@ -6,6 +7,7 @@ use crate::net::is_forbidden_ip;
 pub(super) async fn validated_browser_url(
     url: &str,
     allow_private: bool,
+    security: &SecurityConfig,
 ) -> anyhow::Result<reqwest::Url> {
     let url = reqwest::Url::parse(url).context("parse url")?;
     match url.scheme() {
@@ -25,6 +27,10 @@ pub(super) async fn validated_browser_url(
                 bail!("url resolves to loopback/private address: {ip}");
             }
         }
+    }
+
+    if !security.egress.rules.is_empty() {
+        crate::net::egress_rule_allows("browser_navigate", "GET", &url, security)?;
     }
 
     Ok(url)

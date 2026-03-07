@@ -367,8 +367,11 @@ async fn main() -> anyhow::Result<()> {
 
                 let memory = MemoryStore::open_or_create(&paths)?;
                 let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg)?;
+                let security = cfg.security.clone();
                 let router = rexos::router::ModelRouter::new(cfg.router);
-                let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
+                let agent = rexos::agent::AgentRuntime::new_with_security_config(
+                    memory, llms, router, security,
+                );
 
                 let session_id = match session {
                     Some(id) => id,
@@ -594,8 +597,11 @@ async fn main() -> anyhow::Result<()> {
 
                 let memory = MemoryStore::open_or_create(&paths)?;
                 let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg)?;
+                let security = cfg.security.clone();
                 let router = rexos::router::ModelRouter::new(cfg.router);
-                let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
+                let agent = rexos::agent::AgentRuntime::new_with_security_config(
+                    memory, llms, router, security,
+                );
 
                 let session_id = match session {
                     Some(id) => id,
@@ -702,8 +708,11 @@ If tool permissions are restricted, do not call tools outside the granted scope.
 
                 let memory = MemoryStore::open_or_create(&paths)?;
                 let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg)?;
+                let security = cfg.security.clone();
                 let router = rexos::router::ModelRouter::new(cfg.router);
-                let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
+                let agent = rexos::agent::AgentRuntime::new_with_security_config(
+                    memory, llms, router, security,
+                );
 
                 rexos::harness::bootstrap_with_prompt(&agent, &dir, &session_id, &prompt).await?;
 
@@ -735,8 +744,11 @@ If tool permissions are restricted, do not call tools outside the granted scope.
 
                 let memory = MemoryStore::open_or_create(&paths)?;
                 let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg)?;
+                let security = cfg.security.clone();
                 let router = rexos::router::ModelRouter::new(cfg.router);
-                let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
+                let agent = rexos::agent::AgentRuntime::new_with_security_config(
+                    memory, llms, router, security,
+                );
 
                 let out =
                     rexos::harness::run_harness(&agent, &dir, &session_id, &prompt, max_attempts)
