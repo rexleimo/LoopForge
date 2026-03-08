@@ -46,6 +46,22 @@ jobs:
             --base-ref "${{ github.event.pull_request.base.sha }}" \
             --head-ref "${{ github.sha }}"
 
+  fmt:
+    name: cargo fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all --check
+
   test:
     name: cargo test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
