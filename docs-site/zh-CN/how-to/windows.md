@@ -1,5 +1,9 @@
 # Windows 说明
 
+## 推荐的 Windows 路径
+
+优先使用 PowerShell 原生命令，不要默认依赖 WSL，并用 `loopforge doctor` 做环境确认。
+
 LoopForge 在 Windows 上运行不依赖 WSL。
 
 ## Harness workspace 的 init scripts

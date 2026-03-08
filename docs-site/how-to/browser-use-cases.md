@@ -1,5 +1,9 @@
 # Browser Use Cases (Recipes)
 
+## How to use this section
+
+Treat each recipe as a standalone entry point. If browser setup is not ready yet, go back to [Browser Automation](browser-automation.md) first.
+
 This section is intentionally **copy-paste friendly**: each recipe is a standalone page so you can open it quickly and run it.
 
 See also: [Browser Automation (CDP)](browser-automation.md).

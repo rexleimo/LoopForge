@@ -1,5 +1,9 @@
 # Quickstart (Ollama)
 
+## What success looks like
+
+By the end of this tutorial, Ollama should be reachable, `~/.loopforge/config.toml` should be valid, and one workspace artifact should be created by `loopforge agent run`.
+
 This tutorial runs LoopForge locally using Ollama’s OpenAI-compatible endpoint.
 
 ## Prerequisites

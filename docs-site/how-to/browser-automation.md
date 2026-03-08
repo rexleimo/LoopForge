@@ -1,5 +1,13 @@
 # Browser Automation (CDP)
 
+## Recommended verification path
+
+Before trying complex multi-step flows, first:
+
+1. run `loopforge doctor`
+2. confirm browser checks are healthy
+3. start with one simple navigate/read/screenshot task
+
 Use browser tools when `web_fetch` isn't enough (JS-rendered pages, multi-step flows, forms, screenshots).
 
 For copy-paste recipes, see: [Browser Use Cases](browser-use-cases.md).

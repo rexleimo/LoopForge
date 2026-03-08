@@ -1,5 +1,13 @@
 # Troubleshooting
 
+## Fast triage order
+
+If you do not know where to start, use this order first:
+
+1. `loopforge doctor`
+2. `loopforge config validate`
+3. the most recent workspace report or failing command output
+
 ## First step: run `loopforge doctor`
 
 If you’re not sure what’s wrong, start here:

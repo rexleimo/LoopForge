@@ -305,7 +305,10 @@ async fn leak_guard_redacts_tool_output_before_model_and_audit_persistence() {
         }))
     }
 
-    let _guard = EnvVarGuard::set("LOOPFORGE_TEST_SECRET_REDACT_RT", "super-secret-redact-rt-value-12345");
+    let _guard = EnvVarGuard::set(
+        "LOOPFORGE_TEST_SECRET_REDACT_RT",
+        "super-secret-redact-rt-value-12345",
+    );
 
     let state = TestState::default();
     let state_for_asserts = state.clone();
@@ -321,7 +324,11 @@ async fn leak_guard_redacts_tool_output_before_model_and_audit_persistence() {
     let tmp = tempfile::tempdir().unwrap();
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).unwrap();
-    std::fs::write(workspace.join("secret.txt"), "super-secret-redact-rt-value-12345").unwrap();
+    std::fs::write(
+        workspace.join("secret.txt"),
+        "super-secret-redact-rt-value-12345",
+    )
+    .unwrap();
 
     let paths = rexos::paths::RexosPaths {
         base_dir: tmp.path().join(".loopforge"),
@@ -431,7 +438,10 @@ async fn leak_guard_enforce_blocks_tool_output_without_persisting_secret() {
         }))
     }
 
-    let _guard = EnvVarGuard::set("LOOPFORGE_TEST_SECRET_ENFORCE_RT", "super-secret-enforce-rt-value-12345");
+    let _guard = EnvVarGuard::set(
+        "LOOPFORGE_TEST_SECRET_ENFORCE_RT",
+        "super-secret-enforce-rt-value-12345",
+    );
 
     let state = TestState::default();
     let state_for_asserts = state.clone();
@@ -447,7 +457,11 @@ async fn leak_guard_enforce_blocks_tool_output_without_persisting_secret() {
     let tmp = tempfile::tempdir().unwrap();
     let workspace = tmp.path().join("workspace");
     std::fs::create_dir_all(&workspace).unwrap();
-    std::fs::write(workspace.join("secret.txt"), "super-secret-enforce-rt-value-12345").unwrap();
+    std::fs::write(
+        workspace.join("secret.txt"),
+        "super-secret-enforce-rt-value-12345",
+    )
+    .unwrap();
 
     let paths = rexos::paths::RexosPaths {
         base_dir: tmp.path().join(".loopforge"),

@@ -1,5 +1,13 @@
 # 浏览器自动化（CDP）
 
+## 推荐验证路径
+
+在尝试复杂多步流程前，先做三件事：
+
+1. 运行 `loopforge doctor`
+2. 确认浏览器检查项正常
+3. 先跑一个简单的 navigate/read/screenshot 任务
+
 当 `web_fetch` 不够用（JS 渲染页面、多步交互、表单填写、需要截图留证）时，使用 `browser_*` 工具更可靠。
 
 更多可复制粘贴的配方见：[浏览器案例](browser-use-cases.md)。

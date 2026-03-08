@@ -1,5 +1,11 @@
 # First-Day Starter Tasks
 
+## How to choose quickly
+
+- choose `hello` for the smallest proof
+- choose `workspace-brief` for the first useful artifact
+- choose `repo-onboarding` when you already have a real repository to inspect
+
 If `loopforge onboard` succeeded, use one of these starter profiles next.
 
 ## Starter 1: `hello`

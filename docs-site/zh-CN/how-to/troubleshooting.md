@@ -1,5 +1,13 @@
 # 故障排查
 
+## 快速排查顺序
+
+如果你还不知道从哪开始，先按这个顺序：
+
+1. `loopforge doctor`
+2. `loopforge config validate`
+3. 最近一次 workspace 报告或失败命令输出
+
 ## 第一步：跑 `loopforge doctor`
 
 如果你不确定哪里出了问题，建议先跑：

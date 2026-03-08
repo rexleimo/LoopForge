@@ -1,5 +1,9 @@
 # 快速开始（Ollama）
 
+## 什么算成功
+
+跑完本教程后，应该满足三件事：Ollama 可访问、`~/.loopforge/config.toml` 合法、并且 `loopforge agent run` 已经在 workspace 里生成了一个产物。
+
 本教程用 Ollama 的 OpenAI 兼容接口在本地跑通 LoopForge。
 
 ## 前置条件

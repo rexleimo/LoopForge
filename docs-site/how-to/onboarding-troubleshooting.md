@@ -1,5 +1,13 @@
 # Onboarding Troubleshooting
 
+## Recommended triage order
+
+When onboarding fails, start in this order:
+
+1. `loopforge config validate`
+2. `loopforge doctor`
+3. `<workspace>/.loopforge/onboard-report.md`
+
 Use this page when `loopforge onboard` or `loopforge doctor` reports warnings/errors.
 
 ## 1) Config invalid

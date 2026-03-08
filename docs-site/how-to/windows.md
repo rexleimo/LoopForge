@@ -1,5 +1,9 @@
 # Windows Notes
 
+## Recommended Windows path
+
+Prefer PowerShell-native commands first, avoid assuming WSL exists, and verify setup with `loopforge doctor`.
+
 LoopForge runs on Windows runners without requiring WSL.
 
 ## Init scripts in harness workspaces

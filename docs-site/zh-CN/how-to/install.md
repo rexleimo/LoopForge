@@ -1,5 +1,15 @@
 # 安装与更新
 
+## 推荐路径
+
+对大多数用户，最稳妥的顺序是：
+
+1. 安装 `loopforge`
+2. 运行 `loopforge --help`
+3. 运行 `loopforge init`
+4. 运行 `loopforge config validate`
+5. 运行 `loopforge doctor`
+
 ## 方案 A：下载预编译二进制（推荐）
 
 1. 从 GitHub Releases 下载你系统对应的压缩包。

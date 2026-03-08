@@ -1,5 +1,13 @@
 # New User Walkthrough (10 minutes)
 
+## What success looks like
+
+By the end, you should have:
+
+- one healthy onboarding run
+- a readable onboarding report
+- one follow-up artifact created in the same workspace
+
 This is the fastest way to prove LoopForge is usable on your machine.
 
 ## 0) Prerequisites

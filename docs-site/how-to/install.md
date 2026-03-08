@@ -1,5 +1,15 @@
 # Install & Update
 
+## Recommended path
+
+For most users, the safest order is:
+
+1. install `loopforge`
+2. run `loopforge --help`
+3. run `loopforge init`
+4. run `loopforge config validate`
+5. run `loopforge doctor`
+
 ## Option A: Download a prebuilt binary (recommended)
 
 1. Download the archive for your OS from GitHub Releases.

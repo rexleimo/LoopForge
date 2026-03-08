@@ -1,60 +1,77 @@
-# 概念
+# Concepts
 
-LoopForge 是给「不是跑一次就完事」的场景用的。
+LoopForge is built for workflows that are **not** “one prompt and done”.
 
 ## Workspace
 
-Workspace 就是你的工作目录：
+A workspace is the working directory for one run.
 
-- 工具（文件读写、shell）只能在这个目录里操作
-- harness 的产物也放在这里
+- filesystem tools and shell commands are constrained to this directory
+- harness artifacts are also written here
+- browser screenshots, notes, and generated files usually land here as well
 
-## 记忆 (SQLite)
+## Memory (SQLite)
 
-LoopForge 会记住：
+LoopForge remembers:
 
-- 之前的 session
-- 聊天记录
-- 小的配置状态
+- earlier sessions
+- chat history
+- small pieces of persistent state
+- runtime-managed records such as tasks, schedules, workflows, and outbox messages
 
-存在 `~/.loopforge/loopforge.db`，下次跑的时候能接上。
+This state is stored in `~/.loopforge/loopforge.db` so later runs can continue from earlier work.
 
-## 工具（沙盒里）
+## Tools (inside guardrails)
 
-Agent 能用的工具：
+An agent can use tools such as:
 
-- `fs_read` / `fs_write` — 读写文件（只能在 workspace 内，不能 `..` 往上翻）
-- `shell` — 执行命令（也只能在 workspace 内）
-- `web_fetch` — 抓网页（默认防 SSRF）
-- `browser_*` — 无头浏览器（通过 CDP）
+- `fs_read` / `fs_write` — read and write files inside the workspace
+- `shell` — run commands inside the workspace
+- `web_fetch` — fetch web pages with SSRF protections by default
+- `browser_*` — automate a browser via CDP
 
-!!! note "浏览器依赖"
-    默认用本地 Chrome/Chromium/Edge（通过 CDP）。
+!!! note "Browser prerequisites"
+    By default LoopForge uses a local Chrome/Chromium/Edge browser through CDP.
 
-    找不到浏览器的话，设 `LOOPFORGE_BROWSER_CHROME_PATH`。
+    If LoopForge cannot find a browser binary, set `LOOPFORGE_BROWSER_CHROME_PATH`.
 
-    旧方案：设 `LOOPFORGE_BROWSER_BACKEND=playwright` 并安装 Python + Playwright：
+    The older fallback path is Playwright bridge mode:
 
     ```bash
+    export LOOPFORGE_BROWSER_BACKEND=playwright
     python3 -m pip install playwright
     python3 -m playwright install chromium
     ```
 
-## 模型路由
+## Model routing
 
-LoopForge 会把任务分类：
+LoopForge separates work into task kinds:
 
-- planning — 规划
-- coding — 写代码
-- summary — 总结
+- `planning`
+- `coding`
+- `summary`
 
-每种可以走不同的 provider/model。
+Each kind can route to a different `(provider, model)` pair.
+This makes it possible to use one model for planning, another for code work, and a cheaper one for summaries.
 
-## Harness（持久化长任务）
+## Harness (durable long tasks)
 
-Harness 是在上面的工作流：
+Harness sits on top of the runtime for longer, checkpointed work:
 
-1. 用 artifacts 初始化 workspace
-2. 增量跑 session
-3. 用 `init.sh` / `init.ps1` 验证
-4. 用 git 提交 checkpoint
+1. initialize a workspace with starter artifacts
+2. run incremental sessions instead of one giant prompt
+3. verify with `init.sh` / `init.ps1`
+4. checkpoint progress in Git
+
+## Runtime-managed tools
+
+Some LoopForge capabilities are not just one-off tools. They are runtime-managed and keep state across sessions, for example:
+
+- agents and hands
+- tasks and events
+- schedules and cron jobs
+- workflows
+- channels and outbox delivery
+- knowledge graph records
+
+If you want the full system view, continue to [Runtime Architecture](runtime-architecture.md).

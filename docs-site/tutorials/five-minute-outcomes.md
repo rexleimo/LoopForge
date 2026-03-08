@@ -1,5 +1,9 @@
 # 5-Minute Outcomes
 
+## Pick one outcome
+
+Choose the smallest result that proves value for your current day, then stop and review the artifact before expanding scope.
+
 This page answers one question fast:
 what can LoopForge actually produce for me today?
 

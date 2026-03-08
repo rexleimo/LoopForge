@@ -1,5 +1,9 @@
 # Long Task With Harness
 
+## Use this tutorial when
+
+Choose harness when one-shot `agent run` is no longer enough and you want durable checkpoints, retries, and a resumable workspace.
+
 The harness is for tasks that won’t fit in a single model context window. It makes progress **durable** by combining:
 
 - A workspace directory with durable artifacts (`features.json`, `loopforge-progress.md`, init scripts)

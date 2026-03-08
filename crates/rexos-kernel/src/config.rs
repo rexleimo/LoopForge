@@ -1,7 +1,11 @@
-use std::collections::BTreeMap;
-use std::fs;
+mod defaults;
+mod storage;
 
-use anyhow::Context;
+#[cfg(test)]
+mod tests;
+
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 use crate::paths::RexosPaths;
@@ -82,170 +86,7 @@ pub struct SkillsConfig {
 
 impl Default for RexosConfig {
     fn default() -> Self {
-        let mut providers = BTreeMap::new();
-        providers.insert(
-            "ollama".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "http://127.0.0.1:11434/v1".to_string(),
-                api_key_env: "".to_string(),
-                default_model: "llama3.2".to_string(),
-            },
-        );
-        providers.insert(
-            "deepseek".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://api.deepseek.com".to_string(),
-                api_key_env: "DEEPSEEK_API_KEY".to_string(),
-                default_model: "deepseek-chat".to_string(),
-            },
-        );
-        providers.insert(
-            "kimi".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://api.moonshot.ai/v1".to_string(),
-                api_key_env: "MOONSHOT_API_KEY".to_string(),
-                default_model: "moonshot-v1-8k".to_string(),
-            },
-        );
-        providers.insert(
-            "kimi_cn".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://api.moonshot.cn/v1".to_string(),
-                api_key_env: "MOONSHOT_API_KEY".to_string(),
-                default_model: "moonshot-v1-8k".to_string(),
-            },
-        );
-        providers.insert(
-            "qwen".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://dashscope-us.aliyuncs.com/compatible-mode/v1".to_string(),
-                api_key_env: "DASHSCOPE_API_KEY".to_string(),
-                default_model: "qwen-plus".to_string(),
-            },
-        );
-        providers.insert(
-            "qwen_native".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::DashscopeNative,
-                base_url: "https://dashscope-us.aliyuncs.com/api/v1".to_string(),
-                api_key_env: "DASHSCOPE_API_KEY".to_string(),
-                default_model: "qwen-plus".to_string(),
-            },
-        );
-        providers.insert(
-            "qwen_cn".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1".to_string(),
-                api_key_env: "DASHSCOPE_API_KEY".to_string(),
-                default_model: "qwen-plus".to_string(),
-            },
-        );
-        providers.insert(
-            "qwen_native_cn".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::DashscopeNative,
-                base_url: "https://dashscope.aliyuncs.com/api/v1".to_string(),
-                api_key_env: "DASHSCOPE_API_KEY".to_string(),
-                default_model: "qwen-plus".to_string(),
-            },
-        );
-        providers.insert(
-            "qwen_sg".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1".to_string(),
-                api_key_env: "DASHSCOPE_API_KEY".to_string(),
-                default_model: "qwen-plus".to_string(),
-            },
-        );
-        providers.insert(
-            "qwen_native_sg".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::DashscopeNative,
-                base_url: "https://dashscope-intl.aliyuncs.com/api/v1".to_string(),
-                api_key_env: "DASHSCOPE_API_KEY".to_string(),
-                default_model: "qwen-plus".to_string(),
-            },
-        );
-        providers.insert(
-            "glm".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://open.bigmodel.cn/api/paas/v4".to_string(),
-                api_key_env: "ZHIPUAI_API_KEY".to_string(),
-                default_model: "glm-4".to_string(),
-            },
-        );
-        providers.insert(
-            "glm_native".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::ZhipuNative,
-                base_url: "https://open.bigmodel.cn/api/paas/v4".to_string(),
-                api_key_env: "ZHIPUAI_API_KEY".to_string(),
-                default_model: "glm-4".to_string(),
-            },
-        );
-        providers.insert(
-            "minimax".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://api.minimax.chat/v1".to_string(),
-                api_key_env: "MINIMAX_API_KEY".to_string(),
-                default_model: "MiniMax-M2.5".to_string(),
-            },
-        );
-        providers.insert(
-            "minimax_native".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::MiniMaxNative,
-                base_url: "https://api.minimax.chat/v1".to_string(),
-                api_key_env: "MINIMAX_API_KEY".to_string(),
-                default_model: "MiniMax-M2.5".to_string(),
-            },
-        );
-        providers.insert(
-            "nvidia".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::OpenAiCompatible,
-                base_url: "https://integrate.api.nvidia.com/v1".to_string(),
-                api_key_env: "NVIDIA_API_KEY".to_string(),
-                default_model: "meta/llama-3.2-3b-instruct".to_string(),
-            },
-        );
-        providers.insert(
-            "minimax_anthropic".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::Anthropic,
-                base_url: "https://api.minimax.io/anthropic".to_string(),
-                api_key_env: "MINIMAX_API_KEY".to_string(),
-                default_model: "MiniMax-M2.5".to_string(),
-            },
-        );
-        providers.insert(
-            "anthropic".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::Anthropic,
-                base_url: "https://api.anthropic.com".to_string(),
-                api_key_env: "ANTHROPIC_API_KEY".to_string(),
-                default_model: "claude-3-5-sonnet-latest".to_string(),
-            },
-        );
-        providers.insert(
-            "gemini".to_string(),
-            ProviderConfig {
-                kind: ProviderKind::Gemini,
-                base_url: "https://generativelanguage.googleapis.com/v1beta".to_string(),
-                api_key_env: "GEMINI_API_KEY".to_string(),
-                default_model: "gemini-1.5-flash".to_string(),
-            },
-        );
-
+        let providers = defaults::default_providers();
         Self {
             llm: LlmConfig::default(),
             providers: providers.clone(),
@@ -257,44 +98,22 @@ impl Default for RexosConfig {
 
 impl Default for LlmConfig {
     fn default() -> Self {
-        Self {
-            base_url: "http://127.0.0.1:11434/v1".to_string(),
-            api_key_env: "OPENAI_API_KEY".to_string(),
-            model: "gpt-4.1-mini".to_string(),
-        }
+        defaults::default_llm_config()
     }
 }
 
 impl Default for ProviderConfig {
     fn default() -> Self {
-        Self {
-            kind: ProviderKind::OpenAiCompatible,
-            base_url: "".to_string(),
-            api_key_env: "".to_string(),
-            default_model: "".to_string(),
-        }
+        defaults::default_provider_config()
     }
 }
 
 impl RouterConfig {
     fn default_from_provider(
         default_provider: &str,
-        _providers: &BTreeMap<String, ProviderConfig>,
+        providers: &BTreeMap<String, ProviderConfig>,
     ) -> Self {
-        Self {
-            planning: RouteConfig {
-                provider: default_provider.to_string(),
-                model: "default".to_string(),
-            },
-            coding: RouteConfig {
-                provider: default_provider.to_string(),
-                model: "default".to_string(),
-            },
-            summary: RouteConfig {
-                provider: default_provider.to_string(),
-                model: "default".to_string(),
-            },
-        }
+        defaults::default_router_config(default_provider, providers)
     }
 }
 
@@ -306,21 +125,13 @@ impl Default for RouterConfig {
 
 impl Default for RouteConfig {
     fn default() -> Self {
-        Self {
-            provider: "ollama".to_string(),
-            model: "default".to_string(),
-        }
+        defaults::default_route_config()
     }
 }
 
 impl Default for SkillsConfig {
     fn default() -> Self {
-        Self {
-            allowlist: Vec::new(),
-            require_approval: false,
-            auto_approve_readonly: true,
-            experimental: false,
-        }
+        defaults::default_skills_config()
     }
 }
 
@@ -340,32 +151,11 @@ impl Default for SkillsConfigWrapper {
 
 impl RexosConfig {
     pub fn ensure_default(paths: &RexosPaths) -> anyhow::Result<()> {
-        let config_path = paths.config_path();
-        if config_path.exists() {
-            return Ok(());
-        }
-
-        let default_config = RexosConfig::default();
-        let mut toml_str = toml::to_string_pretty(&default_config).context("serialize config")?;
-        if !toml_str.contains("[skills]") {
-            let skills_toml = toml::to_string_pretty(&SkillsConfigWrapper {
-                skills: SkillsConfig::default(),
-            })
-            .context("serialize skills config")?;
-            toml_str.push('\n');
-            toml_str.push_str(&skills_toml);
-        }
-
-        fs::write(&config_path, toml_str)
-            .with_context(|| format!("write config: {}", config_path.display()))?;
-        Ok(())
+        storage::ensure_default_config(paths)
     }
 
     pub fn load(paths: &RexosPaths) -> anyhow::Result<Self> {
-        let config_path = paths.config_path();
-        let raw = fs::read_to_string(&config_path)
-            .with_context(|| format!("read config: {}", config_path.display()))?;
-        toml::from_str(&raw).context("parse config TOML")
+        storage::load_config(paths)
     }
 
     pub fn api_key(&self) -> Option<String> {
@@ -377,139 +167,6 @@ impl RexosConfig {
     }
 
     pub fn load_skills_config(paths: &RexosPaths) -> anyhow::Result<SkillsConfig> {
-        let config_path = paths.config_path();
-        let raw = fs::read_to_string(&config_path)
-            .with_context(|| format!("read config: {}", config_path.display()))?;
-        let wrapper: SkillsConfigWrapper =
-            toml::from_str(&raw).context("parse skills config TOML")?;
-        Ok(wrapper.skills)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn default_config_serializes() {
-        let cfg = RexosConfig::default();
-        let toml_str = toml::to_string_pretty(&cfg).unwrap();
-        assert!(toml_str.contains("[providers.ollama]"));
-        assert!(toml_str.contains("[providers.deepseek]"));
-        assert!(toml_str.contains("[providers.kimi]"));
-        assert!(toml_str.contains("[providers.qwen]"));
-        assert!(toml_str.contains("[providers.qwen_native]"));
-        assert!(toml_str.contains("[providers.glm]"));
-        assert!(toml_str.contains("[providers.glm_native]"));
-        assert!(toml_str.contains("[providers.minimax]"));
-        assert!(toml_str.contains("[providers.minimax_native]"));
-        assert!(toml_str.contains("[providers.nvidia]"));
-        assert!(toml_str.contains("[providers.anthropic]"));
-        assert!(toml_str.contains("[providers.gemini]"));
-        assert!(toml_str.contains("kind = \"openai_compatible\""));
-        assert!(toml_str.contains("kind = \"dashscope_native\""));
-        assert!(toml_str.contains("kind = \"zhipu_native\""));
-        assert!(toml_str.contains("kind = \"minimax_native\""));
-        assert!(toml_str.contains("base_url"));
-        assert!(toml_str.contains("api_key_env"));
-        assert!(toml_str.contains("default_model"));
-
-        assert!(toml_str.contains("[router.planning]"));
-        assert!(toml_str.contains("provider = \"ollama\""));
-        assert!(toml_str.contains("[router.coding]"));
-        assert!(toml_str.contains("[router.summary]"));
-        assert!(toml_str.contains("[security.secrets]"));
-        assert!(toml_str.contains("mode = \"env_first\""));
-        assert!(toml_str.contains("[security.leaks]"));
-        assert!(toml_str.contains("[security.egress]"));
-    }
-
-    #[test]
-    fn minimax_presets_use_official_base_url() {
-        let cfg = RexosConfig::default();
-
-        let minimax = cfg.providers.get("minimax").unwrap();
-        assert_eq!(minimax.base_url, "https://api.minimax.chat/v1");
-
-        let minimax_native = cfg.providers.get("minimax_native").unwrap();
-        assert_eq!(minimax_native.base_url, "https://api.minimax.chat/v1");
-    }
-
-    #[test]
-    fn nvidia_preset_uses_nim_base_url() {
-        let cfg = RexosConfig::default();
-
-        let nvidia = cfg.providers.get("nvidia").unwrap();
-        assert_eq!(nvidia.base_url, "https://integrate.api.nvidia.com/v1");
-    }
-
-    #[test]
-    fn security_config_parses_table_values() {
-        use crate::security::{LeakMode, SecretMode};
-
-        let parsed: RexosConfig = toml::from_str(
-            r#"
-[security.secrets]
-mode = "env_first"
-
-[security.leaks]
-mode = "warn"
-
-[[security.egress.rules]]
-tool = "web_fetch"
-host = "docs.rs"
-path_prefix = "/"
-methods = ["GET"]
-"#,
-        )
-        .unwrap();
-
-        assert_eq!(parsed.security.secrets.mode, SecretMode::EnvFirst);
-        assert_eq!(parsed.security.leaks.mode, LeakMode::Warn);
-        assert_eq!(parsed.security.egress.rules.len(), 1);
-        assert_eq!(parsed.security.egress.rules[0].tool, "web_fetch");
-        assert_eq!(parsed.security.egress.rules[0].host, "docs.rs");
-        assert_eq!(parsed.security.egress.rules[0].path_prefix, "/");
-        assert_eq!(parsed.security.egress.rules[0].methods, vec!["GET"]);
-    }
-
-    #[test]
-    fn skills_config_defaults_when_table_missing() {
-        let parsed: SkillsConfigWrapper = toml::from_str("[llm]\nmodel = \"x\"").unwrap();
-        assert!(parsed.skills.allowlist.is_empty());
-        assert!(!parsed.skills.require_approval);
-        assert!(parsed.skills.auto_approve_readonly);
-    }
-
-    #[test]
-    fn skills_config_parses_table_values() {
-        let parsed: SkillsConfigWrapper = toml::from_str(
-            r#"
-[skills]
-allowlist = ["safe-skill", "qa-helper"]
-require_approval = true
-auto_approve_readonly = false
-experimental = true
-"#,
-        )
-        .unwrap();
-        assert_eq!(parsed.skills.allowlist, vec!["safe-skill", "qa-helper"]);
-        assert!(parsed.skills.require_approval);
-        assert!(!parsed.skills.auto_approve_readonly);
-        assert!(parsed.skills.experimental);
-    }
-
-    #[test]
-    fn ensure_default_writes_skills_table() {
-        let tmp = tempfile::tempdir().unwrap();
-        let paths = crate::paths::RexosPaths {
-            base_dir: tmp.path().join(".loopforge"),
-        };
-        paths.ensure_dirs().unwrap();
-
-        RexosConfig::ensure_default(&paths).unwrap();
-        let raw = std::fs::read_to_string(paths.config_path()).unwrap();
-        assert!(raw.contains("[skills]"));
-        assert!(raw.contains("require_approval = false"));
+        storage::load_skills_config(paths)
     }
 }

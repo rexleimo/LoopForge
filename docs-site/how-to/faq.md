@@ -1,5 +1,9 @@
 # Beginner FAQ
 
+## Fastest green check
+
+If you only want one successful local proof first, use the first question on this page, then run `loopforge doctor` if anything looks off.
+
 This page is intentionally short and copy/paste-friendly.
 If you are blocked, run `loopforge doctor` first.
 

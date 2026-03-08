@@ -1,5 +1,11 @@
 # First-Day Starter Tasks
 
+## 如何快速选择
+
+- 只想做最小验证：选 `hello`
+- 想先拿到一个有用产物：选 `workspace-brief`
+- 已经有真实仓库要读：选 `repo-onboarding`
+
 如果 `loopforge onboard` 已经成功，可以继续用这些 starter profiles。
 
 ## Starter 1: `hello`

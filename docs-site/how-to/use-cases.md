@@ -1,5 +1,14 @@
 # Common Use Cases (Recipes)
 
+## Pick by goal
+
+Use this index by desired outcome:
+
+- sanity check → setup validation
+- browser tasks → browser recipes
+- routing/provider work → routing recipes
+- operations → daemon / notifications
+
 This page is an **index** of copy-paste recipes.
 
 If you want a quick path, start here:

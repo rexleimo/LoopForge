@@ -16,6 +16,8 @@ LoopForge  is a **personal AI engineer** for software delivery: long-running wor
 - (If the custom domain isn’t configured yet) GitHub Pages: https://rexleimo.github.io/LoopForge/
 - 5-minute outcomes: `docs-site/tutorials/five-minute-outcomes.md`
 - Positioning: `docs-site/explanation/why-loopforge.md`
+- Runtime architecture: `docs-site/explanation/runtime-architecture.md`
+- Internal maintainer map: `docs/internal/runtime-module-map.md`
 
 ## Status
 

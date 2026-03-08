@@ -1,5 +1,13 @@
 # 新人 walkthrough（10 分钟）
 
+## 什么算成功
+
+跑完后，你应该至少拿到：
+
+- 一次健康的 onboarding
+- 一份可读的 onboarding 报告
+- 同一 workspace 里的一个后续产物
+
 这是验证 LoopForge 在你机器上能否跑通的最快路径。
 
 ## 0) 前置条件

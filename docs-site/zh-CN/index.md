@@ -10,6 +10,7 @@
 [Starter Tasks](tutorials/first-day-starter-tasks.md){ .md-button }
 [上手排障](how-to/onboarding-troubleshooting.md){ .md-button }
 [为什么是 LoopForge](explanation/why-loopforge.md){ .md-button }
+[运行时架构](explanation/runtime-architecture.md){ .md-button }
 
 <p class="rexos-muted">
 LoopForge 的定位是工程交付型 AI 助理：本地优先、产物导向、可审计。
@@ -62,6 +63,10 @@ LoopForge 的定位是工程交付型 AI 助理：本地优先、产物导向、
   固化流程：修改 -> 验证 -> checkpoint。
   [Harness 工作流](tutorials/harness-long-task.md)
 
+- :material-sitemap: **运行时架构**
+  快速理解 CLI、runtime、tools、memory 与 audit 是如何衔接的。
+  [打开架构说明](explanation/runtime-architecture.md)
+
 </div>
 
 ## 我们的定位
@@ -77,3 +82,4 @@ LoopForge 的定位是工程交付型 AI 助理：本地优先、产物导向、
 - [上手排障](how-to/onboarding-troubleshooting.md)
 - [5 分钟可见结果](tutorials/five-minute-outcomes.md)
 - [案例任务库](examples/case-tasks/index.md)
+- [运行时架构](explanation/runtime-architecture.md)

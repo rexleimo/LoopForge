@@ -1,5 +1,9 @@
 # Run the Daemon
 
+## Use this page when
+
+Read this page when you want to run LoopForge as a small HTTP service and need a fast health-check path.
+
 LoopForge includes an HTTP daemon (currently minimal).
 
 ## Start

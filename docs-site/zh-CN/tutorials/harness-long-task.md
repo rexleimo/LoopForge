@@ -1,5 +1,9 @@
 # Harness 长任务
 
+## 什么时候用这个教程
+
+当一次性的 `agent run` 已经不够，你需要 durable checkpoint、失败重试和可续跑 workspace 时，就该用 harness。
+
 Harness 适合“一个上下文窗口放不下”的任务。它把进度做成 **durable**：
 
 - workspace 目录里的持久化产物（`features.json`、`loopforge-progress.md`、init scripts）

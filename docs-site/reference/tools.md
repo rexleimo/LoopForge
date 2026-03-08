@@ -36,6 +36,20 @@ Use this index when writing prompts/manifests that need exact tool names:
 
 `agent_spawn`, `agent_list`, `agent_find`, `agent_send`, `agent_kill`, `hand_list`, `hand_activate`, `hand_status`, `hand_deactivate`, `task_post`, `task_claim`, `task_complete`, `task_list`, `event_publish`, `schedule_create`, `schedule_list`, `schedule_delete`, `cron_create`, `cron_list`, `cron_cancel`, `channel_send`, `workflow_run`, `knowledge_add_entity`, `knowledge_add_relation`, `knowledge_query`
 
+## How to read this page
+
+LoopForge tools fall into two execution boundaries:
+
+| Boundary | Typical use | State behavior | Implemented in |
+|---|---|---|---|
+| Standalone tools | Files, shell, browser, web, PDF, media, process work | Usually act on the current workspace or one request | `rexos-tools` |
+| Runtime-managed tools | Agents, hands, tasks, schedules, workflows, outbox, knowledge | Persist shared runtime state across sessions | `rexos-runtime` |
+
+Use the standalone tools when you want to *do work in the workspace*.
+Use the runtime-managed tools when you want to *create or query durable state inside LoopForge itself*.
+
+If you want the bigger picture, read [Runtime Architecture](../explanation/runtime-architecture.md) after this page.
+
 ## Running these examples
 
 Most examples below are written as:
@@ -638,6 +652,12 @@ These tools are implemented by the agent runtime (not by the standalone `Toolset
 - `channel_send` (outbox enqueue; use `loopforge channel drain` to deliver)
 - `knowledge_add_entity` / `knowledge_add_relation` / `knowledge_query`
 
+Practical differences from standalone tools:
+
+- they usually return JSON records, ids, or workflow state rather than raw workspace output
+- they keep state across later sessions instead of acting only on the current prompt
+- they are useful for collaboration/orchestration flows, not just one-off file edits
+
 ### `agent_spawn`
 
 Create an agent session record (persisted) and return its details.
@@ -967,6 +987,11 @@ Use channel_send to enqueue a console message (recipient=stdout) saying \"Hello 
 ## `workflow_run`
 
 Run a multi-step workflow and persist execution state to `.loopforge/workflows/<workflow_id>.json`.
+
+Current scope:
+
+- `workflow_run` is best for orchestrating standalone tools such as `fs_write`, `shell`, `web_fetch`, or browser tools
+- it does **not** currently support nesting runtime-managed tools like `task_*`, `agent_*`, `knowledge_*`, `schedule_*`, `cron_*`, or `channel_send` inside workflow steps
 
 Arguments (tool call JSON):
 

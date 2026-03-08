@@ -10,6 +10,7 @@ Start with one command, get a real artifact, and keep a reproducible trail from 
 [Starter tasks](tutorials/first-day-starter-tasks.md){ .md-button }
 [Troubleshooting](how-to/onboarding-troubleshooting.md){ .md-button }
 [Why LoopForge](explanation/why-loopforge.md){ .md-button }
+[Runtime Architecture](explanation/runtime-architecture.md){ .md-button }
 
 <p class="rexos-muted">
 LoopForge is optimized for builders who care about local-first workflows, real artifacts, and audit-friendly delivery.
@@ -62,6 +63,10 @@ These files tell you what passed, what failed, and what to do next.
   Keep a clear trail: change -> verify -> checkpoint.
   [Harness workflow](tutorials/harness-long-task.md)
 
+- :material-sitemap: **Runtime Architecture**
+  Understand how CLI, runtime, tools, memory, and audits fit together.
+  [Open architecture guide](explanation/runtime-architecture.md)
+
 </div>
 
 ## Where We Fit
@@ -77,3 +82,4 @@ These files tell you what passed, what failed, and what to do next.
 - [Onboarding troubleshooting](how-to/onboarding-troubleshooting.md)
 - [5-minute outcomes](tutorials/five-minute-outcomes.md)
 - [Case task library](examples/case-tasks/index.md)
+- [Runtime architecture](explanation/runtime-architecture.md)

@@ -16,6 +16,8 @@ LoopForge是一个面向软件交付的 **个人研发助理（Personal AI Engin
 - （如自定义域名未配置）GitHub Pages：https://rexleimo.github.io/LoopForge/
 - 5 分钟可见结果：`docs-site/tutorials/five-minute-outcomes.md`
 - 产品定位说明：`docs-site/explanation/why-loopforge.md`
+- 运行时架构说明：`docs-site/explanation/runtime-architecture.md`
+- 仓库内部维护者地图：`docs/internal/runtime-module-map.md`
 
 ## 状态
 

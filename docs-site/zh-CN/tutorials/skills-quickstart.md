@@ -1,5 +1,9 @@
 # Skills 快速上手
 
+## 什么算成功
+
+跑完后，你的 skill 至少应该满足：`loopforge skills list` 能发现、`loopforge skills doctor` 能通过、并且可以成功执行一次。
+
 本教程面向新手，10 分钟内完成第一个 skill 的创建和运行。
 
 ## 1. 创建目录

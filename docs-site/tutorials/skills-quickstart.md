@@ -1,5 +1,9 @@
 # Skills Quickstart
 
+## What success looks like
+
+By the end, your skill should be discoverable by `loopforge skills list`, pass `loopforge skills doctor`, and run once with a real output.
+
 This tutorial helps beginners create and run a first skill in under 10 minutes.
 
 ## 1. Create Skill Folder

@@ -1,5 +1,13 @@
 # 上手排障
 
+## 推荐排查顺序
+
+当 onboarding 失败时，建议按这个顺序排查：
+
+1. `loopforge config validate`
+2. `loopforge doctor`
+3. `<workspace>/.loopforge/onboard-report.md`
+
 当 `loopforge onboard` 或 `loopforge doctor` 给出 warning/error 时，先看这页。
 
 ## 1) 配置无效
