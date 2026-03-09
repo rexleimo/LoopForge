@@ -45,6 +45,12 @@ Docs deps are pinned in `requirements-docs.txt`. Recommended local setup:
 - `make docs-venv` (creates `.venv-docs/` and installs deps)
 - `make docs`
 
+## Secrets scanning (CI)
+
+CI runs `gitleaks` on PRs/pushes to catch accidentally committed secrets.
+
+- Optional local check: `make secrets-check` (requires `gitleaks` installed)
+
 ## Release preflight (maintainers)
 
 - `loopforge release check --tag vX.Y.Z`
