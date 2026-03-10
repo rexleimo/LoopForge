@@ -1,6 +1,9 @@
 use std::collections::BTreeMap;
 
-use super::{LlmConfig, ProviderConfig, ProviderKind, RouteConfig, RouterConfig, SkillsConfig};
+use super::{
+    AwsBedrockConfig, LlmConfig, ProviderConfig, ProviderKind, RouteConfig, RouterConfig,
+    SkillsConfig,
+};
 
 fn provider(
     kind: ProviderKind,
@@ -13,6 +16,7 @@ fn provider(
         base_url: base_url.to_string(),
         api_key_env: api_key_env.to_string(),
         default_model: default_model.to_string(),
+        aws_bedrock: None,
     }
 }
 
@@ -180,6 +184,9 @@ pub(super) fn default_providers() -> BTreeMap<String, ProviderConfig> {
             "gemini-1.5-flash",
         ),
     );
+    let mut bedrock = provider(ProviderKind::Bedrock, "", "", "");
+    bedrock.aws_bedrock = Some(AwsBedrockConfig::default());
+    providers.insert("bedrock".to_string(), bedrock);
     providers
 }
 

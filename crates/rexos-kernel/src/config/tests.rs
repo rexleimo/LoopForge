@@ -17,10 +17,12 @@ fn default_config_serializes() {
     assert!(toml_str.contains("[providers.nvidia]"));
     assert!(toml_str.contains("[providers.anthropic]"));
     assert!(toml_str.contains("[providers.gemini]"));
+    assert!(toml_str.contains("[providers.bedrock]"));
     assert!(toml_str.contains("kind = \"openai_compatible\""));
     assert!(toml_str.contains("kind = \"dashscope_native\""));
     assert!(toml_str.contains("kind = \"zhipu_native\""));
     assert!(toml_str.contains("kind = \"minimax_native\""));
+    assert!(toml_str.contains("kind = \"bedrock\""));
     assert!(toml_str.contains("base_url"));
     assert!(toml_str.contains("api_key_env"));
     assert!(toml_str.contains("default_model"));
@@ -56,6 +58,35 @@ fn default_router_config_uses_default_model_for_all_routes() {
     assert_eq!(router.coding.model, "default");
     assert_eq!(router.summary.provider, "ollama");
     assert_eq!(router.summary.model, "default");
+}
+
+#[test]
+fn bedrock_provider_parses_optional_aws_config_table() {
+    let parsed: RexosConfig = toml::from_str(
+        r#"
+[providers.bedrock]
+kind = "bedrock"
+default_model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+
+[providers.bedrock.aws_bedrock]
+region = "us-east-1"
+"#,
+    )
+    .unwrap();
+
+    let bedrock = parsed.providers.get("bedrock").unwrap();
+    assert_eq!(bedrock.kind, ProviderKind::Bedrock);
+    assert_eq!(
+        bedrock.default_model,
+        "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    );
+    assert_eq!(
+        bedrock
+            .aws_bedrock
+            .as_ref()
+            .map(|cfg| cfg.region.as_str()),
+        Some("us-east-1")
+    );
 }
 
 #[test]

@@ -49,6 +49,18 @@ pub enum ProviderKind {
     Anthropic,
     #[serde(rename = "gemini")]
     Gemini,
+    #[serde(rename = "bedrock")]
+    Bedrock,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AwsBedrockConfig {
+    pub region: String,
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    pub cross_region: String,
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    pub profile: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -58,6 +70,8 @@ pub struct ProviderConfig {
     pub base_url: String,
     pub api_key_env: String,
     pub default_model: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aws_bedrock: Option<AwsBedrockConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -105,6 +119,16 @@ impl Default for LlmConfig {
 impl Default for ProviderConfig {
     fn default() -> Self {
         defaults::default_provider_config()
+    }
+}
+
+impl Default for AwsBedrockConfig {
+    fn default() -> Self {
+        Self {
+            region: "us-east-1".to_string(),
+            cross_region: String::new(),
+            profile: String::new(),
+        }
     }
 }
 
