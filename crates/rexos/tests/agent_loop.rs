@@ -12,6 +12,97 @@ struct TestState {
     last_request: Arc<Mutex<Option<serde_json::Value>>>,
 }
 
+const MCP_STUB_PY: &str = r#"
+import json
+import sys
+
+def send(obj):
+    sys.stdout.write(json.dumps(obj) + "\n")
+    sys.stdout.flush()
+
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    try:
+        msg = json.loads(line)
+    except Exception:
+        continue
+
+    method = msg.get("method")
+    if not method:
+        continue
+
+    # Notifications have no id; ignore them.
+    if "id" not in msg:
+        continue
+
+    msg_id = msg.get("id")
+    params = msg.get("params") or {}
+
+    if method == "initialize":
+        send({"jsonrpc": "2.0", "id": msg_id, "result": {}})
+    elif method == "tools/list":
+        send({
+            "jsonrpc": "2.0",
+            "id": msg_id,
+            "result": {
+                "tools": [
+                    {
+                        "name": "echo",
+                        "description": "Echo input text",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {"text": {"type": "string"}},
+                            "required": ["text"],
+                            "additionalProperties": False
+                        }
+                    }
+                ]
+            }
+        })
+    elif method == "tools/call":
+        name = params.get("name")
+        arguments = params.get("arguments") or {}
+        if name == "echo":
+            send({
+                "jsonrpc": "2.0",
+                "id": msg_id,
+                "result": {"content": [{"type": "text", "text": arguments.get("text", "")}]}
+            })
+        else:
+            send({"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32601, "message": "unknown tool"}})
+    else:
+        send({"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32601, "message": "unknown method"}})
+"#;
+
+fn mcp_python_exe() -> &'static str {
+    if cfg!(windows) {
+        "python"
+    } else {
+        "python3"
+    }
+}
+
+fn write_mcp_stub(workspace: &std::path::Path) -> std::path::PathBuf {
+    let path = workspace.join("mcp_stub.py");
+    std::fs::write(&path, MCP_STUB_PY).expect("write mcp stub script");
+    path
+}
+
+fn mcp_config_json(script: &std::path::Path) -> String {
+    serde_json::json!({
+        "servers": {
+            "stub": {
+                "command": mcp_python_exe(),
+                "args": ["-u", script.to_string_lossy()],
+                "cwd": ".",
+            }
+        }
+    })
+    .to_string()
+}
+
 #[tokio::test]
 async fn agent_loop_executes_tool_calls_and_persists_history() {
     async fn handler(
@@ -85,6 +176,7 @@ async fn agent_loop_executes_tool_calls_and_persists_history() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -149,6 +241,136 @@ async fn agent_loop_executes_tool_calls_and_persists_history() {
         last_req.get("temperature").and_then(|v| v.as_f64()),
         Some(0.0)
     );
+
+    server.abort();
+}
+
+#[tokio::test]
+async fn agent_loop_executes_mcp_tool_calls_when_session_config_is_set() {
+    async fn handler(
+        State(state): State<TestState>,
+        Json(payload): Json<serde_json::Value>,
+    ) -> Json<serde_json::Value> {
+        *state.last_request.lock().unwrap() = Some(payload);
+        let mut calls = state.calls.lock().unwrap();
+        *calls += 1;
+
+        if *calls == 1 {
+            return Json(json!({
+                "choices": [{
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": null,
+                        "tool_calls": [{
+                            "id": "call_1",
+                            "type": "function",
+                            "function": {
+                                "name": "mcp_stub__echo",
+                                "arguments": "{\"text\":\"yo\"}"
+                            }
+                        }]
+                    },
+                    "finish_reason": "tool_calls"
+                }]
+            }));
+        }
+
+        Json(json!({
+            "choices": [{
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "done"
+                },
+                "finish_reason": "stop"
+            }]
+        }))
+    }
+
+    let state = TestState::default();
+    let app = Router::new()
+        .route("/v1/chat/completions", post(handler))
+        .with_state(state.clone());
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move {
+        axum::serve(listener, app).await.unwrap();
+    });
+
+    let tmp = tempfile::tempdir().unwrap();
+    let workspace = tmp.path().join("workspace");
+    std::fs::create_dir_all(&workspace).unwrap();
+
+    let mcp_stub = write_mcp_stub(&workspace);
+
+    let home = tmp.path().join("home");
+    let paths = rexos::paths::RexosPaths {
+        base_dir: home.join(".loopforge"),
+    };
+    paths.ensure_dirs().unwrap();
+
+    let memory = rexos::memory::MemoryStore::open_or_create(&paths).unwrap();
+    let mut providers = BTreeMap::new();
+    providers.insert(
+        "ollama".to_string(),
+        rexos::config::ProviderConfig {
+            kind: rexos::config::ProviderKind::OpenAiCompatible,
+            base_url: format!("http://{addr}/v1"),
+            api_key_env: "".to_string(),
+            default_model: "x".to_string(),
+            aws_bedrock: None,
+        },
+    );
+
+    let cfg = rexos::config::RexosConfig {
+        llm: rexos::config::LlmConfig::default(),
+        providers,
+        router: rexos::config::RouterConfig::default(),
+        security: Default::default(),
+    };
+    let llms = rexos::llm::registry::LlmRegistry::from_config(&cfg).unwrap();
+    let router = rexos::router::ModelRouter::new(rexos::config::RouterConfig {
+        planning: rexos::config::RouteConfig {
+            provider: "ollama".to_string(),
+            model: "x".to_string(),
+        },
+        coding: rexos::config::RouteConfig {
+            provider: "ollama".to_string(),
+            model: "x".to_string(),
+        },
+        summary: rexos::config::RouteConfig {
+            provider: "ollama".to_string(),
+            model: "x".to_string(),
+        },
+    });
+
+    let agent = rexos::agent::AgentRuntime::new(memory, llms, router);
+    agent
+        .set_session_mcp_config("s1", mcp_config_json(&mcp_stub))
+        .unwrap();
+
+    let out = agent
+        .run_session(
+            workspace.clone(),
+            "s1",
+            None,
+            "call mcp",
+            rexos::router::TaskKind::Coding,
+        )
+        .await
+        .unwrap();
+    assert_eq!(out, "done");
+
+    let last_req = state.last_request.lock().unwrap().clone().unwrap();
+    let tool_names: Vec<&str> = last_req["tools"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|t| t.get("function")?.get("name")?.as_str())
+        .collect();
+    assert!(tool_names.contains(&"mcp_stub__echo"), "{tool_names:?}");
 
     server.abort();
 }
@@ -223,6 +445,7 @@ async fn agent_loop_executes_memory_store_and_persists_kv() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -344,6 +567,7 @@ async fn agent_loop_truncates_large_tool_results_with_head_and_tail() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -466,6 +690,7 @@ async fn agent_loop_should_route_by_provider_name() {
             base_url: format!("http://{addr1}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
     providers.insert(
@@ -475,6 +700,7 @@ async fn agent_loop_should_route_by_provider_name() {
             base_url: format!("http://{addr2}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -584,6 +810,7 @@ async fn agent_loop_executes_tool_calls_from_json_content_fallback() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -717,6 +944,7 @@ async fn agent_loop_unwraps_wrapped_tool_arguments() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -829,6 +1057,7 @@ async fn agent_loop_executes_tool_calls_from_embedded_json_snippets() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -941,6 +1170,7 @@ async fn agent_loop_executes_tool_calls_from_tagged_tool_call_json() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -1050,6 +1280,7 @@ async fn agent_loop_executes_tool_calls_from_flattened_call_objects() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -1162,6 +1393,7 @@ async fn agent_loop_executes_tool_calls_from_function_name_json_objects() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

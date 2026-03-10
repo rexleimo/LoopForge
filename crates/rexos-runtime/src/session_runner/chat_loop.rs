@@ -23,11 +23,14 @@ impl AgentRuntime {
         let allowed_lookup: Option<HashSet<String>> = allowed_tools
             .as_ref()
             .map(|tools| tools.iter().cloned().collect());
-        let tools = Toolset::new_with_allowed_tools_and_security(
+        let mcp_config = self.load_session_mcp_config(session_id)?;
+        let tools = Toolset::new_with_allowed_tools_security_and_mcp_config(
             workspace_root.clone(),
             allowed_tools,
             self.security.clone(),
-        )?;
+            mcp_config.as_deref(),
+        )
+        .await?;
         let provider = self.router.provider_for(kind);
         let model = self.resolve_model(provider, kind)?;
 

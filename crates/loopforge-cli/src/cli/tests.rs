@@ -77,6 +77,8 @@ fn cli_parses_agent_run_allowed_tools() {
         "run",
         "--workspace",
         ".",
+        "--mcp-config",
+        "mcp-servers.json",
         "--prompt",
         "x",
         "--allowed-tools",

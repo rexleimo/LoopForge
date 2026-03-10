@@ -1,6 +1,7 @@
 mod browser;
 mod domain;
 mod fs;
+mod mcp;
 mod media;
 mod process;
 mod routing;

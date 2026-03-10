@@ -16,6 +16,7 @@ const SKILL_AUDIT_MAX_RECORDS: usize = 2_000;
 pub(crate) const SESSION_ALLOWED_TOOLS_KEY_PREFIX: &str = "rexos.sessions.allowed_tools.";
 pub(crate) const SESSION_ALLOWED_SKILLS_KEY_PREFIX: &str = "rexos.sessions.allowed_skills.";
 pub(crate) const SESSION_SKILL_POLICY_KEY_PREFIX: &str = "rexos.sessions.skill_policy.";
+pub(crate) const SESSION_MCP_CONFIG_KEY_PREFIX: &str = "rexos.sessions.mcp_config.";
 const ACP_EVENTS_KEY: &str = "rexos.acp.events";
 const ACP_EVENTS_MAX_RECORDS: usize = 5_000;
 const ACP_CHECKPOINTS_KEY_PREFIX: &str = "rexos.acp.checkpoints.";

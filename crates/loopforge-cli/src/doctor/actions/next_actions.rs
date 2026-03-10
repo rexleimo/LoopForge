@@ -57,6 +57,32 @@ fn push_router_action(actions: &mut Vec<String>, checks: &[DoctorCheck]) {
     }
 }
 
+fn push_bedrock_actions(actions: &mut Vec<String>, checks: &[DoctorCheck]) {
+    if let Some(check) = find_check(checks, "bedrock.feature") {
+        if check.status == CheckStatus::Error {
+            push_unique(
+                actions,
+                "Rebuild LoopForge with Bedrock enabled: `cargo build --release -p loopforge-cli --locked --features bedrock` (or install an official release binary built with Bedrock support).".to_string(),
+            );
+        }
+    }
+
+    let mut bedrock_errors: Vec<&DoctorCheck> = checks
+        .iter()
+        .filter(|check| check.id.starts_with("bedrock.") && check.status == CheckStatus::Error)
+        .collect();
+    bedrock_errors.sort_by(|a, b| a.id.cmp(&b.id));
+    if let Some(first) = bedrock_errors.first() {
+        push_unique(
+            actions,
+            format!(
+                "Fix the Bedrock configuration in `~/.loopforge/config.toml` ({})",
+                first.message
+            ),
+        );
+    }
+}
+
 fn push_missing_provider_env_action(actions: &mut Vec<String>, checks: &[DoctorCheck]) {
     if let Some(check) = find_check(checks, "providers.api_keys") {
         if check.status == CheckStatus::Warn {
@@ -149,6 +175,7 @@ pub(super) fn derive_next_actions(checks: &[DoctorCheck]) -> Vec<String> {
     push_missing_core_paths_action(&mut actions, checks);
     push_config_parse_action(&mut actions, checks);
     push_router_action(&mut actions, checks);
+    push_bedrock_actions(&mut actions, checks);
     push_missing_provider_env_action(&mut actions, checks);
     push_security_actions(&mut actions, checks);
     push_runtime_dependency_actions(&mut actions, checks);

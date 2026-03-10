@@ -4,8 +4,12 @@ use std::sync::Arc;
 use rexos_kernel::config::{ProviderConfig, ProviderKind, RexosConfig};
 
 use crate::anthropic::AnthropicDriver;
+#[cfg(feature = "bedrock")]
+use crate::bedrock::BedrockDriver;
 use crate::dashscope::DashscopeDriver;
-use crate::driver::{LlmDriver, OpenAiCompatDriver, UnimplementedDriver};
+#[cfg(not(feature = "bedrock"))]
+use crate::driver::UnimplementedDriver;
+use crate::driver::{LlmDriver, OpenAiCompatDriver};
 use crate::gemini::GeminiDriver;
 use crate::minimax::MiniMaxDriver;
 use crate::zhipu::ZhipuDriver;
@@ -54,7 +58,16 @@ fn build_driver(
             Arc::new(AnthropicDriver::new(provider.base_url.clone(), api_key)?)
         }
         ProviderKind::Gemini => Arc::new(GeminiDriver::new(provider.base_url.clone(), api_key)?),
-        ProviderKind::Bedrock => Arc::new(UnimplementedDriver::new("bedrock")),
+        ProviderKind::Bedrock => {
+            #[cfg(feature = "bedrock")]
+            {
+                Arc::new(BedrockDriver::new(provider.aws_bedrock.as_ref())?)
+            }
+            #[cfg(not(feature = "bedrock"))]
+            {
+                Arc::new(UnimplementedDriver::new("bedrock"))
+            }
+        }
     };
 
     Ok(driver)

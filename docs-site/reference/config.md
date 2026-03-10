@@ -17,6 +17,17 @@ In practice:
 - `loopforge config validate` checks whether the file parses and the required structure is present
 - `loopforge doctor` helps explain why a config is valid-but-still-not-usable in your environment
 
+## MCP servers (per session)
+
+MCP servers are not persisted in `config.toml` yet. Enable them per run:
+
+```bash
+loopforge agent run \
+  --workspace my-ws \
+  --mcp-config mcp-servers.json \
+  --prompt "…"
+```
+
 ## Validate and inspect
 
 ```bash
@@ -65,7 +76,7 @@ This is enough for a local-first Ollama setup. You can harden it later by adding
 
 Each provider entry defines:
 
-- `kind`: driver kind (`openai_compatible`, `zhipu_native`, `minimax_native`, etc.)
+- `kind`: driver kind (`openai_compatible`, `zhipu_native`, `minimax_native`, `bedrock`, etc.)
 - `base_url`: API base URL
 - `api_key_env`: environment variable name that contains the API key (empty for local providers)
 - `default_model`: default model for `model = "default"`
@@ -79,6 +90,28 @@ base_url = "http://127.0.0.1:11434/v1"
 api_key_env = ""
 default_model = "qwen3:4b"
 ```
+
+### AWS Bedrock (Converse API)
+
+For AWS Bedrock, use `kind = "bedrock"` plus an `aws_bedrock` table:
+
+```toml
+[providers.bedrock]
+kind = "bedrock"
+base_url = ""     # unused for Bedrock
+api_key_env = ""  # unused for Bedrock
+default_model = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+
+[providers.bedrock.aws_bedrock]
+region = "us-east-1"
+cross_region = "" # optional
+profile = ""      # optional
+```
+
+Notes:
+
+- Bedrock uses the AWS SDK credential chain (env vars, shared config, profiles, instance role, etc.).
+- `cross_region` (optional) prefixes model ids with `<cross_region>.` when they are not already prefixed.
 
 ## Router
 

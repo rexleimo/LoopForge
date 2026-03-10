@@ -123,6 +123,7 @@ async fn reserved_task_tools_post_claim_complete_and_publish_event() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

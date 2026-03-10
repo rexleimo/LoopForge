@@ -81,10 +81,7 @@ region = "us-east-1"
         "anthropic.claude-3-5-sonnet-20241022-v2:0"
     );
     assert_eq!(
-        bedrock
-            .aws_bedrock
-            .as_ref()
-            .map(|cfg| cfg.region.as_str()),
+        bedrock.aws_bedrock.as_ref().map(|cfg| cfg.region.as_str()),
         Some("us-east-1")
     );
 }

@@ -7,6 +7,9 @@ pub(crate) enum AgentCommand {
         /// Workspace root directory (tools are sandboxed to this path)
         #[arg(long)]
         workspace: PathBuf,
+        /// Optional MCP server config file (JSON; starts MCP servers and exposes their tools)
+        #[arg(long)]
+        mcp_config: Option<PathBuf>,
         /// User instruction for this run
         #[arg(long)]
         prompt: String,

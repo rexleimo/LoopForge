@@ -52,6 +52,7 @@ fn test_agent_with_security(
             base_url,
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

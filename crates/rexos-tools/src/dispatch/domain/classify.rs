@@ -1,6 +1,9 @@
-use super::{browser, fs, media, process, runtime, web, ToolCallDomain};
+use super::{browser, fs, mcp, media, process, runtime, web, ToolCallDomain};
 
 pub(super) fn tool_call_domain(name: &str) -> Option<ToolCallDomain> {
+    if mcp::is_mcp_tool(name) {
+        return Some(ToolCallDomain::Mcp);
+    }
     if fs::is_fs_tool(name) {
         return Some(ToolCallDomain::Fs);
     }

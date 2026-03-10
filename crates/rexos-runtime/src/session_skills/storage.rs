@@ -4,7 +4,8 @@ use anyhow::Context;
 
 use crate::{
     AgentRuntime, SessionSkillPolicy, SESSION_ALLOWED_SKILLS_KEY_PREFIX,
-    SESSION_ALLOWED_TOOLS_KEY_PREFIX, SESSION_SKILL_POLICY_KEY_PREFIX,
+    SESSION_ALLOWED_TOOLS_KEY_PREFIX, SESSION_MCP_CONFIG_KEY_PREFIX,
+    SESSION_SKILL_POLICY_KEY_PREFIX,
 };
 
 fn normalize_names(values: impl IntoIterator<Item = String>) -> Vec<String> {
@@ -27,6 +28,10 @@ impl AgentRuntime {
         format!("{SESSION_ALLOWED_TOOLS_KEY_PREFIX}{session_id}")
     }
 
+    fn session_mcp_config_key(session_id: &str) -> String {
+        format!("{SESSION_MCP_CONFIG_KEY_PREFIX}{session_id}")
+    }
+
     fn session_allowed_skills_key(session_id: &str) -> String {
         format!("{SESSION_ALLOWED_SKILLS_KEY_PREFIX}{session_id}")
     }
@@ -46,6 +51,32 @@ impl AgentRuntime {
             .kv_set(&Self::session_allowed_tools_key(session_id), &raw)
             .context("kv_set session allowed tools")?;
         Ok(())
+    }
+
+    pub fn set_session_mcp_config(&self, session_id: &str, raw_json: String) -> anyhow::Result<()> {
+        let raw_json = raw_json.trim().to_string();
+        self.memory
+            .kv_set(&Self::session_mcp_config_key(session_id), &raw_json)
+            .context("kv_set session mcp config")?;
+        Ok(())
+    }
+
+    pub(crate) fn load_session_mcp_config(
+        &self,
+        session_id: &str,
+    ) -> anyhow::Result<Option<String>> {
+        let raw = self
+            .memory
+            .kv_get(&Self::session_mcp_config_key(session_id))
+            .context("kv_get session mcp config")?;
+        let Some(raw) = raw else {
+            return Ok(None);
+        };
+        let raw = raw.trim().to_string();
+        if raw.is_empty() {
+            return Ok(None);
+        }
+        Ok(Some(raw))
     }
 
     pub(crate) fn load_session_allowed_tools(

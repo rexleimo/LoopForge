@@ -106,6 +106,7 @@ async fn reserved_schedule_tools_create_list_and_delete() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

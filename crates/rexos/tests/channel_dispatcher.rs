@@ -88,6 +88,7 @@ async fn dispatcher_drains_console_outbox_messages() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

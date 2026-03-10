@@ -13,6 +13,7 @@ impl Toolset {
             Some(ToolCallDomain::Web) => self.call_web_tool(name, arguments_json).await,
             Some(ToolCallDomain::Media) => self.call_media_tool(name, arguments_json),
             Some(ToolCallDomain::Browser) => self.call_browser_tool(name, arguments_json).await,
+            Some(ToolCallDomain::Mcp) => self.call_mcp_tool(name, arguments_json).await,
             Some(ToolCallDomain::RuntimeCompat) => Self::call_runtime_compat_tool(name),
             None => bail!("unknown tool: {name}"),
         }

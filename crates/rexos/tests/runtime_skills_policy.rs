@@ -9,6 +9,7 @@ fn build_agent(memory: rexos::memory::MemoryStore) -> rexos::agent::AgentRuntime
             base_url: "http://127.0.0.1:11434/v1".to_string(),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

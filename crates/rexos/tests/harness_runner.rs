@@ -137,6 +137,7 @@ async fn harness_run_retries_on_init_sh_failure_and_checkpoints() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

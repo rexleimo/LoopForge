@@ -49,6 +49,10 @@ fn tool_call_domain_classifies_core_and_compat_tools() {
         Some(ToolCallDomain::Browser)
     );
     assert_eq!(
+        tool_call_domain("mcp_stub__echo"),
+        Some(ToolCallDomain::Mcp)
+    );
+    assert_eq!(
         tool_call_domain("workflow_run"),
         Some(ToolCallDomain::RuntimeCompat)
     );

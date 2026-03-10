@@ -123,6 +123,7 @@ async fn reserved_knowledge_tools_add_entity_relation_and_query() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

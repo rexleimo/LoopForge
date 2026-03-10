@@ -92,6 +92,7 @@ async fn harness_bootstrap_with_prompt_populates_features_and_checkpoints() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -182,6 +183,7 @@ async fn harness_bootstrap_with_prompt_errors_if_initializer_does_not_write_feat
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -299,6 +301,7 @@ async fn harness_bootstrap_with_prompt_normalizes_minimal_features_json() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

@@ -27,6 +27,7 @@ async fn ollama_agent_shell_tool_smoke_creates_file() {
             base_url,
             api_key_env: "".to_string(),
             default_model: model,
+            aws_bedrock: None,
         },
     );
 

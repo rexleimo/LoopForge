@@ -1,6 +1,7 @@
 mod browser;
 mod classify;
 mod fs;
+mod mcp;
 mod media;
 mod process;
 mod runtime;
@@ -15,6 +16,7 @@ pub(crate) enum ToolCallDomain {
     Web,
     Media,
     Browser,
+    Mcp,
     RuntimeCompat,
 }
 

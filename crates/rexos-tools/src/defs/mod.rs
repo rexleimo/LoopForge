@@ -3,12 +3,14 @@ mod catalog;
 mod compat;
 mod exports;
 mod fs;
+mod mcp;
 mod media;
 mod process;
 mod web;
 
 pub(crate) use catalog::{compat_tool_defs, core_tool_defs};
 pub(crate) use exports::*;
+pub(crate) use mcp::wrapper_tool_defs as mcp_wrapper_tool_defs;
 
 #[cfg(test)]
 mod tests {

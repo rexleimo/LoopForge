@@ -57,6 +57,7 @@ async fn doctor_suggests_missing_provider_env_vars() {
             base_url: "https://api.anthropic.com".to_string(),
             api_key_env: "ANTHROPIC_API_KEY".to_string(),
             default_model: "claude-3-5-sonnet-latest".to_string(),
+            aws_bedrock: None,
         },
     );
     std::fs::write(paths.config_path(), toml::to_string(&cfg).unwrap()).unwrap();
@@ -117,6 +118,7 @@ async fn doctor_probes_local_ollama_models_and_cdp_version() {
                 base_url: format!("http://{addr}/v1"),
                 api_key_env: "".to_string(),
                 default_model: "x".to_string(),
+                aws_bedrock: None,
             },
         )]
         .into_iter()
@@ -163,6 +165,7 @@ async fn doctor_reports_security_posture_checks() {
                 base_url: "http://127.0.0.1:11434/v1".to_string(),
                 api_key_env: "".to_string(),
                 default_model: "x".to_string(),
+                aws_bedrock: None,
             },
         )]
         .into_iter()
@@ -219,6 +222,7 @@ async fn doctor_suggests_leak_guard_and_egress_hardening_when_defaults_are_open(
                 base_url: "http://127.0.0.1:11434/v1".to_string(),
                 api_key_env: "".to_string(),
                 default_model: "x".to_string(),
+                aws_bedrock: None,
             },
         )]
         .into_iter()
@@ -263,5 +267,105 @@ async fn doctor_suggests_leak_guard_and_egress_hardening_when_defaults_are_open(
             .any(|item| item.contains("security.egress")),
         "expected egress guidance, got: {:?}",
         report.next_actions
+    );
+}
+
+#[tokio::test]
+async fn doctor_reports_bedrock_feature_status_when_routed() {
+    let tmp = tempfile::tempdir().unwrap();
+    let paths = RexosPaths {
+        base_dir: tmp.path().join(".loopforge"),
+    };
+    std::fs::create_dir_all(&paths.base_dir).unwrap();
+
+    let mut cfg = RexosConfig::default();
+    cfg.router.coding.provider = "bedrock".to_string();
+    cfg.router.coding.model = "default".to_string();
+    if let Some(provider) = cfg.providers.get_mut("bedrock") {
+        provider.default_model = "anthropic.claude-3-5-sonnet-20241022-v2:0".to_string();
+    }
+    std::fs::write(paths.config_path(), toml::to_string(&cfg).unwrap()).unwrap();
+
+    let report = run_doctor(DoctorOptions {
+        paths,
+        timeout: Duration::from_millis(200),
+    })
+    .await
+    .unwrap();
+
+    let statuses: std::collections::BTreeMap<String, CheckStatus> = report
+        .checks
+        .iter()
+        .map(|check| (check.id.clone(), check.status))
+        .collect();
+
+    assert_eq!(
+        statuses.get("bedrock.router.coding.model"),
+        Some(&CheckStatus::Ok)
+    );
+    assert_eq!(
+        statuses.get("bedrock.providers.bedrock.region"),
+        Some(&CheckStatus::Ok)
+    );
+    assert_eq!(
+        statuses.get("bedrock.feature"),
+        Some(if cfg!(feature = "bedrock") {
+            &CheckStatus::Ok
+        } else {
+            &CheckStatus::Error
+        })
+    );
+
+    if !cfg!(feature = "bedrock") {
+        assert!(
+            report
+                .next_actions
+                .iter()
+                .any(|item| item.contains("features bedrock")),
+            "expected bedrock rebuild guidance, got: {:?}",
+            report.next_actions
+        );
+    }
+}
+
+#[tokio::test]
+async fn doctor_flags_missing_bedrock_model_and_region() {
+    let tmp = tempfile::tempdir().unwrap();
+    let paths = RexosPaths {
+        base_dir: tmp.path().join(".loopforge"),
+    };
+    std::fs::create_dir_all(&paths.base_dir).unwrap();
+
+    let mut cfg = RexosConfig::default();
+    cfg.router.coding.provider = "bedrock".to_string();
+    cfg.router.coding.model = "default".to_string();
+    if let Some(provider) = cfg.providers.get_mut("bedrock") {
+        provider.default_model = "".to_string();
+        if let Some(aws) = provider.aws_bedrock.as_mut() {
+            aws.region = "".to_string();
+        }
+    }
+    std::fs::write(paths.config_path(), toml::to_string(&cfg).unwrap()).unwrap();
+
+    let report = run_doctor(DoctorOptions {
+        paths,
+        timeout: Duration::from_millis(200),
+    })
+    .await
+    .unwrap();
+
+    let statuses: std::collections::BTreeMap<String, CheckStatus> = report
+        .checks
+        .iter()
+        .map(|check| (check.id.clone(), check.status))
+        .collect();
+
+    assert_eq!(
+        statuses.get("bedrock.router.coding.model"),
+        Some(&CheckStatus::Error)
+    );
+    assert_eq!(
+        statuses.get("bedrock.providers.bedrock.region"),
+        Some(&CheckStatus::Error)
     );
 }

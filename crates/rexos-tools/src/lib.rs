@@ -8,6 +8,7 @@ mod browser_cdp;
 mod browser_runtime;
 mod defs;
 mod dispatch;
+mod mcp;
 mod net;
 mod ops;
 mod patch;

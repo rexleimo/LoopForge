@@ -69,6 +69,7 @@ async fn agent_runtime_detects_repeated_tool_call_loops() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
     let cfg = rexos::config::RexosConfig {

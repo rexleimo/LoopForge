@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::browser_runtime::BrowserSession;
+use crate::mcp::McpHub;
 use crate::process_runtime::ProcessManager;
 use rexos_kernel::security::SecurityConfig;
 
@@ -17,4 +18,5 @@ pub struct Toolset {
     pub(crate) processes: Arc<tokio::sync::Mutex<ProcessManager>>,
     pub(crate) allowed_tools: Option<HashSet<String>>,
     pub(crate) security: SecurityConfig,
+    pub(crate) mcp: Option<Arc<McpHub>>,
 }

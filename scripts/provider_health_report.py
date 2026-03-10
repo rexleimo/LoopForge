@@ -85,6 +85,22 @@ def build_smoke_cases(env: dict[str, str]) -> list[dict[str, object]]:
             }
         )
 
+    if _env("LOOPFORGE_BEDROCK_MODEL", env):
+        model = _env("LOOPFORGE_BEDROCK_MODEL", env)
+        region = _env("LOOPFORGE_BEDROCK_REGION", env, "us-east-1")
+        cases.append(
+            {
+                "id": "bedrock_smoke",
+                "description": "AWS Bedrock Converse API smoke",
+                "required_env": ["LOOPFORGE_BEDROCK_MODEL"],
+                "command": (
+                    f"LOOPFORGE_BEDROCK_REGION={shlex.quote(region)} "
+                    f"LOOPFORGE_BEDROCK_MODEL={shlex.quote(model)} "
+                    "cargo test -p rexos --features bedrock --test bedrock_smoke -- --ignored --nocapture"
+                ),
+            }
+        )
+
     return cases
 
 

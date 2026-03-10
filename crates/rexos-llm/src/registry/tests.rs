@@ -19,6 +19,7 @@ fn secret_resolver_reads_provider_key_from_env() {
             base_url: "http://127.0.0.1:1".to_string(),
             api_key_env: env_name.clone(),
             default_model: "claude-test".to_string(),
+            aws_bedrock: None,
         },
     );
 
@@ -56,6 +57,7 @@ fn registry_builds_and_resolves_drivers() {
             base_url: "http://127.0.0.1:11434/v1".to_string(),
             api_key_env: "".to_string(),
             default_model: "llama3.2".to_string(),
+            aws_bedrock: None,
         },
     );
     providers.insert(
@@ -65,6 +67,7 @@ fn registry_builds_and_resolves_drivers() {
             base_url: "http://127.0.0.1:1/api/v1".to_string(),
             api_key_env: "DASHSCOPE_API_KEY".to_string(),
             default_model: "qwen-plus".to_string(),
+            aws_bedrock: None,
         },
     );
     providers.insert(
@@ -74,6 +77,7 @@ fn registry_builds_and_resolves_drivers() {
             base_url: "http://127.0.0.1:1/api/paas/v4".to_string(),
             api_key_env: "ZHIPUAI_API_KEY".to_string(),
             default_model: "glm-4".to_string(),
+            aws_bedrock: None,
         },
     );
     providers.insert(
@@ -83,6 +87,7 @@ fn registry_builds_and_resolves_drivers() {
             base_url: "http://127.0.0.1:1/v1".to_string(),
             api_key_env: "MINIMAX_API_KEY".to_string(),
             default_model: "MiniMax-M2.5".to_string(),
+            aws_bedrock: None,
         },
     );
     providers.insert(
@@ -92,6 +97,7 @@ fn registry_builds_and_resolves_drivers() {
             base_url: "http://127.0.0.1:1".to_string(),
             api_key_env: "ANTHROPIC_API_KEY".to_string(),
             default_model: "claude-test".to_string(),
+            aws_bedrock: None,
         },
     );
 

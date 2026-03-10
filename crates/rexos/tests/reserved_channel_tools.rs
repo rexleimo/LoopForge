@@ -88,6 +88,7 @@ async fn reserved_channel_send_enqueues_outbox_message() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "x".to_string(),
+            aws_bedrock: None,
         },
     );
 

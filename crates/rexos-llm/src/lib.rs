@@ -1,4 +1,6 @@
 pub mod anthropic;
+#[cfg(feature = "bedrock")]
+pub mod bedrock;
 pub mod dashscope;
 pub mod driver;
 pub mod gemini;

@@ -44,7 +44,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build (release)
-        run: cargo build --release -p loopforge-cli --locked
+        run: cargo build --release -p loopforge-cli --locked --features bedrock
 
       - name: Package (dry run)
         run: python scripts/package_release.py --version "dryrun-${{ github.run_id }}" --target "${{ matrix.target }}" --bin "${{ matrix.bin }}" --out-dir dist

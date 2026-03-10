@@ -105,13 +105,17 @@ AI 收到任务后，会：
 
 ### MCP 扩展
 
-通过配置可以接入更多 MCP Server：
+LoopForge 当前支持 **MCP stdio transport**，通过 `--mcp-config`（JSON）按 session 接入更多 MCP Server：
 
 ```bash
-# 接入更多工具生态
-loopforge config add-mcp-server docker
-loopforge config add-mcp-server postgres
-loopforge config add-mcp-server linear
+# 远端 MCP tools 会以 namespaced 形式暴露：mcp_<server>__<tool>
+# MCP resources/prompts 通过 wrapper tools 暴露：
+# - mcp_resources_list / mcp_resources_read
+# - mcp_prompts_list / mcp_prompts_get
+loopforge agent run \
+  --workspace my-workspace \
+  --mcp-config mcp-servers.json \
+  --prompt "列出可用 MCP 工具并调用其中一个"
 ```
 
 ## 为什么这很重要

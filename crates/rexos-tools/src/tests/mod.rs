@@ -13,6 +13,7 @@ static ENV_LOCK: Mutex<()> = Mutex::new(());
 mod browser;
 mod compat;
 mod fs;
+mod mcp;
 mod media;
 mod process;
 mod web;

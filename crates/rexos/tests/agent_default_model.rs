@@ -58,6 +58,7 @@ async fn agent_uses_provider_default_model_when_router_model_is_default() {
             base_url: format!("http://{addr}/v1"),
             api_key_env: "".to_string(),
             default_model: "provider-default".to_string(),
+            aws_bedrock: None,
         },
     );
 
