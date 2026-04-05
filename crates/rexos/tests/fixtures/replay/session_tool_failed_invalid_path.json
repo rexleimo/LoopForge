@@ -1,0 +1,25 @@
+[
+  {
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call_1",
+              "type": "function",
+              "function": {
+                "name": "fs_write",
+                "arguments": "{\"path\":\"../hello.txt\",\"content\":\"hello\"}"
+              }
+            }
+          ]
+        },
+        "finish_reason": "tool_calls"
+      }
+    ]
+  }
+]
+
