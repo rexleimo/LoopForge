@@ -85,21 +85,15 @@ async fn diagnose(
     };
 
     if json {
-        let mut out = BTreeMap::new();
-        out.insert(
-            "workspace".to_string(),
-            Value::String(workspace.display().to_string()),
-        );
-        out.insert("session_id".to_string(), Value::String(session_id));
-        out.insert("config".to_string(), sanitized_config);
-        out.insert("servers".to_string(), servers_json);
-        out.insert("tool_names".to_string(), serde_json::to_value(tool_names)?);
-        if let Some(v) = resources_json {
-            out.insert("resources".to_string(), v);
-        }
-        if let Some(v) = prompts_json {
-            out.insert("prompts".to_string(), v);
-        }
+        let out = build_mcp_diagnose_json(
+            &workspace,
+            &session_id,
+            sanitized_config,
+            servers_json,
+            tool_names,
+            resources_json,
+            prompts_json,
+        )?;
         println!("{}", serde_json::to_string_pretty(&out)?);
         return Ok(());
     }
@@ -137,6 +131,36 @@ async fn diagnose(
         println!("prompts_list: {}", serde_json::to_string_pretty(&v)?);
     }
     Ok(())
+}
+
+fn build_mcp_diagnose_json(
+    workspace: &PathBuf,
+    session_id: &str,
+    sanitized_config: Value,
+    servers_json: Value,
+    tool_names: Vec<String>,
+    resources_json: Option<Value>,
+    prompts_json: Option<Value>,
+) -> anyhow::Result<Value> {
+    let mut out = BTreeMap::new();
+    out.insert(
+        "workspace".to_string(),
+        Value::String(workspace.display().to_string()),
+    );
+    out.insert(
+        "session_id".to_string(),
+        Value::String(session_id.to_string()),
+    );
+    out.insert("config".to_string(), sanitized_config);
+    out.insert("servers".to_string(), servers_json);
+    out.insert("tool_names".to_string(), serde_json::to_value(tool_names)?);
+    if let Some(v) = resources_json {
+        out.insert("resources".to_string(), v);
+    }
+    if let Some(v) = prompts_json {
+        out.insert("prompts".to_string(), v);
+    }
+    Ok(Value::Object(out.into_iter().collect()))
 }
 
 fn normalize_json_string(raw: &str) -> anyhow::Result<String> {
@@ -194,6 +218,55 @@ fn sanitize_mcp_config(value: &Value) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn build_mcp_diagnose_json_includes_expected_keys_and_redaction() {
+        let tmp = tempfile::tempdir().unwrap();
+        let workspace = tmp.path().join("workspace");
+
+        let config = serde_json::json!({
+            "servers": {
+                "s1": {
+                    "command": "python",
+                    "env": { "API_KEY": "secret" },
+                }
+            }
+        });
+        let sanitized = sanitize_mcp_config(&config);
+
+        let out = build_mcp_diagnose_json(
+            &workspace,
+            "s-test",
+            sanitized,
+            serde_json::json!(["s1"]),
+            vec!["mcp_s1__echo".to_string()],
+            None,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(
+            out["workspace"].as_str(),
+            Some(workspace.display().to_string().as_str())
+        );
+        assert_eq!(out["session_id"].as_str(), Some("s-test"));
+        assert!(out.get("servers").is_some());
+        assert!(out.get("tool_names").is_some());
+        assert_eq!(
+            out["config"]["servers"]["s1"]["env"]["API_KEY"].as_str(),
+            Some("[redacted]")
+        );
+
+        let tool_names: Vec<String> = out["tool_names"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+        assert_eq!(tool_names, vec!["mcp_s1__echo".to_string()]);
+        assert!(out.get("resources").is_none());
+        assert!(out.get("prompts").is_none());
+    }
 
     #[test]
     fn normalize_json_string_round_trips() {

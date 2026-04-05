@@ -24,44 +24,21 @@ pub(super) async fn run(command: SessionCommand) -> anyhow::Result<()> {
                 .load_session_policy_snapshot(&session_id)
                 .with_context(|| format!("load session policy snapshot: {session_id}"))?;
 
-            let (mcp_servers, mcp_config_sanitized, mcp_parse_error) =
-                summarize_mcp_config(snapshot.mcp_config_json.as_deref(), show_mcp_config);
-
             if json {
-                let mut out = BTreeMap::new();
-                out.insert("session_id".to_string(), Value::String(session_id));
-                out.insert(
-                    "allowed_tools".to_string(),
-                    serde_json::to_value(&snapshot.allowed_tools)?,
-                );
-                out.insert(
-                    "allowed_skills".to_string(),
-                    serde_json::to_value(&snapshot.allowed_skills)?,
-                );
-                out.insert(
-                    "skill_policy".to_string(),
-                    serde_json::to_value(&snapshot.skill_policy)?,
-                );
-
-                let mut mcp = BTreeMap::new();
-                mcp.insert(
-                    "present".to_string(),
-                    Value::Bool(snapshot.mcp_config_json.is_some()),
-                );
-                if let Some(servers) = mcp_servers {
-                    mcp.insert("servers".to_string(), serde_json::to_value(servers)?);
-                }
-                if let Some(err) = mcp_parse_error {
-                    mcp.insert("parse_error".to_string(), Value::String(err));
-                }
-                if let Some(cfg) = mcp_config_sanitized {
-                    mcp.insert("config".to_string(), cfg);
-                }
-                out.insert("mcp".to_string(), Value::Object(mcp.into_iter().collect()));
-
+                let out = build_session_policy_json(
+                    session_id,
+                    &snapshot.allowed_tools,
+                    &snapshot.allowed_skills,
+                    &snapshot.skill_policy,
+                    snapshot.mcp_config_json.as_deref(),
+                    show_mcp_config,
+                )?;
                 println!("{}", serde_json::to_string_pretty(&out)?);
                 return Ok(());
             }
+
+            let (mcp_servers, mcp_config_sanitized, mcp_parse_error) =
+                summarize_mcp_config(snapshot.mcp_config_json.as_deref(), show_mcp_config);
 
             println!("Session policy");
             println!();
@@ -112,6 +89,51 @@ pub(super) async fn run(command: SessionCommand) -> anyhow::Result<()> {
     }
 }
 
+fn build_session_policy_json(
+    session_id: String,
+    allowed_tools: &Option<Vec<String>>,
+    allowed_skills: &Option<Vec<String>>,
+    skill_policy: &rexos::agent::SessionSkillPolicy,
+    mcp_config_json: Option<&str>,
+    show_mcp_config: bool,
+) -> anyhow::Result<Value> {
+    let (mcp_servers, mcp_config_sanitized, mcp_parse_error) =
+        summarize_mcp_config(mcp_config_json, show_mcp_config);
+
+    let mut out = BTreeMap::new();
+    out.insert("session_id".to_string(), Value::String(session_id));
+    out.insert(
+        "allowed_tools".to_string(),
+        serde_json::to_value(allowed_tools)?,
+    );
+    out.insert(
+        "allowed_skills".to_string(),
+        serde_json::to_value(allowed_skills)?,
+    );
+    out.insert(
+        "skill_policy".to_string(),
+        serde_json::to_value(skill_policy)?,
+    );
+
+    let mut mcp = BTreeMap::new();
+    mcp.insert(
+        "present".to_string(),
+        Value::Bool(mcp_config_json.is_some()),
+    );
+    if let Some(servers) = mcp_servers {
+        mcp.insert("servers".to_string(), serde_json::to_value(servers)?);
+    }
+    if let Some(err) = mcp_parse_error {
+        mcp.insert("parse_error".to_string(), Value::String(err));
+    }
+    if let Some(cfg) = mcp_config_sanitized {
+        mcp.insert("config".to_string(), cfg);
+    }
+    out.insert("mcp".to_string(), Value::Object(mcp.into_iter().collect()));
+
+    Ok(Value::Object(out.into_iter().collect()))
+}
+
 fn summarize_mcp_config(
     raw_json: Option<&str>,
     include_sanitized: bool,
@@ -130,7 +152,11 @@ fn summarize_mcp_config(
     let servers = parsed
         .get("servers")
         .and_then(|v| v.as_object())
-        .map(|obj| obj.keys().cloned().collect::<Vec<_>>());
+        .map(|obj| {
+            let mut servers = obj.keys().cloned().collect::<Vec<_>>();
+            servers.sort();
+            servers
+        });
 
     let sanitized = if include_sanitized {
         Some(sanitize_mcp_config(&parsed))
@@ -174,6 +200,109 @@ fn sanitize_mcp_config(value: &Value) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn build_session_policy_json_includes_expected_keys() {
+        let mut skill_policy = rexos::agent::SessionSkillPolicy::default();
+        skill_policy.allowlist = vec!["alpha".to_string()];
+        skill_policy.require_approval = true;
+        skill_policy.auto_approve_readonly = false;
+
+        let mcp_config_json =
+            r#"{"servers":{"s1":{"command":"python","env":{"API_KEY":"secret"}}}}"#;
+        let out = build_session_policy_json(
+            "s-test".to_string(),
+            &Some(vec!["fs_read".to_string(), "fs_write".to_string()]),
+            &None,
+            &skill_policy,
+            Some(mcp_config_json),
+            true,
+        )
+        .unwrap();
+
+        assert_eq!(out["session_id"].as_str(), Some("s-test"));
+        assert!(out.get("allowed_tools").is_some());
+        assert!(out.get("allowed_skills").is_some());
+        assert!(out.get("skill_policy").is_some());
+        assert!(out.get("mcp").is_some());
+
+        let tools: Vec<String> = out["allowed_tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+        assert!(tools.contains(&"fs_read".to_string()));
+        assert!(tools.contains(&"fs_write".to_string()));
+
+        assert_eq!(
+            out["skill_policy"]["require_approval"].as_bool(),
+            Some(true)
+        );
+        assert_eq!(
+            out["skill_policy"]["auto_approve_readonly"].as_bool(),
+            Some(false)
+        );
+        assert_eq!(out["skill_policy"]["allowlist"][0].as_str(), Some("alpha"));
+
+        assert_eq!(out["mcp"]["present"].as_bool(), Some(true));
+        let servers: Vec<String> = out["mcp"]["servers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+        assert_eq!(servers, vec!["s1".to_string()]);
+        assert_eq!(
+            out["mcp"]["config"]["servers"]["s1"]["env"]["API_KEY"].as_str(),
+            Some("[redacted]")
+        );
+        assert_eq!(
+            out["mcp"]["config"]["servers"]["s1"]["command"].as_str(),
+            Some("python")
+        );
+    }
+
+    #[test]
+    fn build_session_policy_json_omits_sanitized_config_when_not_requested() {
+        let out = build_session_policy_json(
+            "s-test".to_string(),
+            &None,
+            &None,
+            &rexos::agent::SessionSkillPolicy::default(),
+            Some(r#"{"servers":{"s1":{"command":"python"}}}"#),
+            false,
+        )
+        .unwrap();
+
+        let mcp = out["mcp"].as_object().unwrap();
+        assert_eq!(mcp.get("present").and_then(|v| v.as_bool()), Some(true));
+        assert!(mcp.contains_key("servers"));
+        assert!(!mcp.contains_key("config"));
+    }
+
+    #[test]
+    fn build_session_policy_json_reports_invalid_mcp_json() {
+        let out = build_session_policy_json(
+            "s-test".to_string(),
+            &None,
+            &None,
+            &rexos::agent::SessionSkillPolicy::default(),
+            Some("not-json"),
+            true,
+        )
+        .unwrap();
+
+        let mcp = out["mcp"].as_object().unwrap();
+        assert_eq!(mcp.get("present").and_then(|v| v.as_bool()), Some(true));
+        assert!(mcp.get("servers").is_none());
+        assert!(mcp.get("config").is_none());
+        assert!(mcp
+            .get("parse_error")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .starts_with("invalid JSON:"),);
+    }
 
     #[test]
     fn sanitize_mcp_config_redacts_env_values() {
