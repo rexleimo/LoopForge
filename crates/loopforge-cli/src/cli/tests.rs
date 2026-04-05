@@ -164,3 +164,31 @@ fn cli_parses_cron_worker_subcommand() {
         "expected `loopforge cron worker` to parse, got: {parsed:?}"
     );
 }
+
+#[test]
+fn cli_parses_session_policy_subcommand() {
+    let parsed = Cli::try_parse_from(["loopforge", "session", "policy", "--workspace", "."]);
+    assert!(
+        parsed.is_ok(),
+        "expected `loopforge session policy` to parse, got: {parsed:?}"
+    );
+}
+
+#[test]
+fn cli_parses_mcp_diagnose_subcommand() {
+    let parsed = Cli::try_parse_from([
+        "loopforge",
+        "mcp",
+        "diagnose",
+        "--workspace",
+        ".",
+        "--config",
+        "mcp-servers.json",
+        "--resources",
+        "--prompts",
+    ]);
+    assert!(
+        parsed.is_ok(),
+        "expected `loopforge mcp diagnose` to parse, got: {parsed:?}"
+    );
+}

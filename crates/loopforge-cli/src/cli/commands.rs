@@ -5,7 +5,9 @@ mod config;
 mod cron;
 mod daemon;
 mod harness;
+mod mcp;
 mod release;
+mod session;
 mod skills;
 
 use clap::Parser;
@@ -20,7 +22,9 @@ pub(crate) use config::ConfigCommand;
 pub(crate) use cron::CronCommand;
 pub(crate) use daemon::DaemonCommand;
 pub(crate) use harness::HarnessCommand;
+pub(crate) use mcp::McpCommand;
 pub(crate) use release::ReleaseCommand;
+pub(crate) use session::SessionCommand;
 pub(crate) use skills::SkillsCommand;
 
 #[derive(Debug, Parser)]
@@ -92,6 +96,16 @@ pub(crate) enum Command {
     Config {
         #[command(subcommand)]
         command: ConfigCommand,
+    },
+    /// MCP server inspection and troubleshooting helpers
+    Mcp {
+        #[command(subcommand)]
+        command: McpCommand,
+    },
+    /// Per-session policy inspection helpers
+    Session {
+        #[command(subcommand)]
+        command: SessionCommand,
     },
     /// Skills discovery, doctor and execution helpers
     Skills {

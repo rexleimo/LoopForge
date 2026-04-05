@@ -7,7 +7,9 @@ mod daemon;
 mod doctor;
 mod harness;
 mod init;
+mod mcp;
 mod release;
+mod session;
 mod skills;
 
 use crate::{
@@ -35,6 +37,8 @@ pub(crate) async fn run(cli: Cli) -> anyhow::Result<()> {
         Command::Cron { command } => cron::run(command).await,
         Command::Acp { command } => acp::run(command),
         Command::Config { command } => config::run(command),
+        Command::Mcp { command } => mcp::run(command).await,
+        Command::Session { command } => session::run(command).await,
         Command::Skills { command } => skills::run(command).await,
         Command::Harness { command } => harness::run(command).await,
         Command::Daemon { command } => daemon::run(command).await,
