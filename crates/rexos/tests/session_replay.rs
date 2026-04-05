@@ -4,6 +4,7 @@ use rexos::config::{ProviderConfig, ProviderKind, RexosConfig, RouteConfig, Rout
 use rexos::paths::RexosPaths;
 use rexos::router::TaskKind;
 use rexos::security::SecurityConfig;
+use serde_json::{json, Value};
 
 mod support;
 
@@ -61,6 +62,127 @@ fn fixture_agent(
     (agent, paths, workspace_root)
 }
 
+fn compact_request(req: &Value) -> Value {
+    fn sorted_string_array(value: &Value) -> Vec<String> {
+        let mut out: Vec<String> = value
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+            .collect();
+        out.sort();
+        out
+    }
+
+    fn sorted_object_keys(value: &Value) -> Vec<String> {
+        let mut out: Vec<String> = value
+            .as_object()
+            .into_iter()
+            .flatten()
+            .map(|(k, _)| k.to_string())
+            .collect();
+        out.sort();
+        out
+    }
+
+    fn tool_schema_snapshot(tool: &Value) -> Value {
+        let name = tool
+            .get("function")
+            .and_then(|f| f.get("name"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("<missing>");
+        let params = tool
+            .get("function")
+            .and_then(|f| f.get("parameters"))
+            .unwrap_or(&Value::Null);
+
+        json!({
+            "name": name,
+            "type": tool.get("type").and_then(|v| v.as_str()).unwrap_or("<missing>"),
+            "param_type": params.get("type").and_then(|v| v.as_str()).unwrap_or("<missing>"),
+            "required": sorted_string_array(params.get("required").unwrap_or(&Value::Null)),
+            "properties": sorted_object_keys(params.get("properties").unwrap_or(&Value::Null)),
+            "additional_properties": params.get("additionalProperties").cloned().unwrap_or(Value::Null),
+        })
+    }
+
+    let tools: Vec<Value> = req
+        .get("tools")
+        .and_then(|v| v.as_array())
+        .into_iter()
+        .flatten()
+        .map(tool_schema_snapshot)
+        .collect();
+    let mut tools = tools;
+    tools.sort_by(|a, b| {
+        a["name"]
+            .as_str()
+            .unwrap_or("")
+            .cmp(b["name"].as_str().unwrap_or(""))
+    });
+
+    let messages: Vec<&Value> = req
+        .get("messages")
+        .and_then(|v| v.as_array())
+        .into_iter()
+        .flatten()
+        .collect();
+
+    let message_roles: Vec<String> = messages
+        .iter()
+        .filter_map(|m| {
+            m.get("role")
+                .and_then(|r| r.as_str())
+                .map(|s| s.to_string())
+        })
+        .collect();
+
+    let mut assistant_tool_calls: Vec<Value> = Vec::new();
+    let mut tool_messages: Vec<Value> = Vec::new();
+
+    for msg in messages {
+        let role = msg.get("role").and_then(|r| r.as_str()).unwrap_or("");
+        if role == "assistant" {
+            let calls = msg.get("tool_calls").and_then(|v| v.as_array());
+            for call in calls.into_iter().flatten() {
+                let args_raw = call
+                    .get("function")
+                    .and_then(|f| f.get("arguments"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let args = serde_json::from_str::<Value>(args_raw)
+                    .unwrap_or_else(|_| Value::String(args_raw.to_string()));
+
+                assistant_tool_calls.push(json!({
+                    "id": call.get("id").cloned().unwrap_or(Value::Null),
+                    "name": call.get("function").and_then(|f| f.get("name")).cloned().unwrap_or(Value::Null),
+                    "arguments": args,
+                }));
+            }
+        }
+
+        if role == "tool" {
+            let content_raw = msg.get("content").and_then(|v| v.as_str()).unwrap_or("");
+            let content = serde_json::from_str::<Value>(content_raw)
+                .unwrap_or_else(|_| Value::String(content_raw.to_string()));
+            tool_messages.push(json!({
+                "name": msg.get("name").cloned().unwrap_or(Value::Null),
+                "tool_call_id": msg.get("tool_call_id").cloned().unwrap_or(Value::Null),
+                "content": content,
+            }));
+        }
+    }
+
+    json!({
+        "model": req.get("model").cloned().unwrap_or(Value::Null),
+        "temperature": req.get("temperature").and_then(|v| v.as_f64()),
+        "tools": tools,
+        "message_roles": message_roles,
+        "assistant_tool_calls": assistant_tool_calls,
+        "tool_messages": tool_messages,
+    })
+}
+
 #[tokio::test]
 async fn replay_fixture_drives_session_and_tool_calls() {
     let fixture = support::openai_compat_fixture::load_json_array(include_str!(
@@ -99,11 +221,50 @@ async fn replay_fixture_drives_session_and_tool_calls() {
 
     let requests = server.requests.lock().unwrap().clone();
     assert_eq!(requests.len(), 2, "expected two chat completions calls");
-    assert_eq!(requests[0]["messages"][0]["role"], "user");
-    assert_eq!(requests[1]["messages"][2]["role"], "tool");
-    assert_eq!(requests[1]["messages"][2]["name"], "fs_write");
-    assert_eq!(requests[1]["messages"][2]["tool_call_id"], "call_1");
-    assert_eq!(requests[1]["messages"][2]["content"], "ok");
+    assert_eq!(
+        compact_request(&requests[0]),
+        json!({
+            "model": "fixture-model",
+            "temperature": 0.0,
+            "tools": [{
+                "name": "fs_write",
+                "type": "function",
+                "param_type": "object",
+                "required": ["content", "path"],
+                "properties": ["content", "path"],
+                "additional_properties": false,
+            }],
+            "message_roles": ["user"],
+            "assistant_tool_calls": [],
+            "tool_messages": [],
+        })
+    );
+    assert_eq!(
+        compact_request(&requests[1]),
+        json!({
+            "model": "fixture-model",
+            "temperature": 0.0,
+            "tools": [{
+                "name": "fs_write",
+                "type": "function",
+                "param_type": "object",
+                "required": ["content", "path"],
+                "properties": ["content", "path"],
+                "additional_properties": false,
+            }],
+            "message_roles": ["user", "assistant", "tool"],
+            "assistant_tool_calls": [{
+                "id": "call_1",
+                "name": "fs_write",
+                "arguments": { "path": "hello.txt", "content": "hello" },
+            }],
+            "tool_messages": [{
+                "name": "fs_write",
+                "tool_call_id": "call_1",
+                "content": "ok",
+            }],
+        })
+    );
 
     server.abort();
 }
@@ -145,6 +306,24 @@ async fn replay_fixture_blocks_tool_not_in_allowed_tools() {
 
     let requests = server.requests.lock().unwrap().clone();
     assert_eq!(requests.len(), 1, "expected one chat completions call");
+    assert_eq!(
+        compact_request(&requests[0]),
+        json!({
+            "model": "fixture-model",
+            "temperature": 0.0,
+            "tools": [{
+                "name": "fs_read",
+                "type": "function",
+                "param_type": "object",
+                "required": ["path"],
+                "properties": ["path"],
+                "additional_properties": false,
+            }],
+            "message_roles": ["user"],
+            "assistant_tool_calls": [],
+            "tool_messages": [],
+        })
+    );
 
     server.abort();
 }
@@ -183,9 +362,31 @@ async fn replay_fixture_surfaces_tool_failure_errors() {
         err_text.contains("parent traversal"),
         "expected relative-path validation error, got: {err_text}"
     );
+    assert!(
+        err_text.contains("fs_write"),
+        "expected tool name in error, got: {err_text}"
+    );
 
     let requests = server.requests.lock().unwrap().clone();
     assert_eq!(requests.len(), 1, "expected one chat completions call");
+    assert_eq!(
+        compact_request(&requests[0]),
+        json!({
+            "model": "fixture-model",
+            "temperature": 0.0,
+            "tools": [{
+                "name": "fs_write",
+                "type": "function",
+                "param_type": "object",
+                "required": ["content", "path"],
+                "properties": ["content", "path"],
+                "additional_properties": false,
+            }],
+            "message_roles": ["user"],
+            "assistant_tool_calls": [],
+            "tool_messages": [],
+        })
+    );
 
     server.abort();
 }
@@ -228,15 +429,50 @@ async fn replay_fixture_executes_mcp_tool_calls() {
 
     let requests = server.requests.lock().unwrap().clone();
     assert_eq!(requests.len(), 2, "expected two chat completions calls");
-    assert_eq!(requests[1]["messages"][2]["role"], "tool");
-    assert_eq!(requests[1]["messages"][2]["name"], "mcp_stub__echo");
-    assert_eq!(requests[1]["messages"][2]["tool_call_id"], "call_1");
-
-    let tool_content = requests[1]["messages"][2]["content"]
-        .as_str()
-        .expect("tool message content");
-    let tool_json: serde_json::Value = serde_json::from_str(tool_content).expect("tool JSON");
-    assert_eq!(tool_json["content"][0]["text"], "yo");
+    assert_eq!(
+        compact_request(&requests[0]),
+        json!({
+            "model": "fixture-model",
+            "temperature": 0.0,
+            "tools": [{
+                "name": "mcp_stub__echo",
+                "type": "function",
+                "param_type": "object",
+                "required": ["text"],
+                "properties": ["text"],
+                "additional_properties": false,
+            }],
+            "message_roles": ["user"],
+            "assistant_tool_calls": [],
+            "tool_messages": [],
+        })
+    );
+    assert_eq!(
+        compact_request(&requests[1]),
+        json!({
+            "model": "fixture-model",
+            "temperature": 0.0,
+            "tools": [{
+                "name": "mcp_stub__echo",
+                "type": "function",
+                "param_type": "object",
+                "required": ["text"],
+                "properties": ["text"],
+                "additional_properties": false,
+            }],
+            "message_roles": ["user", "assistant", "tool"],
+            "assistant_tool_calls": [{
+                "id": "call_1",
+                "name": "mcp_stub__echo",
+                "arguments": { "text": "yo" },
+            }],
+            "tool_messages": [{
+                "name": "mcp_stub__echo",
+                "tool_call_id": "call_1",
+                "content": { "content": [{ "type": "text", "text": "yo" }] },
+            }],
+        })
+    );
 
     server.abort();
 }
