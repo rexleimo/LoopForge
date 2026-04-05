@@ -8,6 +8,7 @@ mod doctor;
 mod harness;
 mod init;
 mod mcp;
+mod mcp_sanitize;
 mod release;
 mod session;
 mod skills;
