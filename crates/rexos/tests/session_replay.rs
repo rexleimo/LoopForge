@@ -3,10 +3,32 @@ use std::collections::BTreeMap;
 use rexos::config::{ProviderConfig, ProviderKind, RexosConfig, RouteConfig, RouterConfig};
 use rexos::paths::RexosPaths;
 use rexos::router::TaskKind;
-use rexos::security::SecurityConfig;
+use rexos::security::{LeakMode, SecurityConfig};
 use serde_json::{json, Value};
 
 mod support;
+
+struct EnvVarGuard {
+    key: &'static str,
+    prev: Option<String>,
+}
+
+impl EnvVarGuard {
+    fn set(key: &'static str, value: &str) -> Self {
+        let prev = std::env::var(key).ok();
+        std::env::set_var(key, value);
+        Self { key, prev }
+    }
+}
+
+impl Drop for EnvVarGuard {
+    fn drop(&mut self) {
+        match self.prev.as_ref() {
+            Some(value) => std::env::set_var(self.key, value),
+            None => std::env::remove_var(self.key),
+        }
+    }
+}
 
 fn fixture_agent(
     tmp: &tempfile::TempDir,
@@ -471,6 +493,131 @@ async fn replay_fixture_executes_mcp_tool_calls() {
                 "tool_call_id": "call_1",
                 "content": { "content": [{ "type": "text", "text": "yo" }] },
             }],
+        })
+    );
+
+    server.abort();
+}
+
+#[tokio::test]
+async fn replay_fixture_enforces_tool_approval_for_dangerous_tools() {
+    let _mode = EnvVarGuard::set("LOOPFORGE_APPROVAL_MODE", "enforce");
+    let _allow = EnvVarGuard::set("LOOPFORGE_APPROVAL_ALLOW", "");
+
+    let fixture = support::openai_compat_fixture::load_json_array(include_str!(
+        "fixtures/replay/session_tool_approval_required.json"
+    ));
+    let server = support::openai_compat_fixture::FixtureServer::spawn(fixture).await;
+
+    let tmp = tempfile::tempdir().unwrap();
+    let (agent, _paths, workspace_root) = fixture_agent(
+        &tmp,
+        server.base_url.clone(),
+        rexos::security::SecurityConfig::default(),
+    );
+
+    let session_id = "s-replay-approval";
+    agent
+        .set_session_allowed_tools(session_id, vec!["shell".to_string()])
+        .unwrap();
+
+    let err = agent
+        .run_session(
+            workspace_root,
+            session_id,
+            None,
+            "run shell",
+            TaskKind::Coding,
+        )
+        .await
+        .unwrap_err();
+    let err_text = err.to_string();
+    assert!(
+        err_text.contains("approval required for dangerous tool `shell`"),
+        "expected approval error, got: {err_text}"
+    );
+
+    let requests = server.requests.lock().unwrap().clone();
+    assert_eq!(requests.len(), 1, "expected one chat completions call");
+    assert_eq!(
+        compact_request(&requests[0]),
+        json!({
+            "model": "fixture-model",
+            "temperature": 0.0,
+            "tools": [{
+                "name": "shell",
+                "type": "function",
+                "param_type": "object",
+                "required": ["command"],
+                "properties": ["command", "timeout_ms"],
+                "additional_properties": false,
+            }],
+            "message_roles": ["user"],
+            "assistant_tool_calls": [],
+            "tool_messages": [],
+        })
+    );
+
+    server.abort();
+}
+
+#[tokio::test]
+async fn replay_fixture_blocks_leak_guard_in_enforce_mode() {
+    let fixture = support::openai_compat_fixture::load_json_array(include_str!(
+        "fixtures/replay/session_leak_guard_enforce.json"
+    ));
+    let server = support::openai_compat_fixture::FixtureServer::spawn(fixture).await;
+
+    let tmp = tempfile::tempdir().unwrap();
+    let mut security = rexos::security::SecurityConfig::default();
+    security.leaks.mode = LeakMode::Enforce;
+
+    let (agent, _paths, workspace_root) = fixture_agent(&tmp, server.base_url.clone(), security);
+    std::fs::write(
+        workspace_root.join("secret.txt"),
+        "secret=sk-01234567890123456789",
+    )
+    .unwrap();
+
+    let session_id = "s-replay-leak-guard";
+    agent
+        .set_session_allowed_tools(session_id, vec!["fs_read".to_string()])
+        .unwrap();
+
+    let err = agent
+        .run_session(
+            workspace_root,
+            session_id,
+            None,
+            "read secret",
+            TaskKind::Coding,
+        )
+        .await
+        .unwrap_err();
+    let err_text = err.to_string();
+    assert!(
+        err_text.contains("tool output blocked by leak guard"),
+        "expected leak guard error, got: {err_text}"
+    );
+
+    let requests = server.requests.lock().unwrap().clone();
+    assert_eq!(requests.len(), 1, "expected one chat completions call");
+    assert_eq!(
+        compact_request(&requests[0]),
+        json!({
+            "model": "fixture-model",
+            "temperature": 0.0,
+            "tools": [{
+                "name": "fs_read",
+                "type": "function",
+                "param_type": "object",
+                "required": ["path"],
+                "properties": ["path"],
+                "additional_properties": false,
+            }],
+            "message_roles": ["user"],
+            "assistant_tool_calls": [],
+            "tool_messages": [],
         })
     );
 
