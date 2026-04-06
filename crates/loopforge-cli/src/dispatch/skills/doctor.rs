@@ -1,14 +1,12 @@
 use std::path::PathBuf;
 
+use super::super::json_output::{print_pretty_json, to_json_value};
 use crate::skills;
 
 pub(super) fn run_doctor(workspace: PathBuf, json: bool, strict: bool) -> anyhow::Result<()> {
     let report = skills::doctor(&workspace)?;
     if json {
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&build_skills_doctor_json(&report)?)?
-        );
+        print_pretty_json(&build_skills_doctor_json(&report)?)?;
     } else {
         println!("discovered_skills: {}", report.discovered_count);
         if report.issues.is_empty() {
@@ -45,7 +43,7 @@ pub(super) fn run_doctor(workspace: PathBuf, json: bool, strict: bool) -> anyhow
 fn build_skills_doctor_json(
     report: &skills::SkillsDoctorReport,
 ) -> anyhow::Result<serde_json::Value> {
-    Ok(serde_json::to_value(report)?)
+    to_json_value(report)
 }
 
 #[cfg(test)]

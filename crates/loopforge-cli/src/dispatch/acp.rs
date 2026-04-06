@@ -1,3 +1,4 @@
+use super::json_output::{print_pretty_json, to_json_value};
 use crate::{
     acp::{load_acp_checkpoints, load_acp_events},
     cli::AcpCommand,
@@ -16,10 +17,7 @@ pub(super) fn run(command: AcpCommand) -> anyhow::Result<()> {
 
             let events = load_acp_events(&memory, session.as_deref(), limit)?;
             if json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&build_acp_events_json(&events)?)?
-                );
+                print_pretty_json(&build_acp_events_json(&events)?)?;
             } else {
                 for event in events {
                     let session = event
@@ -45,10 +43,7 @@ pub(super) fn run(command: AcpCommand) -> anyhow::Result<()> {
 
             let checkpoints = load_acp_checkpoints(&memory, &session)?;
             if json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&build_acp_checkpoints_json(&checkpoints)?)?
-                );
+                print_pretty_json(&build_acp_checkpoints_json(&checkpoints)?)?;
             } else if checkpoints.is_empty() {
                 println!("no checkpoints for session {}", session);
             } else {
@@ -74,13 +69,13 @@ pub(super) fn run(command: AcpCommand) -> anyhow::Result<()> {
 }
 
 fn build_acp_events_json(events: &[serde_json::Value]) -> anyhow::Result<serde_json::Value> {
-    Ok(serde_json::to_value(events)?)
+    to_json_value(events)
 }
 
 fn build_acp_checkpoints_json(
     checkpoints: &[serde_json::Value],
 ) -> anyhow::Result<serde_json::Value> {
-    Ok(serde_json::to_value(checkpoints)?)
+    to_json_value(checkpoints)
 }
 
 #[cfg(test)]

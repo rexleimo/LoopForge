@@ -1,14 +1,12 @@
 use std::path::PathBuf;
 
+use super::super::json_output::{print_pretty_json, to_json_value};
 use crate::skills;
 
 pub(super) fn run_list(workspace: PathBuf, json: bool) -> anyhow::Result<()> {
     let list = skills::list_skills(&workspace)?;
     if json {
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&build_skills_list_json(&list)?)?
-        );
+        print_pretty_json(&build_skills_list_json(&list)?)?;
     } else if list.is_empty() {
         println!("no skills discovered");
     } else {
@@ -43,7 +41,7 @@ pub(super) fn run_show(name: String, workspace: PathBuf, json: bool) -> anyhow::
             .collect::<Vec<_>>(),
     });
     if json {
-        println!("{}", serde_json::to_string_pretty(&item)?);
+        print_pretty_json(&item)?;
     } else {
         println!("name: {}", item["name"].as_str().unwrap_or("-"));
         println!("version: {}", item["version"].as_str().unwrap_or("-"));
@@ -88,7 +86,7 @@ pub(super) fn run_show(name: String, workspace: PathBuf, json: bool) -> anyhow::
 }
 
 fn build_skills_list_json(list: &[skills::SkillListItem]) -> anyhow::Result<serde_json::Value> {
-    Ok(serde_json::to_value(list)?)
+    to_json_value(list)
 }
 
 #[cfg(test)]

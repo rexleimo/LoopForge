@@ -1,3 +1,4 @@
+use super::json_output::{print_pretty_json, to_json_value};
 use crate::{
     cli::ReleaseCommand,
     release_check::{format_release_check_report, run_release_check},
@@ -13,10 +14,7 @@ pub(super) fn run(command: ReleaseCommand) -> anyhow::Result<()> {
         } => {
             let report = run_release_check(&repo_root, tag.as_deref(), run_tests)?;
             if json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&build_release_check_json(&report)?)?
-                );
+                print_pretty_json(&build_release_check_json(&report)?)?;
             } else {
                 println!("{}", format_release_check_report(&report));
             }
@@ -31,7 +29,7 @@ pub(super) fn run(command: ReleaseCommand) -> anyhow::Result<()> {
 fn build_release_check_json(
     report: &crate::release_check::ReleaseCheckReport,
 ) -> anyhow::Result<serde_json::Value> {
-    Ok(serde_json::to_value(report)?)
+    to_json_value(report)
 }
 
 #[cfg(test)]

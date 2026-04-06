@@ -1,5 +1,6 @@
 use rexos::paths::RexosPaths;
 
+use super::json_output::{print_pretty_json, to_json_value};
 use crate::doctor;
 
 pub(super) async fn run(json: bool, strict: bool, timeout_ms: u64) -> anyhow::Result<()> {
@@ -11,10 +12,7 @@ pub(super) async fn run(json: bool, strict: bool, timeout_ms: u64) -> anyhow::Re
     .await?;
 
     if json {
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&build_doctor_json(&report)?)?
-        );
+        print_pretty_json(&build_doctor_json(&report)?)?;
     } else {
         println!("{}", report.to_text());
     }
@@ -27,7 +25,7 @@ pub(super) async fn run(json: bool, strict: bool, timeout_ms: u64) -> anyhow::Re
 }
 
 fn build_doctor_json(report: &doctor::DoctorReport) -> anyhow::Result<serde_json::Value> {
-    Ok(serde_json::to_value(report)?)
+    to_json_value(report)
 }
 
 #[cfg(test)]

@@ -1,5 +1,6 @@
 use rexos::paths::RexosPaths;
 
+use super::json_output::{print_pretty_json, to_json_value};
 use crate::{cli::ConfigCommand, config_validation::validate_config};
 
 pub(super) fn run(command: ConfigCommand) -> anyhow::Result<()> {
@@ -8,10 +9,7 @@ pub(super) fn run(command: ConfigCommand) -> anyhow::Result<()> {
             let paths = RexosPaths::discover()?;
             let report = validate_config(&paths);
             if json {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&build_config_validate_json(&report)?)?
-                );
+                print_pretty_json(&build_config_validate_json(&report)?)?;
             } else if report.valid {
                 println!("config valid: {}", report.config_path);
             } else {
@@ -32,7 +30,7 @@ pub(super) fn run(command: ConfigCommand) -> anyhow::Result<()> {
 fn build_config_validate_json(
     report: &crate::config_validation::ConfigValidationReport,
 ) -> anyhow::Result<serde_json::Value> {
-    Ok(serde_json::to_value(report)?)
+    to_json_value(report)
 }
 
 #[cfg(test)]

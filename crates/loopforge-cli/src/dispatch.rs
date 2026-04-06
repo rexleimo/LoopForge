@@ -7,6 +7,7 @@ mod daemon;
 mod doctor;
 mod harness;
 mod init;
+mod json_output;
 mod mcp;
 mod mcp_sanitize;
 mod release;
