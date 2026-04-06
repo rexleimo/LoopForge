@@ -8,7 +8,10 @@ pub(super) fn run(command: ConfigCommand) -> anyhow::Result<()> {
             let paths = RexosPaths::discover()?;
             let report = validate_config(&paths);
             if json {
-                println!("{}", serde_json::to_string_pretty(&report)?);
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&build_config_validate_json(&report)?)?
+                );
             } else if report.valid {
                 println!("config valid: {}", report.config_path);
             } else {
@@ -23,5 +26,37 @@ pub(super) fn run(command: ConfigCommand) -> anyhow::Result<()> {
             }
             Ok(())
         }
+    }
+}
+
+fn build_config_validate_json(
+    report: &crate::config_validation::ConfigValidationReport,
+) -> anyhow::Result<serde_json::Value> {
+    Ok(serde_json::to_value(report)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config_validation::ConfigValidationReport;
+    use serde_json::json;
+
+    #[test]
+    fn build_config_validate_json_keeps_expected_shape() {
+        let report = ConfigValidationReport {
+            valid: false,
+            config_path: "/tmp/config.toml".to_string(),
+            errors: vec!["router.planning.provider is empty".to_string()],
+        };
+
+        let out = build_config_validate_json(&report).unwrap();
+        assert_eq!(
+            out,
+            json!({
+                "valid": false,
+                "config_path": "/tmp/config.toml",
+                "errors": ["router.planning.provider is empty"],
+            })
+        );
     }
 }
