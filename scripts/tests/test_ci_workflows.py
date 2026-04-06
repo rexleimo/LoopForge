@@ -17,6 +17,18 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("scripts.tests.test_package_release", ci)
         self.assertIn("scripts.tests.test_onboard_metrics_report", ci)
 
+    def test_ci_includes_windows_security_boundaries_fast_slice(self):
+        ci = (REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        self.assertIn("security-boundaries-fast", ci)
+        self.assertIn("security boundaries (fast) (windows)", ci)
+        self.assertIn("runs-on: windows-latest", ci)
+        self.assertIn("cargo test -p rexos-tools --locked tests::web::a2a::", ci)
+        self.assertIn(
+            "cargo test -p rexos-tools --locked tests::web::fetch::web_fetch_respects_egress_policy_rules",
+            ci,
+        )
+        self.assertIn("cargo test -p rexos-tools --locked tests::browser::policy::url::", ci)
+
     def test_provider_nightly_workflow_generates_health_artifacts(self):
         workflow = (
             REPO_ROOT / ".github/workflows/provider-nightly.yml"
