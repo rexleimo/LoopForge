@@ -140,6 +140,23 @@ jobs:
       - name: Test (loopforge-cli)
         run: cargo test -p loopforge-cli --locked
 
+  bedrock-feature-compile:
+    name: bedrock feature compile (fast)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check (loopforge-cli with bedrock)
+        run: cargo check -p loopforge-cli --locked --features bedrock
+
   docs:
     name: docs build
     runs-on: ubuntu-latest
