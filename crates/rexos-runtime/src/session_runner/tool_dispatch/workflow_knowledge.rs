@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use rexos_kernel::router::TaskKind;
 
@@ -11,7 +11,7 @@ use crate::AgentRuntime;
 
 pub(super) async fn dispatch_workflow_knowledge_tool(
     runtime: &AgentRuntime,
-    workspace_root: &PathBuf,
+    workspace_root: &Path,
     session_id: &str,
     kind: TaskKind,
     tool_name: &str,

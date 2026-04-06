@@ -38,7 +38,7 @@ impl AgentRuntime {
             })
             .collect();
 
-        Ok(serde_json::to_string(&out).context("serialize hand_list")?)
+        serde_json::to_string(&out).context("serialize hand_list")
     }
 
     pub(crate) fn hand_activate(&self, args: HandActivateToolArgs) -> anyhow::Result<String> {
@@ -131,7 +131,7 @@ impl AgentRuntime {
             .to_string());
         };
 
-        Ok(serde_json::to_string(&active).context("serialize hand_status")?)
+        serde_json::to_string(&active).context("serialize hand_status")
     }
 
     pub(crate) fn hand_deactivate(&self, instance_id: &str) -> anyhow::Result<String> {

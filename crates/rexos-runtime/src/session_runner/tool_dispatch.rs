@@ -4,7 +4,7 @@ mod parsing;
 mod tasks_scheduling;
 mod workflow_knowledge;
 
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::Context;
 use rexos_kernel::router::TaskKind;
@@ -15,7 +15,7 @@ use crate::AgentRuntime;
 impl AgentRuntime {
     pub(super) async fn dispatch_runtime_tool_call(
         &self,
-        workspace_root: &PathBuf,
+        workspace_root: &Path,
         session_id: &str,
         kind: TaskKind,
         tools: &Toolset,

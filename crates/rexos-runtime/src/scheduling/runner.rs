@@ -121,7 +121,7 @@ fn truncate_status(s: String) -> String {
         }
         out.push(ch);
     }
-    out.push_str("…");
+    out.push('…');
     out
 }
 
@@ -165,7 +165,7 @@ impl AgentRuntime {
             if let Ok(schedule) = parse_schedule(&job.schedule) {
                 let next = compute_initial_next_run_at(&schedule, now);
                 let job_id = job.job_id.clone();
-                let _ = self.cron_jobs_update(|jobs| {
+                self.cron_jobs_update(|jobs| {
                     if let Some(existing) = jobs.iter_mut().find(|j| j.job_id == job_id) {
                         if existing.next_run_at.is_none() && existing.enabled {
                             existing.next_run_at = Some(next);
@@ -357,10 +357,10 @@ impl AgentRuntime {
                     existing.last_status = Some(truncate_status(status.clone()));
                     existing.consecutive_errors = 0;
 
-                    let disable_after_success = match parse_schedule(&existing.schedule) {
-                        Ok(CronSchedule::At { .. }) => true,
-                        _ => false,
-                    };
+                    let disable_after_success = matches!(
+                        parse_schedule(&existing.schedule),
+                        Ok(CronSchedule::At { .. })
+                    );
                     if existing.one_shot || disable_after_success {
                         existing.enabled = false;
                         existing.next_run_at = None;

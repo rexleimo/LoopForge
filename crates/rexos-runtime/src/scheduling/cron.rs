@@ -41,7 +41,7 @@ impl AgentRuntime {
 
     pub(crate) fn cron_list(&self) -> anyhow::Result<String> {
         let jobs = self.cron_jobs_get()?;
-        Ok(serde_json::to_string(&jobs).context("serialize cron_list")?)
+        serde_json::to_string(&jobs).context("serialize cron_list")
     }
 
     pub(crate) fn cron_cancel(&self, job_id: &str) -> anyhow::Result<String> {

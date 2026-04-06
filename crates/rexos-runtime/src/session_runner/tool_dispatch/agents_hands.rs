@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use rexos_kernel::router::TaskKind;
 
@@ -11,7 +11,7 @@ use crate::AgentRuntime;
 
 pub(super) async fn dispatch_agent_hand_tool(
     runtime: &AgentRuntime,
-    workspace_root: &PathBuf,
+    workspace_root: &Path,
     kind: TaskKind,
     tool_name: &str,
     args_json: &str,
@@ -50,7 +50,7 @@ pub(super) async fn dispatch_agent_hand_tool(
             let args: AgentSendToolArgs = parse_args(args_json, tool_name)?;
             Some(
                 runtime
-                    .agent_send(workspace_root.clone(), kind, args)
+                    .agent_send(workspace_root.to_path_buf(), kind, args)
                     .await
                     .map_err(|err| err.context("agent_send"))?,
             )

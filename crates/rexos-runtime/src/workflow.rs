@@ -4,7 +4,7 @@ mod state;
 #[cfg(test)]
 mod tests;
 
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::bail;
 use rexos_kernel::router::TaskKind;
@@ -13,7 +13,7 @@ use rexos_tools::Toolset;
 use execution::{
     emit_workflow_finished, emit_workflow_started, execute_workflow_step,
     record_workflow_step_failure, record_workflow_step_success, serialize_workflow_step_arguments,
-    workflow_result_json,
+    workflow_result_json, WorkflowStepEvent,
 };
 use state::{build_workflow_state, finalize_workflow_state, mark_workflow_step_running};
 
@@ -23,7 +23,7 @@ use crate::{workflow_state_path, AgentRuntime};
 impl AgentRuntime {
     pub(crate) async fn workflow_run(
         &self,
-        workspace_root: &PathBuf,
+        workspace_root: &Path,
         session_id: &str,
         _kind: TaskKind,
         args: WorkflowRunToolArgs,
@@ -48,7 +48,7 @@ impl AgentRuntime {
         let mut policy = self.load_session_policy_snapshot(session_id)?;
         let allowed_tools = policy.allowed_tools.take();
         let tools = Toolset::new_with_allowed_tools_security_and_mcp_config(
-            workspace_root.clone(),
+            workspace_root.to_path_buf(),
             allowed_tools,
             self.security.clone(),
             policy.mcp_config_json.as_deref(),
@@ -82,11 +82,13 @@ impl AgentRuntime {
                     record_workflow_step_success(
                         self,
                         &mut state,
-                        session_id,
-                        &workflow_id,
-                        idx,
-                        &step.tool,
-                        completed_at,
+                        WorkflowStepEvent {
+                            session_id,
+                            workflow_id: &workflow_id,
+                            idx,
+                            tool_name: &step.tool,
+                            completed_at,
+                        },
                         output,
                     );
                 }
@@ -96,11 +98,13 @@ impl AgentRuntime {
                     record_workflow_step_failure(
                         self,
                         &mut state,
-                        session_id,
-                        &workflow_id,
-                        idx,
-                        &step.tool,
-                        completed_at,
+                        WorkflowStepEvent {
+                            session_id,
+                            workflow_id: &workflow_id,
+                            idx,
+                            tool_name: &step.tool,
+                            completed_at,
+                        },
                         &error,
                     );
                     state.updated_at = completed_at;

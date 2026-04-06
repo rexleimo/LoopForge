@@ -174,10 +174,11 @@ mod tests {
 
     #[test]
     fn build_session_policy_json_includes_expected_keys() {
-        let mut skill_policy = rexos::agent::SessionSkillPolicy::default();
-        skill_policy.allowlist = vec!["alpha".to_string()];
-        skill_policy.require_approval = true;
-        skill_policy.auto_approve_readonly = false;
+        let skill_policy = rexos::agent::SessionSkillPolicy {
+            allowlist: vec!["alpha".to_string()],
+            require_approval: true,
+            auto_approve_readonly: false,
+        };
 
         let mcp_config_json =
             r#"{"servers":{"s1":{"command":"python","env":{"API_KEY":"secret"}}}}"#;

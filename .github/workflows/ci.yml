@@ -196,8 +196,8 @@ jobs:
       - name: Check (workspace, locked)
         run: cargo check --workspace --locked
 
-  clippy-core-fast:
-    name: clippy core crates (fast)
+  clippy-workspace:
+    name: clippy workspace (all targets)
     runs-on: ubuntu-latest
 
     steps:
@@ -210,8 +210,8 @@ jobs:
       - name: Rust cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Clippy (core crates, all targets)
-        run: cargo clippy -p rexos-tools -p rexos-llm -p rexos-kernel --all-targets --locked -- -D warnings
+      - name: Clippy (workspace, all targets)
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
   docs:
     name: docs build

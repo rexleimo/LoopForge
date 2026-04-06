@@ -109,6 +109,7 @@ async fn openai_compat_client_posts_and_parses_tool_calls() {
 }
 
 #[tokio::test]
+#[allow(clippy::await_holding_lock)]
 async fn openai_compat_client_retries_transient_http_errors() {
     let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let _guard = EnvVarGuard::set("LOOPFORGE_LLM_RETRY_MAX", "1");
@@ -243,6 +244,7 @@ async fn openai_compat_client_parses_legacy_function_call_into_tool_call() {
 }
 
 #[tokio::test]
+#[allow(clippy::await_holding_lock)]
 async fn openai_compat_client_timeout_can_be_overridden_via_env() {
     let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let _guard = EnvVarGuard::set("LOOPFORGE_OPENAI_COMPAT_TIMEOUT_SECS", "1");

@@ -63,7 +63,7 @@ impl AgentRuntime {
                 out.push(record);
             }
         }
-        Ok(serde_json::to_string(&out).context("serialize agent list")?)
+        serde_json::to_string(&out).context("serialize agent list")
     }
 
     pub(crate) fn agent_find(&self, query: &str) -> anyhow::Result<String> {
@@ -85,7 +85,7 @@ impl AgentRuntime {
             }
         }
 
-        Ok(serde_json::to_string(&out).context("serialize agent find")?)
+        serde_json::to_string(&out).context("serialize agent find")
     }
 
     pub(crate) fn agent_kill(&self, agent_id: &str) -> anyhow::Result<String> {

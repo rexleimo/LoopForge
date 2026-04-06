@@ -8,6 +8,7 @@ use rexos_tools::Toolset;
 
 use crate::records::{WorkflowRunStateRecord, WorkflowStepToolArgs};
 use crate::AgentRuntime;
+pub(super) use events::WorkflowStepEvent;
 
 pub(super) fn serialize_workflow_step_arguments(
     arguments: &serde_json::Value,
@@ -48,45 +49,19 @@ pub(super) fn emit_workflow_started(
 pub(super) fn record_workflow_step_success(
     runtime: &AgentRuntime,
     state: &mut WorkflowRunStateRecord,
-    session_id: &str,
-    workflow_id: &str,
-    idx: usize,
-    tool_name: &str,
-    completed_at: i64,
+    step_event: WorkflowStepEvent<'_>,
     output: String,
 ) {
-    events::record_workflow_step_success(
-        runtime,
-        state,
-        session_id,
-        workflow_id,
-        idx,
-        tool_name,
-        completed_at,
-        output,
-    )
+    events::record_workflow_step_success(runtime, state, step_event, output)
 }
 
 pub(super) fn record_workflow_step_failure(
     runtime: &AgentRuntime,
     state: &mut WorkflowRunStateRecord,
-    session_id: &str,
-    workflow_id: &str,
-    idx: usize,
-    tool_name: &str,
-    completed_at: i64,
+    step_event: WorkflowStepEvent<'_>,
     error: &str,
 ) {
-    events::record_workflow_step_failure(
-        runtime,
-        state,
-        session_id,
-        workflow_id,
-        idx,
-        tool_name,
-        completed_at,
-        error,
-    )
+    events::record_workflow_step_failure(runtime, state, step_event, error)
 }
 
 pub(super) fn emit_workflow_finished(

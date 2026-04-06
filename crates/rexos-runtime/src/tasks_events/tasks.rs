@@ -97,7 +97,7 @@ impl AgentRuntime {
             out.push(record);
         }
 
-        Ok(serde_json::to_string(&out).context("serialize task_list")?)
+        serde_json::to_string(&out).context("serialize task_list")
     }
 
     pub(crate) fn task_claim(&self, agent_id: Option<&str>) -> anyhow::Result<String> {

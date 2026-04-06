@@ -44,13 +44,13 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("Check (loopforge-cli with bedrock)", ci)
         self.assertIn("cargo check -p loopforge-cli --locked --features bedrock", ci)
 
-    def test_ci_includes_clippy_core_fast_guard(self):
+    def test_ci_includes_clippy_workspace_guard(self):
         ci = (REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
-        self.assertIn("clippy-core-fast", ci)
-        self.assertIn("clippy core crates (fast)", ci)
-        self.assertIn("Clippy (core crates, all targets)", ci)
+        self.assertIn("clippy-workspace", ci)
+        self.assertIn("clippy workspace (all targets)", ci)
+        self.assertIn("Clippy (workspace, all targets)", ci)
         self.assertIn(
-            "cargo clippy -p rexos-tools -p rexos-llm -p rexos-kernel --all-targets --locked -- -D warnings",
+            "cargo clippy --workspace --all-targets --locked -- -D warnings",
             ci,
         )
 

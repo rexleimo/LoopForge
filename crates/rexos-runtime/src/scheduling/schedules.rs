@@ -29,7 +29,7 @@ impl AgentRuntime {
 
     pub(crate) fn schedule_list(&self) -> anyhow::Result<String> {
         let schedules = self.schedules_get()?;
-        Ok(serde_json::to_string(&schedules).context("serialize schedule_list")?)
+        serde_json::to_string(&schedules).context("serialize schedule_list")
     }
 
     pub(crate) fn schedule_delete(&self, id: &str) -> anyhow::Result<String> {

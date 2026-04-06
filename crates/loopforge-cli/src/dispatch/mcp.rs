@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Context};
 use serde_json::Value;
@@ -135,7 +135,7 @@ async fn diagnose(
 }
 
 fn build_mcp_diagnose_json(
-    workspace: &PathBuf,
+    workspace: &Path,
     session_id: &str,
     sanitized_config: Value,
     servers_json: Value,

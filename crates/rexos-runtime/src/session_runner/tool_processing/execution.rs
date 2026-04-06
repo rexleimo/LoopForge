@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::Path;
 
 use rexos_kernel::router::TaskKind;
 use rexos_llm::openai_compat::{ChatMessage, Role, ToolCall};
@@ -25,7 +25,7 @@ pub(super) fn build_tool_chat_message(call: ToolCall, output: String) -> ChatMes
 impl AgentRuntime {
     pub(crate) async fn process_tool_call(
         &self,
-        workspace_root: &PathBuf,
+        workspace_root: &Path,
         session_id: &str,
         kind: TaskKind,
         allowed_lookup: Option<&HashSet<String>>,

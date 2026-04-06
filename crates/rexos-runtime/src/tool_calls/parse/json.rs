@@ -16,7 +16,7 @@ pub(super) fn into_tool_calls(calls: Vec<JsonToolCall>) -> Vec<ToolCall> {
     for (idx, call) in calls.into_iter().enumerate() {
         let args_value = call
             .arguments
-            .unwrap_or_else(|| serde_json::Value::Object(call.extra));
+            .unwrap_or(serde_json::Value::Object(call.extra));
         let args = if let Some(text) = args_value.as_str() {
             text.to_string()
         } else {
