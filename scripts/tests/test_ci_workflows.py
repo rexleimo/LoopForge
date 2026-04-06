@@ -37,6 +37,13 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("toolchain: 1.75.0", ci)
         self.assertIn("cargo check --workspace --locked", ci)
 
+    def test_ci_includes_bedrock_feature_compile_guard(self):
+        ci = (REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        self.assertIn("bedrock-feature-compile", ci)
+        self.assertIn("bedrock feature compile (fast)", ci)
+        self.assertIn("Check (loopforge-cli with bedrock)", ci)
+        self.assertIn("cargo check -p loopforge-cli --locked --features bedrock", ci)
+
     def test_provider_nightly_workflow_generates_health_artifacts(self):
         workflow = (
             REPO_ROOT / ".github/workflows/provider-nightly.yml"
