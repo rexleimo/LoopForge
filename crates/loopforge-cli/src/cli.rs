@@ -5,5 +5,6 @@ mod tests;
 
 pub(crate) use commands::{
     AcpCommand, AgentCommand, AgentKind, ChannelCommand, Cli, Command, ConfigCommand, CronCommand,
-    DaemonCommand, HarnessCommand, McpCommand, ReleaseCommand, SessionCommand, SkillsCommand,
+    DaemonCommand, HarnessCommand, McpCommand, ReleaseCommand, SessionCommand, SkillsArchiveFormat,
+    SkillsCommand,
 };

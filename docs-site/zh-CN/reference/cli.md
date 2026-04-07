@@ -12,7 +12,7 @@ LoopForge 的二进制命令是 `loopforge`。
 - 想走一遍引导式首跑：`loopforge onboard`
 - 在 workspace 里执行一次 agent 任务：`loopforge agent run`
 - 需要可持续续跑的长任务：`loopforge harness init` + `loopforge harness run`
-- 查看或执行本地 skills：`loopforge skills list|show|doctor|run`
+- 查看、安装或执行 skills：`loopforge skills list|show|doctor|install|run`
 - 发送积压的 outbox 消息：`loopforge channel drain` / `loopforge channel worker`
 - 运行已存储的 cron（可选 worker）：`loopforge cron tick` / `loopforge cron worker`
 - 以 HTTP 服务方式运行：`loopforge daemon start`
@@ -29,7 +29,7 @@ LoopForge 的二进制命令是 `loopforge`。
 - `loopforge config validate` —— 校验 `~/.loopforge/config.toml`
 - `loopforge agent run` —— 在 workspace 中运行一次 agent session
 - `loopforge harness init|run` —— 初始化并续跑长任务 harness workspace
-- `loopforge skills list|show|doctor|run` —— 发现、查看、诊断并执行本地 skills
+- `loopforge skills list|show|doctor|install|run` —— 发现、查看、诊断、安装并执行 skills
 - `loopforge channel drain|worker` —— 发送 outbox 队列中的通知
 - `loopforge cron tick|worker` —— 运行已存储的 cron（可选 worker）
 - `loopforge daemon start` —— 启动 HTTP daemon

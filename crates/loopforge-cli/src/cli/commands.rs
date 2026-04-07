@@ -25,7 +25,7 @@ pub(crate) use harness::HarnessCommand;
 pub(crate) use mcp::McpCommand;
 pub(crate) use release::ReleaseCommand;
 pub(crate) use session::SessionCommand;
-pub(crate) use skills::SkillsCommand;
+pub(crate) use skills::{SkillsArchiveFormat, SkillsCommand};
 
 #[derive(Debug, Parser)]
 #[command(name = "loopforge")]

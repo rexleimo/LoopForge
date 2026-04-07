@@ -1,4 +1,5 @@
 mod doctor;
+mod install;
 mod listing;
 mod run;
 
@@ -17,6 +18,13 @@ pub(super) async fn run(command: SkillsCommand) -> anyhow::Result<()> {
             json,
             strict,
         } => doctor::run_doctor(workspace, json, strict),
+        SkillsCommand::Install {
+            url,
+            workspace,
+            format,
+            force,
+            json,
+        } => install::run_install(url, workspace, format, force, json).await,
         SkillsCommand::Run {
             name,
             workspace,

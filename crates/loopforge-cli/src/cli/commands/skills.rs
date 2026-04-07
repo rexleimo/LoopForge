@@ -2,6 +2,14 @@ use std::path::PathBuf;
 
 use super::agent::AgentKind;
 
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub(crate) enum SkillsArchiveFormat {
+    Auto,
+    Zip,
+    Tar,
+    TarGz,
+}
+
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SkillsCommand {
     /// List discovered skills (workspace + ~/.codex/skills)
@@ -35,6 +43,23 @@ pub(crate) enum SkillsCommand {
         /// Exit non-zero on warnings too
         #[arg(long)]
         strict: bool,
+    },
+    /// Install one skill archive from URL into workspace .loopforge/skills
+    Install {
+        /// Skill archive URL (zip/tar/tar.gz)
+        url: String,
+        /// Workspace root directory
+        #[arg(long, default_value = ".")]
+        workspace: PathBuf,
+        /// Archive format (auto detects by bytes when omitted)
+        #[arg(long, value_enum, default_value_t = SkillsArchiveFormat::Auto)]
+        format: SkillsArchiveFormat,
+        /// Replace an existing skill with the same manifest name
+        #[arg(long)]
+        force: bool,
+        /// Print JSON output (machine-readable)
+        #[arg(long)]
+        json: bool,
     },
     /// Execute one skill with real runtime tools and model routing
     Run {

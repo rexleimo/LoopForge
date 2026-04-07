@@ -136,3 +136,13 @@
 - Adopt：repo secrets 扫描护栏、（将来）某些 CI 安全检查
 - Extend：cron 削峰、端到端多模态覆盖、ACP provenance 记录
 - Build：Bedrock provider、MCP transport（若立项）
+
+## 2026-04-07 统一回看（对比项落地状态）
+
+- ✅ Repo secrets 扫描护栏：已落地 `gitleaks` CI job（`ci.yml`）。
+- ✅ Cron catch-up + 削峰语义：已落地第一版 cron runner 语义（见 `docs/internal/2026-03-09-notes.zh-CN.md`）。
+- ✅ Bedrock provider：已完成并进入主线（含 feature compile guard、doctor 覆盖）。
+- ✅ MCP transport：已完成并进入主线（含 session policy 快照、MCP wrappers、routing、回归测试）。
+- ✅ open-harness 参考边界重构：已合并到 `main`（`refactor-openharness-boundaries` 相关工作已收口）。
+- ✅ Skills 下载/解压安全（canonical root + anti-traversal）：已新增 `loopforge skills install <url>`，落地 canonical root 固定、`../`/绝对路径拒绝、symlink/hardlink 拒绝，并补齐 zip-slip/tar-slip 回归测试。
+- ✅ 新增上游跟踪自动化：增加 `scripts/check_openharness_upstream.py` + `.github/workflows/open-harness-watch.yml`，每周检查 `MaxGfeller/open-harness` HEAD 变化并输出报告 artifact。

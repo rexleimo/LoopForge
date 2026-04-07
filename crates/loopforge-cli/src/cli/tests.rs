@@ -118,6 +118,26 @@ fn cli_parses_skills_run_subcommand() {
 }
 
 #[test]
+fn cli_parses_skills_install_subcommand() {
+    let parsed = Cli::try_parse_from([
+        "loopforge",
+        "skills",
+        "install",
+        "https://example.com/hello-skill.zip",
+        "--workspace",
+        ".",
+        "--format",
+        "zip",
+        "--force",
+        "--json",
+    ]);
+    assert!(
+        parsed.is_ok(),
+        "expected `loopforge skills install` to parse, got: {parsed:?}"
+    );
+}
+
+#[test]
 fn cli_parses_onboard_subcommand() {
     let parsed = Cli::try_parse_from([
         "loopforge",

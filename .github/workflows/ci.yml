@@ -23,6 +23,7 @@ jobs:
         run: |
           python3 -m unittest \
             scripts.tests.test_ci_workflows \
+            scripts.tests.test_check_openharness_upstream \
             scripts.tests.test_verify_version_changelog \
             scripts.tests.test_verify_release_consistency \
             scripts.tests.test_resolve_release_tag \

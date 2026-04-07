@@ -10,6 +10,7 @@ class CiWorkflowTests(unittest.TestCase):
         ci = (REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         self.assertIn("scripts-tests", ci)
         self.assertIn("python3 -m unittest", ci)
+        self.assertIn("scripts.tests.test_check_openharness_upstream", ci)
         self.assertIn("scripts.tests.test_verify_version_changelog", ci)
         self.assertIn("scripts.tests.test_verify_release_consistency", ci)
         self.assertIn("scripts.tests.test_resolve_release_tag", ci)
@@ -61,6 +62,18 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("schedule:", workflow)
         self.assertIn("provider_health_report.py", workflow)
         self.assertIn("upload-artifact@v4", workflow)
+
+    def test_open_harness_watch_workflow_tracks_upstream_head(self):
+        workflow = (
+            REPO_ROOT / ".github/workflows/open-harness-watch.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("schedule:", workflow)
+        self.assertIn("workflow_dispatch", workflow)
+        self.assertIn("check_openharness_upstream.py", workflow)
+        self.assertIn("--state-file docs/internal/competitive/open-harness-upstream.json", workflow)
+        self.assertIn("--fail-on-change", workflow)
+        self.assertIn("actions/upload-artifact@v4", workflow)
+        self.assertIn("open-harness-watch", workflow)
 
     def test_release_dry_run_workflow_builds_but_does_not_publish(self):
         workflow = (

@@ -54,6 +54,24 @@ loopforge skills doctor --workspace .
 loopforge skills doctor --workspace . --strict
 ```
 
+### 从远程归档安装一个 skill
+
+```bash
+loopforge skills install https://example.com/hello-skill.zip --workspace .
+```
+
+常用参数：
+
+- `--format <auto|zip|tar|tar-gz>`（默认 `auto`）
+- `--force`：当同名 skill 已存在时覆盖安装
+- `--json`：输出机器可读 JSON
+
+安装过程的安全护栏：
+
+- 解压根目录固定在 canonical install root（`<workspace>/.loopforge/skills`）
+- 拒绝 `../` 路径穿越与绝对路径
+- 拒绝 symlink / hardlink 归档条目
+
 ### 运行 skill
 
 ```bash

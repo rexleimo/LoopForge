@@ -4,6 +4,17 @@ All notable user-visible changes are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `loopforge skills install <url>` for remote skill archive install into workspace `.loopforge/skills`.
+
+### Changed
+
+- Skills archive extraction is now hardened with canonical-root write boundaries and archive traversal defenses:
+  - reject parent traversal (`../`) and absolute paths
+  - reject symlink/hardlink entries during extraction
+  - regression tests cover zip-slip and tar-slip style payloads
+
 ## [1.3.0] - 2026-03-07
 
 ### Added

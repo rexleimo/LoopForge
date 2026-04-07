@@ -1,0 +1,42 @@
+name: Open-Harness Watch
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+jobs:
+  upstream-watch:
+    name: upstream watch (open-harness)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Check upstream head delta
+        id: watch
+        continue-on-error: true
+        run: |
+          python3 scripts/check_openharness_upstream.py \
+            --state-file docs/internal/competitive/open-harness-upstream.json \
+            --out-json .tmp/open-harness-watch/report.json \
+            --out-markdown .tmp/open-harness-watch/report.md \
+            --fail-on-change
+
+      - name: Upload upstream watch report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-harness-watch
+          path: .tmp/open-harness-watch/
+
+      - name: Fail when upstream moved
+        if: steps.watch.outcome == 'failure'
+        run: |
+          echo "open-harness upstream HEAD changed. Review artifact and refresh internal baseline."
+          exit 1

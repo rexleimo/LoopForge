@@ -54,6 +54,24 @@ loopforge skills doctor --workspace .
 loopforge skills doctor --workspace . --strict
 ```
 
+### Install one skill from a remote archive
+
+```bash
+loopforge skills install https://example.com/hello-skill.zip --workspace .
+```
+
+Useful flags:
+
+- `--format <auto|zip|tar|tar-gz>` (default `auto`)
+- `--force` to replace an existing installed skill with the same manifest name
+- `--json` for machine-readable output
+
+Security guards on install:
+
+- archive extraction is pinned to a canonical install root (`<workspace>/.loopforge/skills`)
+- parent traversal (`../`) and absolute paths are rejected
+- symlink and hardlink archive entries are rejected
+
 ### Run a skill
 
 ```bash

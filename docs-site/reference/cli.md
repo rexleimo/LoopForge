@@ -12,7 +12,7 @@ Use this quick map when you are not sure where to start:
 - Want a guided first-run: `loopforge onboard`
 - Run one agent task in a workspace: `loopforge agent run`
 - Run longer incremental work with durable workspace artifacts: `loopforge harness init` + `loopforge harness run`
-- Inspect or execute local skills: `loopforge skills list|show|doctor|run`
+- Inspect, install, or execute skills: `loopforge skills list|show|doctor|install|run`
 - Deliver queued outbound messages: `loopforge channel drain` / `loopforge channel worker`
 - Run stored cron jobs (optional worker): `loopforge cron tick` / `loopforge cron worker`
 - Run LoopForge as an HTTP service: `loopforge daemon start`
@@ -29,7 +29,7 @@ Top-level commands are organized by job type:
 - `loopforge config validate` — validate `~/.loopforge/config.toml`
 - `loopforge agent run` — run a single agent session in a workspace
 - `loopforge harness init|run` — initialize and continue long-running harness workspaces
-- `loopforge skills list|show|doctor|run` — discover, inspect, diagnose, and execute local skills
+- `loopforge skills list|show|doctor|install|run` — discover, inspect, diagnose, install, and execute skills
 - `loopforge channel drain|worker` — deliver queued outbound notifications
 - `loopforge cron tick|worker` — run stored cron jobs (optional worker)
 - `loopforge daemon start` — start the HTTP daemon
