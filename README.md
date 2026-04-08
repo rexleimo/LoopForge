@@ -15,6 +15,7 @@ LoopForge  is a **personal AI engineer** for software delivery: long-running wor
 - Docs site: https://os.rexai.top
 - (If the custom domain isn’t configured yet) GitHub Pages: https://rexleimo.github.io/LoopForge/
 - 5-minute outcomes: `docs-site/tutorials/five-minute-outcomes.md`
+- Agent Team playbook: `docs-site/how-to/agent-team-playbook.md`
 - Positioning: `docs-site/explanation/why-loopforge.md`
 - Runtime architecture: `docs-site/explanation/runtime-architecture.md`
 - Internal maintainer map: `docs/internal/runtime-module-map.md`
@@ -73,6 +74,17 @@ After onboarding, LoopForge writes:
 
 - `loopforge-onboard-demo/.loopforge/onboard-report.json`
 - `loopforge-onboard-demo/.loopforge/onboard-report.md`
+
+## Agent Team mode (recommended for teams)
+
+Treat LoopForge as a compact agent team with clear ownership:
+
+- Planner agent: breaks down scope, risks, and acceptance criteria into `notes/plan.md`
+- Builder agent: ships implementation and runs verification gates
+- Reviewer agent: runs findings-first review and writes `notes/review.md`
+- Release agent: runs `loopforge release check` and prepares cap/release actions
+
+Playbook: `docs-site/how-to/agent-team-playbook.md`
 
 ## Run with Ollama (OpenAI-compatible)
 

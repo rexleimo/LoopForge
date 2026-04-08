@@ -15,6 +15,7 @@ LoopForge是一个面向软件交付的 **个人研发助理（Personal AI Engin
 - 文档站点：https://os.rexai.top
 - （如自定义域名未配置）GitHub Pages：https://rexleimo.github.io/LoopForge/
 - 5 分钟可见结果：`docs-site/tutorials/five-minute-outcomes.md`
+- Agent Team 作战手册：`docs-site/how-to/agent-team-playbook.md`
 - 产品定位说明：`docs-site/explanation/why-loopforge.md`
 - 运行时架构说明：`docs-site/explanation/runtime-architecture.md`
 - 仓库内部维护者地图：`docs/internal/runtime-module-map.md`
@@ -65,6 +66,17 @@ loopforge agent run --workspace /tmp/loopforge-work --prompt "Create hello.txt w
 
 可选的 Ollama smoke test：`LOOPFORGE_OLLAMA_MODEL=<your-model> cargo test --workspace --test ollama_smoke -- --ignored`。
 可选的 NVIDIA NIM smoke test：`NVIDIA_API_KEY=<key> cargo test --workspace --test nvidia_nim_smoke -- --ignored`。
+
+## Agent Team 模式（团队推荐）
+
+把 LoopForge 当作一个“小型 Agent Team”来用，并明确分工：
+
+- Planner Agent：拆解范围、风险和验收标准，沉淀到 `notes/plan.md`
+- Builder Agent：完成实现并执行验证门禁
+- Reviewer Agent：做 findings-first 评审，输出 `notes/review.md`
+- Release Agent：执行 `loopforge release check`，准备 cap/发版动作
+
+操作手册：`docs-site/how-to/agent-team-playbook.md`
 
 ## 发版（维护者）
 

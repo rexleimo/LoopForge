@@ -10,6 +10,7 @@ class CiWorkflowTests(unittest.TestCase):
         ci = (REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         self.assertIn("scripts-tests", ci)
         self.assertIn("python3 -m unittest", ci)
+        self.assertIn("scripts.tests.test_check_i18n_parity", ci)
         self.assertIn("scripts.tests.test_check_openharness_upstream", ci)
         self.assertIn("scripts.tests.test_verify_version_changelog", ci)
         self.assertIn("scripts.tests.test_verify_release_consistency", ci)

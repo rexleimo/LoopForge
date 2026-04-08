@@ -77,6 +77,7 @@ plugins:
             Beginner FAQ: 新手 FAQ
             Workflows: 工作流
             Long Task With Harness: Harness 长任务
+            Agent Team Playbook: Agent Team 作战手册
             Examples: 案例代码
             Common Use Cases: 常见场景
             Case Tasks: 案例任务
@@ -182,6 +183,7 @@ nav:
           - Beginner FAQ: how-to/faq.md
       - Workflows:
           - Long Task With Harness: tutorials/harness-long-task.md
+          - Agent Team Playbook: how-to/agent-team-playbook.md
           - Browser Automation: how-to/browser-automation.md
       - Configuration:
           - Providers & Routing: how-to/providers.md

@@ -63,6 +63,10 @@ These files tell you what passed, what failed, and what to do next.
   Keep a clear trail: change -> verify -> checkpoint.
   [Harness workflow](tutorials/harness-long-task.md)
 
+- :material-account-group: **Agent Team Playbook**
+  Organize Planner / Builder / Reviewer / Release roles with one artifact trail.
+  [Open playbook](how-to/agent-team-playbook.md)
+
 - :material-sitemap: **Runtime Architecture**
   Understand how CLI, runtime, tools, memory, and audits fit together.
   [Open architecture guide](explanation/runtime-architecture.md)
@@ -81,5 +85,6 @@ These files tell you what passed, what failed, and what to do next.
 - [Starter tasks](tutorials/first-day-starter-tasks.md)
 - [Onboarding troubleshooting](how-to/onboarding-troubleshooting.md)
 - [5-minute outcomes](tutorials/five-minute-outcomes.md)
+- [Agent Team playbook](how-to/agent-team-playbook.md)
 - [Case task library](examples/case-tasks/index.md)
 - [Runtime architecture](explanation/runtime-architecture.md)

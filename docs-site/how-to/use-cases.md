@@ -16,6 +16,7 @@ If you want a quick path, start here:
 - [Setup Sanity Check](../examples/sanity-check.md)
 - [Case Tasks (Copy/Paste)](../examples/case-tasks/index.md)
 - [Harness Recipes (Checkpoints)](../examples/harness-recipes.md)
+- [Agent Team Playbook](agent-team-playbook.md)
 - [Mechanical Edits](../examples/mechanical-edits.md)
 - [Routing Recipes](../examples/routing-recipes.md)
 - [Daemon Health Check](../examples/daemon-health.md)

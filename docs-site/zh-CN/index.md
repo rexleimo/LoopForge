@@ -63,6 +63,10 @@ LoopForge 的定位是工程交付型 AI 助理：本地优先、产物导向、
   固化流程：修改 -> 验证 -> checkpoint。
   [Harness 工作流](tutorials/harness-long-task.md)
 
+- :material-account-group: **Agent Team 作战手册**
+  用 Planner / Builder / Reviewer / Release 分工，统一产物轨迹。
+  [打开手册](how-to/agent-team-playbook.md)
+
 - :material-sitemap: **运行时架构**
   快速理解 CLI、runtime、tools、memory 与 audit 是如何衔接的。
   [打开架构说明](explanation/runtime-architecture.md)
@@ -81,5 +85,6 @@ LoopForge 的定位是工程交付型 AI 助理：本地优先、产物导向、
 - [Starter Tasks](tutorials/first-day-starter-tasks.md)
 - [上手排障](how-to/onboarding-troubleshooting.md)
 - [5 分钟可见结果](tutorials/five-minute-outcomes.md)
+- [Agent Team 作战手册](how-to/agent-team-playbook.md)
 - [案例任务库](examples/case-tasks/index.md)
 - [运行时架构](explanation/runtime-architecture.md)

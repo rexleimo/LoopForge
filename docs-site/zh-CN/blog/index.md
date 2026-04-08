@@ -5,6 +5,9 @@
 ## 最新文章
 
 - [LoopForge v1.0.0 发布说明](loopforge-v1-0-0-release-notes.md)
+- [5分钟学会 MCP：让 AI Agent 真正掌控你的开发环境](mcp-integration-guide.md)
+- [为什么你的 AI 助手记不住上下文？Agent 记忆设计指南](agent-memory-design.md)
+- [让 AI 放心执行代码：隔离执行环境的最佳实践](safe-code-execution.md)
 - [LoopForge：不是泛助手，而是个人研发助理](personal-ai-engineer.md)
 - [什么是 LoopForge？](what-is-loopforge.md)
 

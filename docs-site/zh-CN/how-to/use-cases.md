@@ -16,6 +16,7 @@
 - [环境自检](../examples/sanity-check.md)
 - [案例任务（可复制粘贴）](../examples/case-tasks/index.md)
 - [Harness 配方（Checkpoints）](../examples/harness-recipes.md)
+- [Agent Team 作战手册](agent-team-playbook.md)
 - [机械化改动](../examples/mechanical-edits.md)
 - [路由示例](../examples/routing-recipes.md)
 - [Daemon 健康检查](../examples/daemon-health.md)
