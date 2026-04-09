@@ -21,7 +21,8 @@ rust-version = "1.75"
 
 [workspace.dependencies]
 anyhow = "1"
-axum = "0.8"
+# Pin to 0.8.0; newer 0.8.x releases raise rust-version above workspace MSRV 1.75.
+axum = "=0.8.0"
 base64 = "0.22"
 clap = { version = "4", features = ["derive"] }
 dirs = "5"
@@ -35,10 +36,11 @@ serial_test = "3"
 semver = { version = "1", features = ["serde"] }
 sha2 = "0.10"
 tar = "0.4"
-tempfile = "3"
+# Keep versions below the getrandom 0.4 / edition2024 transition so MSRV 1.75 checks stay green.
+tempfile = ">=3.12, <3.26"
 thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "process", "time"] }
 toml = "0.8"
 tower = { version = "0.5", features = ["util"] }
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = ">=1.10, <1.21", features = ["v4"] }
 zip = { version = "0.6", default-features = false, features = ["deflate"] }

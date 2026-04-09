@@ -11,6 +11,7 @@ use crate::tool_calls::parse_tool_calls_from_json_content;
 use crate::AgentRuntime;
 
 impl AgentRuntime {
+    #[async_recursion::async_recursion(?Send)]
     pub async fn run_session(
         &self,
         workspace_root: PathBuf,
